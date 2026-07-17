@@ -128,7 +128,7 @@ export default function Experience() {
           </div>
           <div className="compass" style={{ opacity: showCompass ? 1 : 0 }}>
             <span className="dot" />
-            Click & drag to look around
+            Click & drag to look around · tap a feature to enter
             <span className="dot" />
           </div>
         </>

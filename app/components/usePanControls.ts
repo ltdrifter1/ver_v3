@@ -114,12 +114,20 @@ export function usePanControls(
 
     const onUp = (e: PointerEvent) => {
       if (!controls.dragging) return;
+      const wasDrag = controls.dragged;
       controls.dragging = false;
       stage.classList.remove('dragging');
       try {
         stage.releasePointerCapture(e.pointerId);
       } catch {
         /* ignore */
+      }
+      // Keep `dragged` true through the synthetic click that follows a drag,
+      // then clear so the next tap can open a hotspot.
+      if (wasDrag) {
+        window.setTimeout(() => {
+          if (!controls.dragging) controls.dragged = false;
+        }, 0);
       }
     };
 

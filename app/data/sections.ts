@@ -36,8 +36,9 @@ export type Section = {
 };
 
 /**
- * Seven discoverable hotspots. Tuned against the live BackSide skybox
- * (higher u sits toward the left of frame). Append ?debug=1 to tint hit areas.
+ * Discoverable hotspots around the 360° store.
+ * Click-and-drag to look, then click a feature to open its room.
+ * Append ?debug=1 to tint hit areas while tuning (u,v).
  */
 export const SECTIONS: Section[] = [
   {
@@ -50,10 +51,10 @@ export const SECTIONS: Section[] = [
     intro:
       'The foam ear-cups still smell of cigarettes and rain. Drop the needle and the room disappears — just you, a stool, and 174 beats per minute.',
     accent: '#ffb347',
-    u: 0.74,
-    v: 0.44,
-    w: 5,
-    h: 10,
+    u: 0.78,
+    v: 0.42,
+    w: 6,
+    h: 11,
     items: [
       { label: 'Tape 001 — Midnight Amen', meta: 'Continuous mix', detail: '62 min' },
       { label: 'Tape 002 — Hydro Steppers', meta: 'Continuous mix', detail: '58 min' },
@@ -72,10 +73,10 @@ export const SECTIONS: Section[] = [
     intro:
       'Static rolls until it doesn’t. Hand-dubbed VHS sets, pirate TV idents and grainy warehouse footage nobody was supposed to keep.',
     accent: '#7ad7ff',
-    u: 0.68,
-    v: 0.48,
-    w: 3.8,
-    h: 3.6,
+    u: 0.7,
+    v: 0.46,
+    w: 4.5,
+    h: 4.2,
     items: [
       { label: 'Warehouse Tape — Sector 7', meta: 'VHS transfer', detail: '1994' },
       { label: 'Pirate Ident Reel', meta: 'Off-air capture', detail: '1995' },
@@ -93,10 +94,10 @@ export const SECTIONS: Section[] = [
     intro:
       'Cardboard sleeves softened by a thousand thumbs. Every divider is a name; every name kept this place breathing after dark.',
     accent: '#ff7a9c',
-    u: 0.7,
-    v: 0.72,
-    w: 12,
-    h: 6.5,
+    u: 0.72,
+    v: 0.7,
+    w: 14,
+    h: 7.5,
     items: [
       { label: 'Tenor Fly', meta: 'Roller / Steppa', detail: 'VCR-002' },
       { label: 'Sister Circuit', meta: 'Ragga Jungle', detail: 'VCR-004' },
@@ -116,10 +117,10 @@ export const SECTIONS: Section[] = [
     intro:
       'The drawer sticks unless you hit it just right. Fresh pressings, dusty repress, and a tin of badges by the till.',
     accent: '#9dff8a',
-    u: 0.524,
-    v: 0.514,
-    w: 5.5,
-    h: 4.6,
+    u: 0.52,
+    v: 0.5,
+    w: 6.5,
+    h: 5.5,
     items: [
       { label: 'VCR-013 — Dread at the Controls', meta: '12" Vinyl', detail: '£12' },
       { label: 'VCR-011 — Nocturne LP', meta: 'Double 12"', detail: '£18' },
@@ -138,10 +139,10 @@ export const SECTIONS: Section[] = [
     intro:
       'Layer over layer over layer. Pull one flyer and three come with it. Every party that ever mattered is buried in here somewhere.',
     accent: '#ffe66d',
-    u: 0.57,
-    v: 0.34,
-    w: 9,
-    h: 5,
+    u: 0.58,
+    v: 0.32,
+    w: 10,
+    h: 5.5,
     items: [
       { label: 'HELTER SKELTER', meta: 'New Year’s Eve', detail: '1994' },
       { label: 'DREAMSCAPE', meta: 'Aerodrome', detail: '1995' },
@@ -160,10 +161,10 @@ export const SECTIONS: Section[] = [
     intro:
       'Still takes 10p. The number on the card behind the glass hasn’t changed since ’93 — ring it and somebody actually answers.',
     accent: '#ff5e5e',
-    u: 0.6,
-    v: 0.42,
-    w: 3.5,
-    h: 8.2,
+    u: 0.62,
+    v: 0.4,
+    w: 4.2,
+    h: 9,
     items: [
       { label: 'demos@vcrrecords.fm', meta: 'Send a dubplate', detail: 'WAV / 320' },
       { label: 'bookings@vcrrecords.fm', meta: 'Soundsystem hire', detail: 'UK + EU' },
