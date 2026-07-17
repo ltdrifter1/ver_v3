@@ -6,6 +6,8 @@ import { useTexture } from '@react-three/drei';
 import * as THREE from 'three';
 
 import {
+  DRAG_FRICTION,
+  FRICTION_STOP,
   INTRO_DUR,
   MAX_PITCH,
   MFOV_EXPLORE,
@@ -37,29 +39,31 @@ const wrapYaw = (y: number) => {
 type Props = {
   controls: Controls;
   reduceMotion: boolean;
+  /** Flips true when the gate opens — starts the intro zoom. */
+  enteredRef: { value: boolean };
+  /** Hotspots live only after intro unlocks look. */
   liveRef: { value: boolean };
   panelOpenRef: { value: boolean };
   onOpen: (id: string) => void;
-  /** Fires once when the intro drop/zoom finishes — unlock click-and-drag look. */
   onIntroComplete?: () => void;
   debug?: boolean;
 };
 
 /**
- * Orbit rig matching balmingtiger.com:
- * - MFOV 120 explore scale (responsive → vertical FOV)
- * - start at designed front; look locked through intro FOV ease
- * - click-and-drag only after intro (no hover lean)
+ * Camera rig — balmingtiger / krpano parity:
+ * - MFOV 120 explore, intro 160→120 over 2s
+ * - Look locked during intro
+ * - After unlock: click-and-drag with instant tracking + inertia
  */
 function Rig({
   controls,
   env,
-  liveRef,
+  enteredRef,
   onIntroComplete,
 }: {
   controls: Controls;
   env: SceneEnv;
-  liveRef: { value: boolean };
+  enteredRef: { value: boolean };
   onIntroComplete?: () => void;
 }) {
   const { camera, size } = useThree();
@@ -68,7 +72,7 @@ function Rig({
   const yaw = useRef(startYaw);
   const pitch = useRef(startPitch);
   const introElapsed = useRef(0);
-  const wasLive = useRef(false);
+  const wasEntered = useRef(false);
   const introDone = useRef(false);
   const onIntroCompleteRef = useRef(onIntroComplete);
   onIntroCompleteRef.current = onIntroComplete;
@@ -81,10 +85,12 @@ function Rig({
     cam.rotation.order = 'YXZ';
     controls.lookTarget.x = startYaw;
     controls.lookTarget.y = startPitch;
+    controls.velocity.x = 0;
+    controls.velocity.y = 0;
     yaw.current = startYaw;
     pitch.current = startPitch;
     introElapsed.current = 0;
-    wasLive.current = false;
+    wasEntered.current = false;
     introDone.current = false;
   }, [camera, controls, startYaw, startPitch]);
 
@@ -95,53 +101,92 @@ function Rig({
     const aspect = size.width / Math.max(1, size.height);
     const exploreFov = mfovToVerticalFov(MFOV_EXPLORE, aspect);
     const introFov = mfovToVerticalFov(MFOV_INTRO, aspect);
+    const dt = Math.min(0.05, delta);
 
-    if (liveRef.value && !wasLive.current) {
-      wasLive.current = true;
+    // —— Intro: gate opened → FOV ease, look locked ——
+    if (enteredRef.value && !wasEntered.current) {
+      wasEntered.current = true;
       introElapsed.current = env.reduceMotion ? INTRO_DUR : 0;
-      // Hold the designed start pose through the whole intro.
       controls.lookTarget.x = startYaw;
       controls.lookTarget.y = startPitch;
+      controls.velocity.x = 0;
+      controls.velocity.y = 0;
       yaw.current = startYaw;
       pitch.current = startPitch;
     }
 
-    if (wasLive.current && introElapsed.current < INTRO_DUR) {
-      introElapsed.current = Math.min(INTRO_DUR, introElapsed.current + delta);
-      // Keep look locked while the zoom-out plays — ignore any stray input.
+    if (wasEntered.current && introElapsed.current < INTRO_DUR) {
+      introElapsed.current = Math.min(INTRO_DUR, introElapsed.current + dt);
       controls.lookTarget.x = startYaw;
       controls.lookTarget.y = startPitch;
+      controls.velocity.x = 0;
+      controls.velocity.y = 0;
       yaw.current = startYaw;
       pitch.current = startPitch;
     }
 
-    if (wasLive.current && !introDone.current && introElapsed.current >= INTRO_DUR) {
+    if (wasEntered.current && !introDone.current && introElapsed.current >= INTRO_DUR) {
       introDone.current = true;
       onIntroCompleteRef.current?.();
     }
 
-    const introT = wasLive.current
+    const introT = wasEntered.current
       ? easeInOutCubic(Math.min(1, introElapsed.current / INTRO_DUR))
       : 0;
     cam.fov = THREE.MathUtils.lerp(introFov, exploreFov, introT);
     cam.updateProjectionMatrix();
 
     const looking = introDone.current;
-    const targetYaw = looking ? wrapYaw(controls.lookTarget.x) : startYaw;
-    const targetPitch = looking
-      ? THREE.MathUtils.clamp(controls.lookTarget.y, -MAX_PITCH, MAX_PITCH)
-      : startPitch;
-    if (looking) controls.lookTarget.y = targetPitch;
 
-    const k = looking ? 1 - Math.exp(-delta * 28) : 1;
-    let dy = targetYaw - yaw.current;
-    if (dy > Math.PI) dy -= TWO_PI;
-    if (dy < -Math.PI) dy += TWO_PI;
-    yaw.current = wrapYaw(yaw.current + dy * k);
-    pitch.current += (targetPitch - pitch.current) * k;
+    if (looking) {
+      // Clamp pitch on the shared target
+      controls.lookTarget.y = THREE.MathUtils.clamp(
+        controls.lookTarget.y,
+        -MAX_PITCH,
+        MAX_PITCH,
+      );
 
-    const breathYaw = env.reduceMotion || !looking ? 0 : Math.sin(t * 0.11) * 0.006;
-    const breathPitch = env.reduceMotion || !looking ? 0 : Math.cos(t * 0.09) * 0.004;
+      if (controls.dragging) {
+        // krpano mode="drag": view follows instantly while held
+        yaw.current = controls.lookTarget.x;
+        pitch.current = controls.lookTarget.y;
+      } else {
+        // Inertia after release (dragfriction per 60fps frame)
+        if (!env.reduceMotion) {
+          const spd = Math.hypot(controls.velocity.x, controls.velocity.y);
+          if (spd > FRICTION_STOP) {
+            controls.lookTarget.x = wrapYaw(
+              controls.lookTarget.x + controls.velocity.x * dt,
+            );
+            controls.lookTarget.y = THREE.MathUtils.clamp(
+              controls.lookTarget.y + controls.velocity.y * dt,
+              -MAX_PITCH,
+              MAX_PITCH,
+            );
+            const decay = Math.pow(DRAG_FRICTION, dt * 60);
+            controls.velocity.x *= decay;
+            controls.velocity.y *= decay;
+          } else {
+            controls.velocity.x = 0;
+            controls.velocity.y = 0;
+          }
+        } else {
+          controls.velocity.x = 0;
+          controls.velocity.y = 0;
+        }
+
+        // Snappy catch-up to target (still instant-feeling)
+        const k = 1 - Math.exp(-dt * 40);
+        let dy = controls.lookTarget.x - yaw.current;
+        if (dy > Math.PI) dy -= TWO_PI;
+        if (dy < -Math.PI) dy += TWO_PI;
+        yaw.current = wrapYaw(yaw.current + dy * k);
+        pitch.current += (controls.lookTarget.y - pitch.current) * k;
+      }
+    }
+
+    const breathYaw = env.reduceMotion || !looking ? 0 : Math.sin(t * 0.11) * 0.005;
+    const breathPitch = env.reduceMotion || !looking ? 0 : Math.cos(t * 0.09) * 0.0035;
 
     env.look.x = yaw.current + breathYaw;
     env.look.y = pitch.current + breathPitch;
@@ -149,10 +194,11 @@ function Rig({
     camera.rotation.order = 'YXZ';
     camera.rotation.y = env.look.x;
     camera.rotation.x = env.look.y;
+
     if (!env.reduceMotion && looking) {
-      camera.rotation.z = Math.sin(t * 0.05) * 0.0025;
-      camera.position.x = Math.sin(t * 0.1) * 0.03;
-      camera.position.y = Math.cos(t * 0.083) * 0.022;
+      camera.rotation.z = Math.sin(t * 0.05) * 0.002;
+      camera.position.x = Math.sin(t * 0.1) * 0.025;
+      camera.position.y = Math.cos(t * 0.083) * 0.018;
     } else {
       camera.rotation.z = 0;
       camera.position.set(0, 0, 0);
@@ -169,6 +215,7 @@ function easeInOutCubic(t: number) {
 export default function Scene({
   controls,
   reduceMotion,
+  enteredRef,
   liveRef,
   panelOpenRef,
   onOpen,
@@ -204,7 +251,7 @@ export default function Scene({
       <Rig
         controls={controls}
         env={env}
-        liveRef={liveRef}
+        enteredRef={enteredRef}
         onIntroComplete={onIntroComplete}
       />
 

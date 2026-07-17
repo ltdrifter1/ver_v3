@@ -2,9 +2,15 @@
 
 import { useEffect, useRef, type RefObject } from 'react';
 import type { Controls } from './sceneContext';
-import { LOOK_DRAG_GAIN, LOOK_KEY_STEP, MFOV_EXPLORE, mfovToVerticalFov } from '@/lib/pano';
+import {
+  DRAG_FOV_GAIN,
+  DRAG_INERTIA,
+  LOOK_KEY_STEP,
+  MFOV_EXPLORE,
+  mfovToVerticalFov,
+} from '@/lib/pano';
 
-const DRAG_THRESHOLD = 5; // match balmingtiger Observer dragMinimum
+const DRAG_THRESHOLD = 5;
 const TWO_PI = Math.PI * 2;
 const DEG = Math.PI / 180;
 
@@ -16,10 +22,13 @@ const wrapYaw = (y: number) => {
 };
 
 /**
- * Click-and-drag look-around only (plus arrow keys for a11y).
- * Hover lean and wheel pan are intentionally disabled — the room stays put
- * until the visitor grabs and drags, matching balmingtiger.com's explore feel.
- * `enabledRef` stays false through the intro drop/zoom, then flips on.
+ * krpano-style click-and-drag look (control mode="drag").
+ *
+ * - Grab the panorama and drag — content follows the pointer (pano-drag).
+ * - View tracks instantly while held; release keeps a short inertia tail
+ *   (draginertia / dragfriction).
+ * - No hover lean, no wheel pan. Arrow keys remain for a11y.
+ * - `enabledRef` is false through the intro zoom, then flipped on.
  */
 export function usePanControls(
   stageRef: RefObject<HTMLElement | null>,
@@ -27,7 +36,7 @@ export function usePanControls(
 ) {
   const controls = useRef<Controls>({
     lookTarget: { x: 0, y: 0 },
-    pointer: { x: 0, y: 0 },
+    velocity: { x: 0, y: 0 },
     dragging: false,
     dragged: false,
   }).current;
@@ -40,32 +49,32 @@ export function usePanControls(
     let startY = 0;
     let lastX = 0;
     let lastY = 0;
+    let lastT = 0;
     let touch = false;
 
     const w = () => Math.max(1, window.innerWidth);
     const h = () => Math.max(1, window.innerHeight);
 
-    /** Radians of yaw/pitch per pixel, scaled to current MFOV like krpano. */
+    /** Radians per pixel from current MFOV (1:1 with visible FOV). */
     const perPixel = () => {
       const aspect = w() / h();
       const mfov = MFOV_EXPLORE * DEG;
       const vfov = mfovToVerticalFov(MFOV_EXPLORE, aspect) * DEG;
       const hfov = aspect >= 1 ? mfov : 2 * Math.atan(Math.tan(vfov / 2) * aspect);
-      const gain = touch ? LOOK_DRAG_GAIN * 1.15 : LOOK_DRAG_GAIN;
-      return {
-        yaw: (hfov / w()) * gain,
-        pitch: (vfov / h()) * gain,
-      };
+      const gain = touch ? DRAG_FOV_GAIN * 1.08 : DRAG_FOV_GAIN;
+      return { yaw: (hfov / w()) * gain, pitch: (vfov / h()) * gain };
     };
 
     const onDown = (e: PointerEvent) => {
       if (!enabledRef.current) return;
-      // primary button / touch only — ignore right-click etc.
       if (e.pointerType === 'mouse' && e.button !== 0) return;
       controls.dragging = true;
       controls.dragged = false;
+      controls.velocity.x = 0;
+      controls.velocity.y = 0;
       startX = lastX = e.clientX;
       startY = lastY = e.clientY;
+      lastT = performance.now();
       touch = e.pointerType === 'touch';
       stage.classList.add('dragging');
       try {
@@ -76,15 +85,28 @@ export function usePanControls(
     };
 
     const onMove = (e: PointerEvent) => {
-      // No hover lean — look only changes while a drag is held.
       if (!enabledRef.current || !controls.dragging) return;
+
+      const now = performance.now();
+      const dt = Math.max(1 / 120, (now - lastT) / 1000);
       const dx = e.clientX - lastX;
       const dy = e.clientY - lastY;
       lastX = e.clientX;
       lastY = e.clientY;
+      lastT = now;
+
       const { yaw, pitch } = perPixel();
-      controls.lookTarget.x = wrapYaw(controls.lookTarget.x - dx * yaw);
-      controls.lookTarget.y += dy * pitch;
+      // Pano-drag (krpano): drag right → content moves right → look left.
+      const dYaw = dx * yaw;
+      const dPitch = dy * pitch;
+      controls.lookTarget.x = wrapYaw(controls.lookTarget.x + dYaw);
+      controls.lookTarget.y += dPitch;
+
+      // Rolling angular velocity; draginertia reduces leftover momentum.
+      const retain = 1 - DRAG_INERTIA;
+      controls.velocity.x = (dYaw / dt) * retain;
+      controls.velocity.y = (dPitch / dt) * retain;
+
       if (Math.hypot(e.clientX - startX, e.clientY - startY) > DRAG_THRESHOLD) {
         controls.dragged = true;
       }
@@ -104,16 +126,25 @@ export function usePanControls(
     const onKey = (e: KeyboardEvent) => {
       if (!enabledRef.current) return;
       const step = LOOK_KEY_STEP;
-      if (e.key === 'ArrowLeft') controls.lookTarget.x = wrapYaw(controls.lookTarget.x + step);
-      else if (e.key === 'ArrowRight') controls.lookTarget.x = wrapYaw(controls.lookTarget.x - step);
-      else if (e.key === 'ArrowUp') controls.lookTarget.y += step;
-      else if (e.key === 'ArrowDown') controls.lookTarget.y -= step;
+      // arrows match pano-drag mental model (left key looks left)
+      if (e.key === 'ArrowLeft') {
+        controls.lookTarget.x = wrapYaw(controls.lookTarget.x + step);
+        controls.velocity.x = 0;
+      } else if (e.key === 'ArrowRight') {
+        controls.lookTarget.x = wrapYaw(controls.lookTarget.x - step);
+        controls.velocity.x = 0;
+      } else if (e.key === 'ArrowUp') {
+        controls.lookTarget.y += step;
+        controls.velocity.y = 0;
+      } else if (e.key === 'ArrowDown') {
+        controls.lookTarget.y -= step;
+        controls.velocity.y = 0;
+      }
     };
 
-    // Prevent page scroll / trackpad from accidentally looking around
     const onWheel = (e: WheelEvent) => {
-      if (!enabledRef.current) return;
-      e.preventDefault();
+      // Swallow wheel so trackpads don't scroll the page / nudge the look.
+      if (enabledRef.current) e.preventDefault();
     };
 
     stage.addEventListener('pointerdown', onDown);

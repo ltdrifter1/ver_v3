@@ -11,8 +11,11 @@ import { usePanControls } from './usePanControls';
 
 export default function Experience() {
   const stageRef = useRef<HTMLDivElement>(null);
-  /** Click-and-drag look — stays false through the intro drop/zoom. */
+  /** True once the gate opens — kicks the intro FOV ease. */
+  const enteredRef = useRef({ value: false });
+  /** Click-and-drag look — unlocked only after intro zoom settles. */
   const lookEnabledRef = useRef(false);
+  /** Hotspot proximity / clicks — same unlock as look. */
   const liveRef = useRef({ value: false });
   const panelOpenRef = useRef({ value: false });
 
@@ -42,39 +45,37 @@ export default function Experience() {
   }, []);
 
   const handleEntered = useCallback(() => {
-    // Room is visible / intro plays, but look + hotspots stay locked until zoom settles.
+    // Start intro zoom. Look + hotspots stay locked until onIntroComplete.
     lookEnabledRef.current = false;
     liveRef.current.value = false;
+    enteredRef.current.value = true;
     setLive(true);
     setCanLook(false);
     setShowCompass(false);
   }, []);
 
   const handleIntroComplete = useCallback(() => {
+    // Mirror balmingtiger: set(control.usercontrol, all) after enter tween.
     lookEnabledRef.current = true;
     liveRef.current.value = true;
     setCanLook(true);
     setShowCompass(true);
   }, []);
 
-  // dismiss the explore prompt once the visitor starts dragging
   useEffect(() => {
     if (!canLook) return;
     const dismiss = () => setShowCompass(false);
-    const id = setTimeout(dismiss, 7000);
+    const id = setTimeout(dismiss, 8000);
     window.addEventListener('pointerdown', dismiss, { once: true });
-    window.addEventListener('keydown', dismiss, { once: true });
     return () => {
       clearTimeout(id);
       window.removeEventListener('pointerdown', dismiss);
-      window.removeEventListener('keydown', dismiss);
     };
   }, [canLook]);
 
   const openedAt = useRef(0);
 
   const open = useCallback((id: string) => {
-    // Hotspots stay inert until the intro zoom finishes and drag is unlocked.
     if (!lookEnabledRef.current) return;
     openedAt.current = Date.now();
     panelOpenRef.current.value = true;
@@ -82,7 +83,6 @@ export default function Experience() {
   }, []);
 
   const close = useCallback(() => {
-    // ignore the trailing pointerup of the opening click landing on the scrim
     if (Date.now() - openedAt.current < 350) return;
     panelOpenRef.current.value = false;
     setActive(null);
@@ -108,6 +108,7 @@ export default function Experience() {
           <Scene
             controls={controls}
             reduceMotion={reduceMotion}
+            enteredRef={enteredRef.current}
             liveRef={liveRef.current}
             panelOpenRef={panelOpenRef.current}
             onOpen={open}
@@ -127,7 +128,7 @@ export default function Experience() {
           </div>
           <div className="compass" style={{ opacity: showCompass ? 1 : 0 }}>
             <span className="dot" />
-            Click & drag to look around · find what hums
+            Click & drag to look around
             <span className="dot" />
           </div>
         </>
