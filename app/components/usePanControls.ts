@@ -1,12 +1,19 @@
 'use client';
 
 import { useEffect, useRef, type RefObject } from 'react';
+import gsap from 'gsap';
 import type { Controls } from './sceneContext';
 import {
-  DRAG_FOV_GAIN,
   DRAG_INERTIA,
+  FOLLOW_OFF_DUR,
+  FOLLOW_REENABLE_DELAY,
+  FOLLOW_REENABLE_DUR,
   LOOK_KEY_STEP,
   MFOV_EXPLORE,
+  MFOV_MAX,
+  MFOV_MIN,
+  MOUSE_FOV_CHANGE,
+  mfovToHorizontalFov,
   mfovToVerticalFov,
 } from '@/lib/pano';
 
@@ -22,13 +29,17 @@ const wrapYaw = (y: number) => {
 };
 
 /**
- * krpano-style click-and-drag look (control mode="drag").
+ * krpano-style click-and-drag look — balmingtiger.com / vtourskin parity.
  *
- * - Grab the panorama and drag — content follows the pointer (pano-drag).
- * - View tracks instantly while held; release keeps a short inertia tail
- *   (draginertia / dragfriction).
- * - No hover lean, no wheel pan. Arrow keys remain for a11y.
- * - `enabledRef` is false through the intro zoom, then flipped on.
+ * control.mouse="drag" / touch="drag":
+ *   - Grab the panorama; content follows the pointer (pano-drag).
+ *   - View tracks instantly while held.
+ *   - Release keeps a short inertia tail (draginertia / dragfriction).
+ *
+ * Also:
+ *   - followmousecontrol lean (desktop, no-touch) via pointer + followFactor
+ *   - mouse-wheel / trackpad FOV zoom (fovmin…fovmax)
+ *   - Arrow keys for a11y
  */
 export function usePanControls(
   stageRef: RefObject<HTMLElement | null>,
@@ -39,6 +50,11 @@ export function usePanControls(
     velocity: { x: 0, y: 0 },
     dragging: false,
     dragged: false,
+    mfov: MFOV_EXPLORE,
+    fisheye: 0.3,
+    pointer: { x: 0, y: 0 },
+    followFactor: 0,
+    userControl: false,
   }).current;
 
   useEffect(() => {
@@ -51,23 +67,40 @@ export function usePanControls(
     let lastY = 0;
     let lastT = 0;
     let touch = false;
+    let followTween: gsap.core.Tween | null = null;
+    let followDelay: gsap.core.Tween | null = null;
 
-    const w = () => Math.max(1, window.innerWidth);
-    const h = () => Math.max(1, window.innerHeight);
+    const w = () => Math.max(1, stage.clientWidth || window.innerWidth);
+    const h = () => Math.max(1, stage.clientHeight || window.innerHeight);
 
-    /** Radians per pixel from current MFOV (1:1 with visible FOV). */
+    const killFollowTweens = () => {
+      followTween?.kill();
+      followDelay?.kill();
+      followTween = null;
+      followDelay = null;
+    };
+
+    /** Radians per pixel from current MFOV (dragscale=0 → FOV-linked). */
     const perPixel = () => {
       const aspect = w() / h();
-      const mfov = MFOV_EXPLORE * DEG;
-      const vfov = mfovToVerticalFov(MFOV_EXPLORE, aspect) * DEG;
-      const hfov = aspect >= 1 ? mfov : 2 * Math.atan(Math.tan(vfov / 2) * aspect);
-      const gain = touch ? DRAG_FOV_GAIN * 1.08 : DRAG_FOV_GAIN;
-      return { yaw: (hfov / w()) * gain, pitch: (vfov / h()) * gain };
+      const vfov = mfovToVerticalFov(controls.mfov, aspect) * DEG;
+      const hfov = mfovToHorizontalFov(controls.mfov, aspect) * DEG;
+      return { yaw: hfov / w(), pitch: vfov / h() };
+    };
+
+    const syncPointer = (e: PointerEvent) => {
+      const rect = stage.getBoundingClientRect();
+      const pw = Math.max(1, rect.width);
+      const ph = Math.max(1, rect.height);
+      controls.pointer.x = (e.clientX - rect.left) / pw - 0.5;
+      controls.pointer.y = (e.clientY - rect.top) / ph - 0.5;
     };
 
     const onDown = (e: PointerEvent) => {
-      if (!enabledRef.current) return;
+      if (!enabledRef.current || !controls.userControl) return;
       if (e.pointerType === 'mouse' && e.button !== 0) return;
+
+      syncPointer(e);
       controls.dragging = true;
       controls.dragged = false;
       controls.velocity.x = 0;
@@ -77,6 +110,16 @@ export function usePanControls(
       lastT = performance.now();
       touch = e.pointerType === 'touch';
       stage.classList.add('dragging');
+
+      // vtourskin: onmousedown → tween(followfactor, 0.0, 0.2)
+      killFollowTweens();
+      followTween = gsap.to(controls, {
+        followFactor: 0,
+        duration: FOLLOW_OFF_DUR,
+        ease: 'power1.out',
+        overwrite: true,
+      });
+
       try {
         stage.setPointerCapture(e.pointerId);
       } catch {
@@ -85,7 +128,8 @@ export function usePanControls(
     };
 
     const onMove = (e: PointerEvent) => {
-      if (!enabledRef.current || !controls.dragging) return;
+      syncPointer(e);
+      if (!enabledRef.current || !controls.userControl || !controls.dragging) return;
 
       const now = performance.now();
       const dt = Math.max(1 / 120, (now - lastT) / 1000);
@@ -96,7 +140,7 @@ export function usePanControls(
       lastT = now;
 
       const { yaw, pitch } = perPixel();
-      // Pano-drag (krpano): drag right → content moves right → look left.
+      // Pano-drag (krpano mode=drag): drag right → content moves right → look left.
       const dYaw = dx * yaw;
       const dPitch = dy * pitch;
       controls.lookTarget.x = wrapYaw(controls.lookTarget.x + dYaw);
@@ -122,8 +166,20 @@ export function usePanControls(
       } catch {
         /* ignore */
       }
-      // Keep `dragged` true through the synthetic click that follows a drag,
-      // then clear so the next tap can open a hotspot.
+
+      // vtourskin: onmouseup → delayedcall(1.0, tween(followfactor, 1.0, 3.0))
+      if (!touch && controls.userControl) {
+        killFollowTweens();
+        followDelay = gsap.delayedCall(FOLLOW_REENABLE_DELAY, () => {
+          followTween = gsap.to(controls, {
+            followFactor: 1,
+            duration: FOLLOW_REENABLE_DUR,
+            ease: 'power1.out',
+            overwrite: true,
+          });
+        });
+      }
+
       if (wasDrag) {
         window.setTimeout(() => {
           if (!controls.dragging) controls.dragged = false;
@@ -132,9 +188,8 @@ export function usePanControls(
     };
 
     const onKey = (e: KeyboardEvent) => {
-      if (!enabledRef.current) return;
+      if (!enabledRef.current || !controls.userControl) return;
       const step = LOOK_KEY_STEP;
-      // arrows match pano-drag mental model (left key looks left)
       if (e.key === 'ArrowLeft') {
         controls.lookTarget.x = wrapYaw(controls.lookTarget.x + step);
         controls.velocity.x = 0;
@@ -147,12 +202,19 @@ export function usePanControls(
       } else if (e.key === 'ArrowDown') {
         controls.lookTarget.y -= step;
         controls.velocity.y = 0;
+      } else if (e.key === '+' || e.key === '=') {
+        controls.mfov = Math.max(MFOV_MIN, controls.mfov - MOUSE_FOV_CHANGE * 3);
+      } else if (e.key === '-' || e.key === '_') {
+        controls.mfov = Math.min(MFOV_MAX, controls.mfov + MOUSE_FOV_CHANGE * 3);
       }
     };
 
     const onWheel = (e: WheelEvent) => {
-      // Swallow wheel so trackpads don't scroll the page / nudge the look.
-      if (enabledRef.current) e.preventDefault();
+      if (!enabledRef.current || !controls.userControl) return;
+      e.preventDefault();
+      // krpano mousefovchange — wheel up zooms in (smaller FOV)
+      const delta = Math.sign(e.deltaY) * MOUSE_FOV_CHANGE * Math.min(8, Math.abs(e.deltaY) / 40);
+      controls.mfov = Math.min(MFOV_MAX, Math.max(MFOV_MIN, controls.mfov + delta));
     };
 
     stage.addEventListener('pointerdown', onDown);
@@ -163,6 +225,7 @@ export function usePanControls(
     window.addEventListener('keydown', onKey);
 
     return () => {
+      killFollowTweens();
       stage.removeEventListener('pointerdown', onDown);
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerup', onUp);

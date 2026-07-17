@@ -1,11 +1,22 @@
 /**
  * Shared geometry + view/control constants for the 360° store.
  *
- * Matched to balmingtiger.com's krpano 1.20 setup:
+ * Matched to balmingtiger.com (krpano 1.20.10 + vtourskin):
+ *
  *   <view hlookat="0" vlookat="0" fovtype="MFOV" fov="120"
- *         fovmin="70" fovmax="140" fisheye="0.3" />
- *   <control mode="drag" draginertia="0.1" dragfriction="0.9" />
- * Enter: fov 160 → 120 over 2s, then usercontrol=all (click-and-drag).
+ *         fovmin="70" fovmax="140" maxpixelzoom="2.0"
+ *         limitview="auto" fisheye="0.3" />
+ *   <control mouse="drag" touch="drag"
+ *            draginertia="0.1" dragfriction="0.9"
+ *            mousefovchange="1.0" />
+ *   skin_settings followmousecontrol="true"
+ *     → followrange=10, followspeed=0.05
+ *
+ * Enter (site_scripts.js clickIntro):
+ *   gsap.fromTo(view, { fisheye:1, fov:160 },
+ *     { fisheye:0.3, fov:120, hlookat:0, vlookat:0,
+ *       duration:2, ease:"power3.inOut", delay:0.4,
+ *       onComplete: set(control.usercontrol, all) })
  */
 export const PANO_WIDTH = 2048;
 export const PANO_HEIGHT = 1024;
@@ -13,16 +24,25 @@ export const PANO_ASPECT = PANO_WIDTH / PANO_HEIGHT;
 
 export const SPHERE_RADIUS = 48;
 
-/** Pitch clamp (radians) — keeps poles out of a wide MFOV view. */
-export const MAX_PITCH = 1.05;
+/** krpano view.mfovratio default (4:3). */
+export const MFOV_RATIO = 4 / 3;
 
 export const MFOV_EXPLORE = 120;
 export const MFOV_INTRO = 160;
+export const MFOV_MIN = 70;
+export const MFOV_MAX = 140;
+
+/** Steady-state + intro fisheye (krpano view.fisheye). */
+export const FISHEYE_EXPLORE = 0.3;
+export const FISHEYE_INTRO = 1.0;
+
+/** Enter tween — mirrors balmingtiger clickIntro. */
+export const INTRO_DELAY = 0.4;
 export const INTRO_DUR = 2;
 
 /**
- * Designed "front" of the store (listening booth / bins / CRT), equivalent of
- * krpano hlookat=0, vlookat=0 for this equirect.
+ * Designed "front" of the store (listening booth / bins / CRT),
+ * equivalent of krpano hlookat=0, vlookat=0 for this equirect.
  */
 export const START_LOOK_U = 0.7;
 export const START_LOOK_V = 0.5;
@@ -36,21 +56,63 @@ export const DRAG_INERTIA = 0.1;
 export const DRAG_FRICTION = 0.9;
 export const FRICTION_STOP = 0.002;
 
+/** control.mousefovchange — degrees of MFOV per wheel "notch" scale. */
+export const MOUSE_FOV_CHANGE = 1.0;
+
 /**
- * How much of the viewport FOV a full-width drag covers.
- * krpano drag feels roughly 1:1 with the visible FOV.
+ * followmousecontrol (vtourskin skin_followmouse_init):
+ *   followrange=10 (degrees), followspeed=0.05
+ * On mousedown: followfactor → 0 in 0.2s
+ * On mouseup: after 1s, followfactor → 1 over 3s
  */
-export const DRAG_FOV_GAIN = 1.0;
+export const FOLLOW_RANGE_DEG = 10;
+export const FOLLOW_SPEED = 0.05;
+export const FOLLOW_OFF_DUR = 0.2;
+export const FOLLOW_REENABLE_DELAY = 1.0;
+export const FOLLOW_REENABLE_DUR = 3.0;
 
-export const LOOK_KEY_STEP = 0.18;
+export const LOOK_KEY_STEP = 0.09; // ≈ keybaccelerate feel per tap
 
-/** MFOV (longer axis, degrees) → Three.js vertical FOV for this aspect. */
+/**
+ * MFOV (degrees) → Three.js vertical FOV for this aspect.
+ * Uses krpano's mfovratio (4/3): compare width vs height*mfovratio.
+ */
 export function mfovToVerticalFov(mfovDeg: number, aspect: number): number {
   const m = ((mfovDeg * Math.PI) / 180) / 2;
-  if (aspect >= 1) {
+  const widthIsLonger = aspect >= MFOV_RATIO;
+  if (widthIsLonger) {
+    // Longer axis is width → HFOV = mfov, derive VFOV from aspect
     return (2 * Math.atan(Math.tan(m) / aspect) * 180) / Math.PI;
   }
+  // Longer axis is (mfovratio-scaled) height → VFOV = mfov
   return mfovDeg;
+}
+
+/** Horizontal FOV (degrees) implied by current MFOV + aspect. */
+export function mfovToHorizontalFov(mfovDeg: number, aspect: number): number {
+  const vfov = mfovToVerticalFov(mfovDeg, aspect);
+  if (aspect >= MFOV_RATIO) return mfovDeg;
+  const v = ((vfov * Math.PI) / 180) / 2;
+  return (2 * Math.atan(Math.tan(v) * aspect) * 180) / Math.PI;
+}
+
+/**
+ * limitview="auto" pitch clamp for a full sphere:
+ * keep the view inside ±90° given the current VFOV.
+ */
+export function autoPitchLimit(mfovDeg: number, aspect: number): number {
+  const vfov = (mfovToVerticalFov(mfovDeg, aspect) * Math.PI) / 180;
+  return Math.max(0.05, Math.PI / 2 - vfov / 2 - 0.02);
+}
+
+/**
+ * followmouse zoomscale = max(1, 1/tan(vfov/2))
+ * Stronger lean when zoomed in, subdued at wide MFOV.
+ */
+export function followZoomScale(mfovDeg: number, aspect: number): number {
+  const vfov = (mfovToVerticalFov(mfovDeg, aspect) * Math.PI) / 180;
+  const z = 1 / Math.tan(Math.max(0.05, vfov / 2));
+  return Math.max(1, z);
 }
 
 export function uToYaw(u: number): number {
