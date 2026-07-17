@@ -79,10 +79,16 @@ export default function Experience() {
     <div className="stage" ref={stageRef}>
       <Canvas
         dpr={[1, maxDpr]}
-        gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
-        camera={{ fov: 42, position: [0, 0, 9] }}
-        onCreated={({ gl }) => {
+        gl={{
+          antialias: true,
+          alpha: false,
+          powerPreference: 'high-performance',
+          preserveDrawingBuffer: true,
+        }}
+        camera={{ fov: 68, position: [0, 0, 0], near: 0.1, far: 200 }}
+        onCreated={({ gl, camera }) => {
           gl.setClearColor('#070402', 1);
+          camera.rotation.order = 'YXZ';
         }}
       >
         <Suspense fallback={null}>
@@ -107,7 +113,7 @@ export default function Experience() {
           </div>
           <div className="compass" style={{ opacity: showCompass ? 1 : 0 }}>
             <span className="dot" />
-            Drag to explore the room · find what hums
+            Drag to look around · full 360° · find what hums
             <span className="dot" />
           </div>
         </>

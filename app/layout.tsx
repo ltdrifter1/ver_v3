@@ -25,7 +25,7 @@ const body = Space_Grotesk({
 export const metadata: Metadata = {
   title: 'VCR Records — Video Cassette Recordings',
   description:
-    'Step inside the VCR Records store. A fixed-camera, hand-illustrated panorama of a 1990s jungle & drum and bass record shop. Pan, explore, and discover.',
+    'Step inside the VCR Records store. A full 360° hand-illustrated panorama of a 1990s jungle & drum and bass record shop. Look around, explore, and discover.',
   keywords: [
     'VCR Records',
     'jungle',
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
   ],
   openGraph: {
     title: 'VCR Records',
-    description: 'An interactive record-store installation. Pan, explore, discover.',
+    description: 'An interactive 360° record-store installation. Look around, explore, discover.',
     type: 'website',
   },
 };

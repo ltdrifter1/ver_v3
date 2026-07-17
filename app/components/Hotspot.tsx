@@ -1,16 +1,17 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import { Html } from '@react-three/drei';
 import * as THREE from 'three';
 
-import { uvToLocal } from '@/lib/pano';
+import { uvToSpherical, SPHERE_RADIUS } from '@/lib/pano';
 import type { Section } from '@/app/data/sections';
 import { useSceneEnv } from './sceneContext';
 import type { Controls } from './sceneContext';
 
 const tmp = new THREE.Vector3();
+const origin = new THREE.Vector3(0, 0, 0);
 
 export default function Hotspot({
   section,
@@ -29,7 +30,13 @@ export default function Hotspot({
   const [hovered, setHovered] = useState(false);
   const env = useSceneEnv();
   const { camera, gl } = useThree();
-  const [x, y] = uvToLocal(section.u, section.v);
+  const [x, y, z] = uvToSpherical(section.u, section.v, SPHERE_RADIUS - 0.4);
+
+  useLayoutEffect(() => {
+    const m = mesh.current;
+    if (!m) return;
+    m.lookAt(origin);
+  }, [x, y, z]);
 
   useFrame(() => {
     const m = mesh.current;
@@ -47,20 +54,19 @@ export default function Hotspot({
 
     opacity.current += (target - opacity.current) * 0.12;
     el.style.opacity = opacity.current.toFixed(3);
-    // hide entirely behind the wall when fully off
     el.style.visibility = opacity.current < 0.01 ? 'hidden' : 'visible';
   });
 
   const handleClick = (e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation();
-    if (controls.dragged) return; // ignore clicks that were really drags
+    if (controls.dragged) return;
     onOpen(section.id);
   };
 
   return (
     <mesh
       ref={mesh}
-      position={[x, y, 0.05]}
+      position={[x, y, z]}
       onPointerOver={(e) => {
         e.stopPropagation();
         if (!env.live.value) return;
@@ -74,12 +80,12 @@ export default function Hotspot({
       onClick={handleClick}
     >
       <planeGeometry args={[section.w, section.h]} />
-      {/* invisible, but still raycastable (debug tints it for alignment) */}
       <meshBasicMaterial
         transparent
         opacity={debug ? 0.28 : 0}
         color={debug ? section.accent : '#ffffff'}
         depthWrite={false}
+        side={THREE.DoubleSide}
       />
 
       <Html center prepend zIndexRange={[15, 10]} style={{ pointerEvents: 'none' }}>

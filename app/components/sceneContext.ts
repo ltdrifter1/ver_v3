@@ -5,9 +5,12 @@ import { createContext, useContext } from 'react';
 export type Vec2 = { x: number; y: number };
 
 export type Controls = {
-  /** smoothed pan target in [-1,1], driven by pointer + drag */
-  panTarget: Vec2;
-  /** raw normalised pointer position in [-1,1] (desktop hover) */
+  /**
+   * Look target in radians.
+   * x = yaw (free, wraps), y = pitch (clamped by the rig).
+   */
+  lookTarget: Vec2;
+  /** raw normalised pointer position in [-1,1] (desktop hover lean) */
   pointer: Vec2;
   /** true while a drag is in progress */
   dragging: boolean;
@@ -16,10 +19,8 @@ export type Controls = {
 };
 
 export type SceneEnv = {
-  /** smoothed current pan applied to layers (incl. breathing), in [-1,1] */
-  pan: Vec2;
-  /** how far each axis can travel in world units (set by responsive camera) */
-  range: Vec2;
+  /** smoothed current look (yaw/pitch radians), incl. breathing */
+  look: Vec2;
   /** elapsed time in seconds */
   time: number;
   /** whether the experience is live (post-gate) */

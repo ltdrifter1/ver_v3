@@ -3,21 +3,27 @@
 import { useEffect, useRef, type RefObject } from 'react';
 import type { Controls } from './sceneContext';
 
-const clamp = (v: number, a = -1, b = 1) => Math.min(b, Math.max(a, v));
 const DRAG_THRESHOLD = 6; // px before a press counts as a drag
+const TWO_PI = Math.PI * 2;
+
+const wrapYaw = (y: number) => {
+  let v = y % TWO_PI;
+  if (v > Math.PI) v -= TWO_PI;
+  if (v < -Math.PI) v += TWO_PI;
+  return v;
+};
 
 /**
- * Unified pointer / touch / wheel / keyboard panning. Updates a stable mutable
- * `controls` object read every frame by the scene. Move + up are bound to the
- * window so a drag continues outside the element, while keeping the canvas free
- * to receive its own raycast events for hotspots.
+ * Unified pointer / touch / wheel / keyboard look-around for the 360° room.
+ * Updates a stable mutable `controls` object read every frame by the scene.
+ * Yaw is free (full spin); pitch is left unclamped here and clamped in the Rig.
  */
 export function usePanControls(
   stageRef: RefObject<HTMLElement | null>,
   enabledRef: RefObject<boolean>,
 ) {
   const controls = useRef<Controls>({
-    panTarget: { x: 0, y: 0 },
+    lookTarget: { x: 0, y: 0 },
     pointer: { x: 0, y: 0 },
     dragging: false,
     dragged: false,
@@ -57,9 +63,10 @@ export function usePanControls(
       const dy = e.clientY - lastY;
       lastX = e.clientX;
       lastY = e.clientY;
-      const speed = touch ? 2.6 : 2.2;
-      controls.panTarget.x = clamp(controls.panTarget.x - (dx / w()) * speed);
-      controls.panTarget.y = clamp(controls.panTarget.y + (dy / h()) * speed);
+      // drag right → look right (negative yaw in YXZ with our sphere layout)
+      const speed = touch ? 2.8 : 2.4;
+      controls.lookTarget.x = wrapYaw(controls.lookTarget.x - (dx / w()) * speed * Math.PI);
+      controls.lookTarget.y += (dy / h()) * speed * 1.1;
       if (Math.hypot(e.clientX - startX, e.clientY - startY) > DRAG_THRESHOLD) {
         controls.dragged = true;
       }
@@ -72,17 +79,21 @@ export function usePanControls(
 
     const onWheel = (e: WheelEvent) => {
       if (!enabledRef.current) return;
-      const d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
-      controls.panTarget.x = clamp(controls.panTarget.x + d * 0.0012);
+      // horizontal wheel / trackpad → yaw; vertical → pitch
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+        controls.lookTarget.x = wrapYaw(controls.lookTarget.x + e.deltaX * 0.0024);
+      } else {
+        controls.lookTarget.y += e.deltaY * 0.0018;
+      }
     };
 
     const onKey = (e: KeyboardEvent) => {
       if (!enabledRef.current) return;
-      const step = 0.12;
-      if (e.key === 'ArrowLeft') controls.panTarget.x = clamp(controls.panTarget.x - step);
-      else if (e.key === 'ArrowRight') controls.panTarget.x = clamp(controls.panTarget.x + step);
-      else if (e.key === 'ArrowUp') controls.panTarget.y = clamp(controls.panTarget.y + step);
-      else if (e.key === 'ArrowDown') controls.panTarget.y = clamp(controls.panTarget.y - step);
+      const step = 0.14;
+      if (e.key === 'ArrowLeft') controls.lookTarget.x = wrapYaw(controls.lookTarget.x + step);
+      else if (e.key === 'ArrowRight') controls.lookTarget.x = wrapYaw(controls.lookTarget.x - step);
+      else if (e.key === 'ArrowUp') controls.lookTarget.y += step;
+      else if (e.key === 'ArrowDown') controls.lookTarget.y -= step;
     };
 
     stage.addEventListener('pointerdown', onDown);

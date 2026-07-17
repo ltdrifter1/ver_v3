@@ -5,17 +5,23 @@ import { useFrame, useThree } from '@react-three/fiber';
 import { useTexture } from '@react-three/drei';
 import * as THREE from 'three';
 
-import { PLANE_W, PLANE_H, TEXTURE_SRC } from '@/lib/pano';
+import { MAX_PITCH, SPHERE_RADIUS, TEXTURE_SRC } from '@/lib/pano';
 import { SECTIONS } from '@/app/data/sections';
 import { SceneContext, type SceneEnv, type Controls } from './sceneContext';
-import ParallaxLayer from './ParallaxLayer';
 import DustField from './DustField';
 import LightBeams from './LightBeams';
 import Flicker from './Flicker';
 import Hotspot from './Hotspot';
 
-const MATH_PI = Math.PI;
-const FOV = 42;
+const FOV = 68;
+const TWO_PI = Math.PI * 2;
+
+const wrapYaw = (y: number) => {
+  let v = y % TWO_PI;
+  if (v > Math.PI) v -= TWO_PI;
+  if (v < -Math.PI) v += TWO_PI;
+  return v;
+};
 
 type Props = {
   controls: Controls;
@@ -26,7 +32,7 @@ type Props = {
   debug?: boolean;
 };
 
-/** Drives per-frame state: smoothing pan, breathing camera, responsive crop. */
+/** Orbit rig: camera pinned at the origin, yaw/pitch look + subtle breathing. */
 function Rig({
   controls,
   env,
@@ -34,55 +40,63 @@ function Rig({
   controls: Controls;
   env: SceneEnv;
 }) {
-  const { camera, size } = useThree();
-  const ux = useRef(0);
-  const uy = useRef(0);
+  const { camera } = useThree();
+  // Start facing the listening booth / bins (main store wall).
+  const START_YAW = (0.74 - 0.5) * Math.PI * 2;
+  const yaw = useRef(START_YAW);
+  const pitch = useRef(0);
 
-  // Responsive crop: fit the panorama so there is always overflow to explore on
-  // both axes, regardless of viewport shape.
   useEffect(() => {
-    const aspect = size.width / Math.max(1, size.height);
-    const fovRad = (FOV * MATH_PI) / 180;
-    // visible height we want at the plane, capped so edges stay hidden
-    let visH = Math.min(PLANE_H * 0.76, (PLANE_W * 0.9) / aspect);
-    visH = Math.max(visH, PLANE_H * 0.42);
-    const camZ = visH / 2 / Math.tan(fovRad / 2);
-    const visW = visH * aspect;
-
     const cam = camera as THREE.PerspectiveCamera;
     cam.fov = FOV;
-    cam.position.set(0, 0, camZ);
-    cam.lookAt(0, 0, 0);
+    cam.near = 0.1;
+    cam.far = SPHERE_RADIUS * 3;
+    cam.position.set(0, 0, 0);
+    cam.rotation.order = 'YXZ';
     cam.updateProjectionMatrix();
-
-    env.range.x = Math.max(0, (PLANE_W - visW) / 2);
-    env.range.y = Math.max(0, (PLANE_H - visH) / 2);
-  }, [camera, size.width, size.height, env]);
+    controls.lookTarget.x = START_YAW;
+    controls.lookTarget.y = 0;
+  }, [camera, controls]);
 
   useFrame((state, delta) => {
     const t = state.clock.elapsedTime;
     env.time = t;
 
-    const lean = controls.pointer; // additive cursor lean (0 on touch)
-    const targetX = THREE.MathUtils.clamp(controls.panTarget.x + lean.x * 0.18, -1.12, 1.12);
-    const targetY = THREE.MathUtils.clamp(controls.panTarget.y + lean.y * 0.16, -1.12, 1.12);
+    const lean = controls.pointer;
+    const targetYaw = wrapYaw(controls.lookTarget.x - lean.x * 0.06);
+    const targetPitch = THREE.MathUtils.clamp(
+      controls.lookTarget.y + lean.y * 0.05,
+      -MAX_PITCH,
+      MAX_PITCH,
+    );
+    // keep the mutable target pitch clamped so keyboard/wheel don't run away
+    controls.lookTarget.y = targetPitch;
 
-    const k = 1 - Math.pow(0.0016, delta); // frame-rate independent smoothing
-    ux.current += (targetX - ux.current) * k;
-    uy.current += (targetY - uy.current) * k;
+    const k = 1 - Math.pow(0.0014, delta);
+    // shortest-path blend for yaw so a full spin never eases the long way
+    let dy = targetYaw - yaw.current;
+    if (dy > Math.PI) dy -= TWO_PI;
+    if (dy < -Math.PI) dy += TWO_PI;
+    yaw.current = wrapYaw(yaw.current + dy * k);
+    pitch.current += (targetPitch - pitch.current) * k;
 
-    const breathX = env.reduceMotion ? 0 : Math.sin(t * 0.13) * 0.02 + Math.sin(t * 0.07) * 0.012;
-    const breathY = env.reduceMotion ? 0 : Math.cos(t * 0.11) * 0.016;
+    const breathYaw = env.reduceMotion ? 0 : Math.sin(t * 0.11) * 0.008;
+    const breathPitch = env.reduceMotion ? 0 : Math.cos(t * 0.09) * 0.006;
 
-    env.pan.x = ux.current + breathX;
-    env.pan.y = uy.current + breathY;
+    env.look.x = yaw.current + breathYaw;
+    env.look.y = pitch.current + breathPitch;
 
-    // Camera breathing — a tiny truck/pedestal that also yields real parallax
-    // between depth layers without translating the framing meaningfully.
+    camera.rotation.order = 'YXZ';
+    camera.rotation.y = env.look.x;
+    camera.rotation.x = env.look.y;
     if (!env.reduceMotion) {
-      camera.position.x = Math.sin(t * 0.1) * 0.05 + ux.current * 0.06;
-      camera.position.y = Math.cos(t * 0.083) * 0.035 - uy.current * 0.05;
-      camera.rotation.z = Math.sin(t * 0.05) * 0.004;
+      camera.rotation.z = Math.sin(t * 0.05) * 0.0035;
+      // tiny positional breathing so dust gets real depth parallax
+      camera.position.x = Math.sin(t * 0.1) * 0.04;
+      camera.position.y = Math.cos(t * 0.083) * 0.03;
+    } else {
+      camera.rotation.z = 0;
+      camera.position.set(0, 0, 0);
     }
   }, -1);
 
@@ -102,17 +116,17 @@ export default function Scene({
 
   useEffect(() => {
     tex.colorSpace = THREE.SRGBColorSpace;
-    tex.anisotropy = Math.min(8, gl.capabilities.getMaxAnisotropy());
-    tex.minFilter = THREE.LinearMipmapLinearFilter;
+    tex.flipY = true;
+    tex.anisotropy = Math.min(4, gl.capabilities.getMaxAnisotropy());
+    tex.minFilter = THREE.LinearFilter;
     tex.magFilter = THREE.LinearFilter;
-    tex.generateMipmaps = true;
+    tex.generateMipmaps = false;
     tex.needsUpdate = true;
   }, [tex, gl]);
 
   const env = useMemo<SceneEnv>(
     () => ({
-      pan: { x: 0, y: 0 },
-      range: { x: 3, y: 1.5 },
+      look: { x: 0, y: 0 },
       time: 0,
       live: liveRef,
       panelOpen: panelOpenRef,
@@ -125,29 +139,25 @@ export default function Scene({
     <SceneContext.Provider value={env}>
       <Rig controls={controls} env={env} />
 
-      {/* ambient warmth so additive elements read as tungsten light */}
       <color attach="background" args={['#070402']} />
 
-      {/* far wall / main illustration + welded signage + hotspots */}
-      <ParallaxLayer parallax={1} z={0}>
-        <mesh>
-          <planeGeometry args={[PLANE_W, PLANE_H]} />
-          <meshBasicMaterial map={tex} toneMapped={false} />
-        </mesh>
+      {/* Inward equirectangular store. Texture is pre-flopped so BackSide reads correctly. */}
+      <mesh>
+        <sphereGeometry args={[SPHERE_RADIUS, 64, 48]} />
+        <meshBasicMaterial map={tex} toneMapped={false} side={THREE.BackSide} depthWrite={false} />
+      </mesh>
 
+      {/* accents + hotspots sit just inside the sphere wall */}
+      <group>
         <LightBeams />
         <Flicker />
-
-        {/* hotspots ride with the illustration so they stay registered */}
         {SECTIONS.map((s) => (
           <Hotspot key={s.id} section={s} onOpen={onOpen} controls={controls} debug={debug} />
         ))}
-      </ParallaxLayer>
+      </group>
 
-      {/* foreground dust — strongest parallax */}
-      <ParallaxLayer parallax={1.9} z={3.2}>
-        <DustField count={reduceMotion ? 90 : 220} />
-      </ParallaxLayer>
+      {/* dust volume around the eye — world space so turning reveals depth */}
+      <DustField count={reduceMotion ? 90 : 240} />
     </SceneContext.Provider>
   );
 }
