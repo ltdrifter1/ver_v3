@@ -6,10 +6,11 @@ import { useFBO } from '@react-three/drei';
 import * as THREE from 'three';
 
 /**
- * Approximate krpano view.fisheye (stereographic blend).
+ * krpano-style view.fisheye.
  *
- * balmingtiger keeps fisheye=0.3 in explore and tweens 1.0 → 0.3 on enter.
- * Priority > 0 takes over the R3F render loop: scene → FBO → distorted blit.
+ * Renders slightly wider than the base FOV, then shows nearly that full
+ * wide frame with mild barrel curvature — so explore stays ZOOMED OUT
+ * (floor + ceiling + side walls), matching balmingtiger after intro.
  */
 export default function FisheyePass({ amountRef }: { amountRef: { current: number } }) {
   const { gl, scene, camera, size } = useThree();
@@ -42,18 +43,24 @@ export default function FisheyePass({ amountRef }: { amountRef: { current: numbe
             p.x *= uAspect;
 
             float k = clamp(uAmount, 0.0, 1.0);
-            // Soft globe at 0.3; strong enter pull at 1.0
-            float strength = k * k * 1.35;
             float r2 = dot(p, p);
-            vec2 q = p / (1.0 + strength * r2);
+            // Barrel curve only — do NOT shrink toward centre (that zoomed us in).
+            float radial = 1.0 + k * 0.22 * r2;
+            // Slight overall shrink so barrel edges stay inside the wide FBO
+            float fit = 1.0 / (1.0 + k * 0.22);
+            vec2 q = p * radial * fit;
+
+            q.x = clamp(q.x, -uAspect * 0.995, uAspect * 0.995);
+            q.y = clamp(q.y, -0.995, 0.995);
             q.x /= uAspect;
             vec2 uv = q * 0.5 + 0.5;
 
-            if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) {
-              gl_FragColor = vec4(0.027, 0.016, 0.008, 1.0);
-              return;
-            }
-            gl_FragColor = texture2D(tDiffuse, uv);
+            vec4 col = texture2D(tDiffuse, uv);
+            // Soft cel lift
+            col.rgb = pow(max(col.rgb, 0.0), vec3(0.9));
+            col.rgb = mix(col.rgb, smoothstep(0.06, 0.94, col.rgb), 0.2);
+            col.rgb *= vec3(1.05, 1.03, 0.99);
+            gl_FragColor = col;
           }
         `,
         depthTest: false,
@@ -90,21 +97,32 @@ export default function FisheyePass({ amountRef }: { amountRef: { current: numbe
   );
 
   useFrame(() => {
-    amountSmooth.current += (amountRef.current - amountSmooth.current) * 0.4;
+    amountSmooth.current += (amountRef.current - amountSmooth.current) * 0.45;
+    const k = Math.max(0, amountSmooth.current);
+    const cam = camera as THREE.PerspectiveCamera;
+    const baseFov = cam.fov;
 
-    // Negligible distortion → straight scene render (still our responsibility).
-    if (amountSmooth.current < 0.008) {
+    // Extra width for curved edges + intro punch. Explore k=0.3 → ~12% wider.
+    const expand = 1 + k * 0.4;
+
+    if (k < 0.008) {
       gl.setRenderTarget(null);
       gl.render(scene, camera);
       return;
     }
 
+    cam.fov = Math.min(170, baseFov * expand);
+    cam.updateProjectionMatrix();
+
     gl.setRenderTarget(fbo);
     gl.clear();
     gl.render(scene, camera);
 
+    cam.fov = baseFov;
+    cam.updateProjectionMatrix();
+
     material.uniforms.tDiffuse.value = fbo.texture;
-    material.uniforms.uAmount.value = amountSmooth.current;
+    material.uniforms.uAmount.value = k;
 
     gl.setRenderTarget(null);
     gl.render(outScene, outCam);

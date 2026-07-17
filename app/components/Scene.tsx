@@ -334,14 +334,22 @@ export default function Scene({
         fisheyeRef={fisheyeRef}
       />
 
-      <color attach="background" args={['#070402']} />
+      <color attach="background" args={['#ebe4d6']} />
 
       <mesh>
         <sphereGeometry args={[SPHERE_RADIUS, 96, 64]} />
-        <meshBasicMaterial map={tex} toneMapped={false} side={THREE.BackSide} depthWrite={false} />
+        <meshBasicMaterial
+          map={tex}
+          toneMapped={false}
+          side={THREE.BackSide}
+          depthWrite={false}
+          // Lift the illustration toward a flatter cartoon read
+          color="#fff6ea"
+        />
       </mesh>
 
       <group>
+        {/* Keep beams/flicker subtle — heavy atmospherics fought the cel look */}
         <LightBeams />
         <Flicker />
         {SECTIONS.map((s) => (
@@ -349,7 +357,7 @@ export default function Scene({
         ))}
       </group>
 
-      <DustField count={reduceMotion ? 90 : 240} />
+      <DustField count={reduceMotion ? 20 : 50} />
 
       <FisheyePass amountRef={fisheyeRef} />
     </SceneContext.Provider>

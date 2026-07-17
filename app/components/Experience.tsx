@@ -7,6 +7,7 @@ import Scene from './Scene';
 import LoadingGate from './LoadingGate';
 import SectionPanel from './SectionPanel';
 import FilmFX from './FilmFX';
+import TopNav from './TopNav';
 import { usePanControls } from './usePanControls';
 
 export default function Experience() {
@@ -77,10 +78,16 @@ export default function Experience() {
 
   const open = useCallback((id: string) => {
     if (!lookEnabledRef.current) return;
+    // Toggle like balmingtiger menu buttons
+    if (active === id) {
+      panelOpenRef.current.value = false;
+      setActive(null);
+      return;
+    }
     openedAt.current = Date.now();
     panelOpenRef.current.value = true;
     setActive(id);
-  }, []);
+  }, [active]);
 
   const close = useCallback(() => {
     if (Date.now() - openedAt.current < 350) return;
@@ -100,7 +107,7 @@ export default function Experience() {
         }}
         camera={{ fov: 100, position: [0, 0, 0], near: 0.1, far: 200 }}
         onCreated={({ gl, camera }) => {
-          gl.setClearColor('#070402', 1);
+          gl.setClearColor('#ebe4d6', 1);
           camera.rotation.order = 'YXZ';
         }}
       >
@@ -120,18 +127,12 @@ export default function Experience() {
 
       <FilmFX />
 
+      <TopNav visible={canLook} activeId={active} onOpen={open} />
+
       {live && (
-        <>
-          <div className="brand-stamp">
-            <span className="rec" />
-            VCR REC · ON AIR
-          </div>
-          <div className="compass" style={{ opacity: showCompass ? 1 : 0 }}>
-            <span className="dot" />
-            Click & drag to look around
-            <span className="dot" />
-          </div>
-        </>
+        <div className="compass" style={{ opacity: showCompass ? 1 : 0 }}>
+          Click & drag to look around
+        </div>
       )}
 
       <SectionPanel activeId={active} onClose={close} />
