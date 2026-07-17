@@ -2,13 +2,7 @@
 
 import { useEffect, useRef, type RefObject } from 'react';
 import type { Controls } from './sceneContext';
-import {
-  LOOK_DRAG_GAIN,
-  LOOK_KEY_STEP,
-  LOOK_WHEEL_GAIN,
-  MFOV_EXPLORE,
-  mfovToVerticalFov,
-} from '@/lib/pano';
+import { LOOK_DRAG_GAIN, LOOK_KEY_STEP, MFOV_EXPLORE, mfovToVerticalFov } from '@/lib/pano';
 
 const DRAG_THRESHOLD = 5; // match balmingtiger Observer dragMinimum
 const TWO_PI = Math.PI * 2;
@@ -22,8 +16,10 @@ const wrapYaw = (y: number) => {
 };
 
 /**
- * Pointer / touch / wheel / keyboard look-around tuned to feel like
- * balmingtiger.com's krpano controls: snappy, FOV-scaled, low friction.
+ * Click-and-drag look-around only (plus arrow keys for a11y).
+ * Hover lean and wheel pan are intentionally disabled — the room stays put
+ * until the visitor grabs and drags, matching balmingtiger.com's explore feel.
+ * `enabledRef` stays false through the intro drop/zoom, then flips on.
  */
 export function usePanControls(
   stageRef: RefObject<HTMLElement | null>,
@@ -64,6 +60,8 @@ export function usePanControls(
 
     const onDown = (e: PointerEvent) => {
       if (!enabledRef.current) return;
+      // primary button / touch only — ignore right-click etc.
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
       controls.dragging = true;
       controls.dragged = false;
       startX = lastX = e.clientX;
@@ -78,18 +76,13 @@ export function usePanControls(
     };
 
     const onMove = (e: PointerEvent) => {
-      if (!enabledRef.current) return;
-      if (!touch && e.pointerType !== 'touch') {
-        controls.pointer.x = (e.clientX / w()) * 2 - 1;
-        controls.pointer.y = -((e.clientY / h()) * 2 - 1);
-      }
-      if (!controls.dragging) return;
+      // No hover lean — look only changes while a drag is held.
+      if (!enabledRef.current || !controls.dragging) return;
       const dx = e.clientX - lastX;
       const dy = e.clientY - lastY;
       lastX = e.clientX;
       lastY = e.clientY;
       const { yaw, pitch } = perPixel();
-      // drag right → look right
       controls.lookTarget.x = wrapYaw(controls.lookTarget.x - dx * yaw);
       controls.lookTarget.y += dy * pitch;
       if (Math.hypot(e.clientX - startX, e.clientY - startY) > DRAG_THRESHOLD) {
@@ -98,22 +91,13 @@ export function usePanControls(
     };
 
     const onUp = (e: PointerEvent) => {
+      if (!controls.dragging) return;
       controls.dragging = false;
       stage.classList.remove('dragging');
       try {
         stage.releasePointerCapture(e.pointerId);
       } catch {
         /* ignore */
-      }
-    };
-
-    const onWheel = (e: WheelEvent) => {
-      if (!enabledRef.current) return;
-      // trackpads often report both axes — prefer the dominant one
-      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
-        controls.lookTarget.x = wrapYaw(controls.lookTarget.x + e.deltaX * LOOK_WHEEL_GAIN);
-      } else {
-        controls.lookTarget.y += e.deltaY * LOOK_WHEEL_GAIN;
       }
     };
 
@@ -126,11 +110,17 @@ export function usePanControls(
       else if (e.key === 'ArrowDown') controls.lookTarget.y -= step;
     };
 
+    // Prevent page scroll / trackpad from accidentally looking around
+    const onWheel = (e: WheelEvent) => {
+      if (!enabledRef.current) return;
+      e.preventDefault();
+    };
+
     stage.addEventListener('pointerdown', onDown);
     window.addEventListener('pointermove', onMove);
     window.addEventListener('pointerup', onUp);
     window.addEventListener('pointercancel', onUp);
-    stage.addEventListener('wheel', onWheel, { passive: true });
+    stage.addEventListener('wheel', onWheel, { passive: false });
     window.addEventListener('keydown', onKey);
 
     return () => {

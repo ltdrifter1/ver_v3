@@ -49,10 +49,14 @@ main {
   height: 100dvh;
   width: 100vw;
   background: radial-gradient(120% 90% at 50% 40%, #1a120a 0%, #060403 70%, #000 100%);
-  cursor: grab;
+  cursor: default;
   touch-action: none;
 }
-.stage.dragging {
+/* Grab cursor only after the intro drop/zoom unlocks look-around */
+.stage.can-look {
+  cursor: grab;
+}
+.stage.can-look.dragging {
   cursor: grabbing;
 }
 

@@ -6,6 +6,7 @@ import { useTexture } from '@react-three/drei';
 import * as THREE from 'three';
 
 import {
+  INTRO_DUR,
   MAX_PITCH,
   MFOV_EXPLORE,
   MFOV_INTRO,
@@ -39,35 +40,39 @@ type Props = {
   liveRef: { value: boolean };
   panelOpenRef: { value: boolean };
   onOpen: (id: string) => void;
+  /** Fires once when the intro drop/zoom finishes — unlock click-and-drag look. */
+  onIntroComplete?: () => void;
   debug?: boolean;
 };
 
 /**
  * Orbit rig matching balmingtiger.com:
  * - MFOV 120 explore scale (responsive → vertical FOV)
- * - start at designed front (hlookat/vlookat ≈ 0)
- * - snappy look follow, tiny cursor lean
- * - intro FOV ease 160 → 120 on enter
+ * - start at designed front; look locked through intro FOV ease
+ * - click-and-drag only after intro (no hover lean)
  */
 function Rig({
   controls,
   env,
   liveRef,
+  onIntroComplete,
 }: {
   controls: Controls;
   env: SceneEnv;
   liveRef: { value: boolean };
+  onIntroComplete?: () => void;
 }) {
   const { camera, size } = useThree();
   const startYaw = uToYaw(START_LOOK_U);
   const startPitch = vToPitch(START_LOOK_V);
   const yaw = useRef(startYaw);
   const pitch = useRef(startPitch);
-  const introElapsed = useRef(0); // seconds since enter; 0→INTRO_DUR
+  const introElapsed = useRef(0);
   const wasLive = useRef(false);
-  const INTRO_DUR = 2; // balmingtiger enter tween is 2s
+  const introDone = useRef(false);
+  const onIntroCompleteRef = useRef(onIntroComplete);
+  onIntroCompleteRef.current = onIntroComplete;
 
-  // Keep look target + camera projection in sync with the designed start pose.
   useEffect(() => {
     const cam = camera as THREE.PerspectiveCamera;
     cam.near = 0.1;
@@ -80,6 +85,7 @@ function Rig({
     pitch.current = startPitch;
     introElapsed.current = 0;
     wasLive.current = false;
+    introDone.current = false;
   }, [camera, controls, startYaw, startPitch]);
 
   useFrame((state, delta) => {
@@ -90,42 +96,52 @@ function Rig({
     const exploreFov = mfovToVerticalFov(MFOV_EXPLORE, aspect);
     const introFov = mfovToVerticalFov(MFOV_INTRO, aspect);
 
-    // Kick the intro ease the first frame we go live (shutter open).
     if (liveRef.value && !wasLive.current) {
       wasLive.current = true;
       introElapsed.current = env.reduceMotion ? INTRO_DUR : 0;
+      // Hold the designed start pose through the whole intro.
+      controls.lookTarget.x = startYaw;
+      controls.lookTarget.y = startPitch;
+      yaw.current = startYaw;
+      pitch.current = startPitch;
     }
+
     if (wasLive.current && introElapsed.current < INTRO_DUR) {
       introElapsed.current = Math.min(INTRO_DUR, introElapsed.current + delta);
+      // Keep look locked while the zoom-out plays — ignore any stray input.
+      controls.lookTarget.x = startYaw;
+      controls.lookTarget.y = startPitch;
+      yaw.current = startYaw;
+      pitch.current = startPitch;
+    }
+
+    if (wasLive.current && !introDone.current && introElapsed.current >= INTRO_DUR) {
+      introDone.current = true;
+      onIntroCompleteRef.current?.();
     }
 
     const introT = wasLive.current
-      ? easeInOutCubic(introElapsed.current / INTRO_DUR)
+      ? easeInOutCubic(Math.min(1, introElapsed.current / INTRO_DUR))
       : 0;
     cam.fov = THREE.MathUtils.lerp(introFov, exploreFov, introT);
     cam.updateProjectionMatrix();
 
-    // Minimal cursor lean — balmingtiger is mostly direct drag, not pointer-follow
-    const lean = controls.pointer;
-    const leanAmt = controls.dragging ? 0 : 0.025;
-    const targetYaw = wrapYaw(controls.lookTarget.x - lean.x * leanAmt);
-    const targetPitch = THREE.MathUtils.clamp(
-      controls.lookTarget.y + lean.y * leanAmt * 0.8,
-      -MAX_PITCH,
-      MAX_PITCH,
-    );
-    controls.lookTarget.y = targetPitch;
+    const looking = introDone.current;
+    const targetYaw = looking ? wrapYaw(controls.lookTarget.x) : startYaw;
+    const targetPitch = looking
+      ? THREE.MathUtils.clamp(controls.lookTarget.y, -MAX_PITCH, MAX_PITCH)
+      : startPitch;
+    if (looking) controls.lookTarget.y = targetPitch;
 
-    // Snappy follow (was heavily lagged — felt insensitive). ~critically damped.
-    const k = 1 - Math.exp(-delta * 28);
+    const k = looking ? 1 - Math.exp(-delta * 28) : 1;
     let dy = targetYaw - yaw.current;
     if (dy > Math.PI) dy -= TWO_PI;
     if (dy < -Math.PI) dy += TWO_PI;
     yaw.current = wrapYaw(yaw.current + dy * k);
     pitch.current += (targetPitch - pitch.current) * k;
 
-    const breathYaw = env.reduceMotion ? 0 : Math.sin(t * 0.11) * 0.006;
-    const breathPitch = env.reduceMotion ? 0 : Math.cos(t * 0.09) * 0.004;
+    const breathYaw = env.reduceMotion || !looking ? 0 : Math.sin(t * 0.11) * 0.006;
+    const breathPitch = env.reduceMotion || !looking ? 0 : Math.cos(t * 0.09) * 0.004;
 
     env.look.x = yaw.current + breathYaw;
     env.look.y = pitch.current + breathPitch;
@@ -133,7 +149,7 @@ function Rig({
     camera.rotation.order = 'YXZ';
     camera.rotation.y = env.look.x;
     camera.rotation.x = env.look.y;
-    if (!env.reduceMotion) {
+    if (!env.reduceMotion && looking) {
       camera.rotation.z = Math.sin(t * 0.05) * 0.0025;
       camera.position.x = Math.sin(t * 0.1) * 0.03;
       camera.position.y = Math.cos(t * 0.083) * 0.022;
@@ -156,6 +172,7 @@ export default function Scene({
   liveRef,
   panelOpenRef,
   onOpen,
+  onIntroComplete,
   debug = false,
 }: Props) {
   const tex = useTexture(TEXTURE_SRC);
@@ -184,7 +201,12 @@ export default function Scene({
 
   return (
     <SceneContext.Provider value={env}>
-      <Rig controls={controls} env={env} liveRef={liveRef} />
+      <Rig
+        controls={controls}
+        env={env}
+        liveRef={liveRef}
+        onIntroComplete={onIntroComplete}
+      />
 
       <color attach="background" args={['#070402']} />
 

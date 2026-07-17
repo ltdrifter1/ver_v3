@@ -28,6 +28,8 @@ export const MFOV_EXPLORE = 120;
 export const MFOV_INTRO = 160;
 export const MFOV_MIN = 70;
 export const MFOV_MAX = 140;
+/** Enter FOV ease duration (seconds) — look-around unlocks after this. */
+export const INTRO_DUR = 2;
 
 /**
  * Starting look — equivalent of krpano hlookat=0, vlookat=0 aimed at the
@@ -39,9 +41,7 @@ export const START_LOOK_V = 0.5; // horizon
 
 /** Drag gain: full-width drag ≈ MFOV × this (balmingtiger feels ~1:1–1.2). */
 export const LOOK_DRAG_GAIN = 1.35;
-/** Trackpad / wheel radians per deltaY unit. */
-export const LOOK_WHEEL_GAIN = 0.0032;
-/** Keyboard step in radians. */
+/** Keyboard step in radians (a11y — primary look is click-and-drag). */
 export const LOOK_KEY_STEP = 0.2;
 
 /**

@@ -10,7 +10,7 @@ export type Controls = {
    * x = yaw (free, wraps), y = pitch (clamped by the rig).
    */
   lookTarget: Vec2;
-  /** raw normalised pointer position in [-1,1] (desktop hover lean) */
+  /** unused (kept for shape stability) — look is click-and-drag only */
   pointer: Vec2;
   /** true while a drag is in progress */
   dragging: boolean;
