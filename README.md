@@ -70,6 +70,33 @@ npm run build && npm run start
 Append `?debug=1` to the URL to tint the otherwise-invisible hotspots while tuning
 their placement.
 
+## Deploy on Vercel
+
+This is a static Next.js App Router app — no env vars, database, or server
+routes. Vercel auto-detects it.
+
+1. Merge this branch into `main` (or point the Vercel project at this branch).
+2. Import the repo at [vercel.com/new](https://vercel.com/new).
+3. Leave defaults: Framework **Next.js**, Install `npm install`, Build `next build`,
+   Root `./`.
+4. Deploy.
+
+**Common failure:** if the Vercel project’s Production Branch is `main` but
+`main` still only has the initial README commit, the build fails (no
+`package.json` / Next app). Production must track a branch that contains this
+app — either merge the PR into `main`, or set Production Branch to this feature
+branch under Project Settings → Git.
+
+Node is pinned to `22.x` via `package.json` `engines`. Optional: confirm in
+Vercel → Project Settings → Build → Node.js Version.
+
+Or with the CLI:
+
+```bash
+npx vercel        # preview
+npx vercel --prod # production
+```
+
 ## Project layout
 
 ```
