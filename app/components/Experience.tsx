@@ -85,7 +85,8 @@ export default function Experience() {
           powerPreference: 'high-performance',
           preserveDrawingBuffer: true,
         }}
-        camera={{ fov: 68, position: [0, 0, 0], near: 0.1, far: 200 }}
+        // Initial FOV matches balmingtiger enter (MFOV ~160 → settles to 120 in Rig)
+        camera={{ fov: 100, position: [0, 0, 0], near: 0.1, far: 200 }}
         onCreated={({ gl, camera }) => {
           gl.setClearColor('#070402', 1);
           camera.rotation.order = 'YXZ';

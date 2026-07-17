@@ -2,9 +2,17 @@
 
 import { useEffect, useRef, type RefObject } from 'react';
 import type { Controls } from './sceneContext';
+import {
+  LOOK_DRAG_GAIN,
+  LOOK_KEY_STEP,
+  LOOK_WHEEL_GAIN,
+  MFOV_EXPLORE,
+  mfovToVerticalFov,
+} from '@/lib/pano';
 
-const DRAG_THRESHOLD = 6; // px before a press counts as a drag
+const DRAG_THRESHOLD = 5; // match balmingtiger Observer dragMinimum
 const TWO_PI = Math.PI * 2;
+const DEG = Math.PI / 180;
 
 const wrapYaw = (y: number) => {
   let v = y % TWO_PI;
@@ -14,9 +22,8 @@ const wrapYaw = (y: number) => {
 };
 
 /**
- * Unified pointer / touch / wheel / keyboard look-around for the 360° room.
- * Updates a stable mutable `controls` object read every frame by the scene.
- * Yaw is free (full spin); pitch is left unclamped here and clamped in the Rig.
+ * Pointer / touch / wheel / keyboard look-around tuned to feel like
+ * balmingtiger.com's krpano controls: snappy, FOV-scaled, low friction.
  */
 export function usePanControls(
   stageRef: RefObject<HTMLElement | null>,
@@ -39,8 +46,21 @@ export function usePanControls(
     let lastY = 0;
     let touch = false;
 
-    const w = () => window.innerWidth;
-    const h = () => window.innerHeight;
+    const w = () => Math.max(1, window.innerWidth);
+    const h = () => Math.max(1, window.innerHeight);
+
+    /** Radians of yaw/pitch per pixel, scaled to current MFOV like krpano. */
+    const perPixel = () => {
+      const aspect = w() / h();
+      const mfov = MFOV_EXPLORE * DEG;
+      const vfov = mfovToVerticalFov(MFOV_EXPLORE, aspect) * DEG;
+      const hfov = aspect >= 1 ? mfov : 2 * Math.atan(Math.tan(vfov / 2) * aspect);
+      const gain = touch ? LOOK_DRAG_GAIN * 1.15 : LOOK_DRAG_GAIN;
+      return {
+        yaw: (hfov / w()) * gain,
+        pitch: (vfov / h()) * gain,
+      };
+    };
 
     const onDown = (e: PointerEvent) => {
       if (!enabledRef.current) return;
@@ -50,6 +70,11 @@ export function usePanControls(
       startY = lastY = e.clientY;
       touch = e.pointerType === 'touch';
       stage.classList.add('dragging');
+      try {
+        stage.setPointerCapture(e.pointerId);
+      } catch {
+        /* ignore */
+      }
     };
 
     const onMove = (e: PointerEvent) => {
@@ -63,33 +88,38 @@ export function usePanControls(
       const dy = e.clientY - lastY;
       lastX = e.clientX;
       lastY = e.clientY;
-      // drag right → look right (negative yaw in YXZ with our sphere layout)
-      const speed = touch ? 2.8 : 2.4;
-      controls.lookTarget.x = wrapYaw(controls.lookTarget.x - (dx / w()) * speed * Math.PI);
-      controls.lookTarget.y += (dy / h()) * speed * 1.1;
+      const { yaw, pitch } = perPixel();
+      // drag right → look right
+      controls.lookTarget.x = wrapYaw(controls.lookTarget.x - dx * yaw);
+      controls.lookTarget.y += dy * pitch;
       if (Math.hypot(e.clientX - startX, e.clientY - startY) > DRAG_THRESHOLD) {
         controls.dragged = true;
       }
     };
 
-    const onUp = () => {
+    const onUp = (e: PointerEvent) => {
       controls.dragging = false;
       stage.classList.remove('dragging');
+      try {
+        stage.releasePointerCapture(e.pointerId);
+      } catch {
+        /* ignore */
+      }
     };
 
     const onWheel = (e: WheelEvent) => {
       if (!enabledRef.current) return;
-      // horizontal wheel / trackpad → yaw; vertical → pitch
+      // trackpads often report both axes — prefer the dominant one
       if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
-        controls.lookTarget.x = wrapYaw(controls.lookTarget.x + e.deltaX * 0.0024);
+        controls.lookTarget.x = wrapYaw(controls.lookTarget.x + e.deltaX * LOOK_WHEEL_GAIN);
       } else {
-        controls.lookTarget.y += e.deltaY * 0.0018;
+        controls.lookTarget.y += e.deltaY * LOOK_WHEEL_GAIN;
       }
     };
 
     const onKey = (e: KeyboardEvent) => {
       if (!enabledRef.current) return;
-      const step = 0.14;
+      const step = LOOK_KEY_STEP;
       if (e.key === 'ArrowLeft') controls.lookTarget.x = wrapYaw(controls.lookTarget.x + step);
       else if (e.key === 'ArrowRight') controls.lookTarget.x = wrapYaw(controls.lookTarget.x - step);
       else if (e.key === 'ArrowUp') controls.lookTarget.y += step;
