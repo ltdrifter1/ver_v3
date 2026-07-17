@@ -27,8 +27,13 @@ export const SPHERE_RADIUS = 48;
 /** krpano view.mfovratio default (4:3). */
 export const MFOV_RATIO = 4 / 3;
 
-export const MFOV_EXPLORE = 120;
-export const MFOV_INTRO = 160;
+/**
+ * Explore MFOV. krpano xml lists 120, but their stereographic fisheye=0.3
+ * reads much wider than a plain rectilinear 120. Land at 140 (their fovmax)
+ * so the post-intro room matches balmingtiger’s pulled-back frame.
+ */
+export const MFOV_EXPLORE = 140;
+export const MFOV_INTRO = 170;
 export const MFOV_MIN = 70;
 export const MFOV_MAX = 140;
 

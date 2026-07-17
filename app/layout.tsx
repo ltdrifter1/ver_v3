@@ -1,23 +1,19 @@
 import type { Metadata, Viewport } from 'next';
-import { Anton, VT323, Space_Grotesk } from 'next/font/google';
+import { Nunito, Archivo_Black } from 'next/font/google';
 import './globals.css';
 
-const display = Anton({
+/** Bold display — cartoon storefront title energy. */
+const display = Archivo_Black({
   weight: '400',
   subsets: ['latin'],
   variable: '--font-display',
   display: 'swap',
 });
 
-const mono = VT323({
-  weight: '400',
+/** Rounded sans — flat cartoon UI like balmingtiger’s clean labels. */
+const body = Nunito({
   subsets: ['latin'],
-  variable: '--font-mono',
-  display: 'swap',
-});
-
-const body = Space_Grotesk({
-  subsets: ['latin'],
+  weight: ['600', '700', '800'],
   variable: '--font-body',
   display: 'swap',
 });
@@ -42,7 +38,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#0a0705',
+  themeColor: '#ebe4d6',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
@@ -55,7 +51,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${display.variable} ${mono.variable} ${body.variable}`}>
+    <html lang="en" className={`${display.variable} ${body.variable}`}>
       <body>
         <main>{children}</main>
       </body>

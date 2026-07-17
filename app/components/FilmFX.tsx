@@ -1,13 +1,14 @@
 'use client';
 
-/** Fullscreen filmic treatment: tungsten warmth, vignette, grain and scanlines. */
+/**
+ * Light cartoon grade — flat, bright, clean like balmingtiger.
+ * No heavy film grain / scanlines / tungsten wash that fought the illustration.
+ */
 export default function FilmFX() {
   return (
     <div className="fx-layer" aria-hidden>
-      <div className="fx-warm" />
+      <div className="fx-cel" />
       <div className="fx-vignette" />
-      <div className="fx-scan" />
-      <div className="fx-grain" />
     </div>
   );
 }
