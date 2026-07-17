@@ -21,10 +21,14 @@ export type Section = {
   intro: string;
   /** accent colour used across the hotspot + panel */
   accent: string;
-  /** normalised hotspot position on the panorama (u from left, v from top) */
+  /**
+   * Normalised hotspot position on the equirectangular store
+   * (public/textures/store_pano.webp, 2048×1024).
+   * u: around full 360° yaw · v: top→bottom
+   */
   u: number;
   v: number;
-  /** hotspot footprint in plane units */
+  /** hotspot footprint in world units on the sphere wall */
   w: number;
   h: number;
   /** list rendered inside the panel */
@@ -32,9 +36,9 @@ export type Section = {
 };
 
 /**
- * The seven discoverable hotspots. Positions (u,v) are normalised to the
- * panorama illustration (public/textures/store_pano.webp, 1536x1024) and are
- * converted to world coordinates inside the scene.
+ * Discoverable hotspots around the 360° store.
+ * Click-and-drag to look, then click a feature to open its room.
+ * Append ?debug=1 to tint hit areas while tuning (u,v).
  */
 export const SECTIONS: Section[] = [
   {
@@ -47,10 +51,10 @@ export const SECTIONS: Section[] = [
     intro:
       'The foam ear-cups still smell of cigarettes and rain. Drop the needle and the room disappears — just you, a stool, and 174 beats per minute.',
     accent: '#ffb347',
-    u: 0.06,
-    v: 0.31,
-    w: 2.4,
-    h: 4.2,
+    u: 0.78,
+    v: 0.42,
+    w: 6,
+    h: 11,
     items: [
       { label: 'Tape 001 — Midnight Amen', meta: 'Continuous mix', detail: '62 min' },
       { label: 'Tape 002 — Hydro Steppers', meta: 'Continuous mix', detail: '58 min' },
@@ -69,10 +73,10 @@ export const SECTIONS: Section[] = [
     intro:
       'Static rolls until it doesn’t. Hand-dubbed VHS sets, pirate TV idents and grainy warehouse footage nobody was supposed to keep.',
     accent: '#7ad7ff',
-    u: 0.225,
-    v: 0.44,
-    w: 1.7,
-    h: 1.6,
+    u: 0.7,
+    v: 0.46,
+    w: 4.5,
+    h: 4.2,
     items: [
       { label: 'Warehouse Tape — Sector 7', meta: 'VHS transfer', detail: '1994' },
       { label: 'Pirate Ident Reel', meta: 'Off-air capture', detail: '1995' },
@@ -90,10 +94,10 @@ export const SECTIONS: Section[] = [
     intro:
       'Cardboard sleeves softened by a thousand thumbs. Every divider is a name; every name kept this place breathing after dark.',
     accent: '#ff7a9c',
-    u: 0.4,
-    v: 0.72,
-    w: 5.2,
-    h: 3.6,
+    u: 0.72,
+    v: 0.7,
+    w: 14,
+    h: 7.5,
     items: [
       { label: 'Tenor Fly', meta: 'Roller / Steppa', detail: 'VCR-002' },
       { label: 'Sister Circuit', meta: 'Ragga Jungle', detail: 'VCR-004' },
@@ -113,10 +117,10 @@ export const SECTIONS: Section[] = [
     intro:
       'The drawer sticks unless you hit it just right. Fresh pressings, dusty repress, and a tin of badges by the till.',
     accent: '#9dff8a',
-    u: 0.86,
-    v: 0.52,
-    w: 2.6,
-    h: 2.2,
+    u: 0.52,
+    v: 0.5,
+    w: 6.5,
+    h: 5.5,
     items: [
       { label: 'VCR-013 — Dread at the Controls', meta: '12" Vinyl', detail: '£12' },
       { label: 'VCR-011 — Nocturne LP', meta: 'Double 12"', detail: '£18' },
@@ -135,10 +139,10 @@ export const SECTIONS: Section[] = [
     intro:
       'Layer over layer over layer. Pull one flyer and three come with it. Every party that ever mattered is buried in here somewhere.',
     accent: '#ffe66d',
-    u: 0.31,
-    v: 0.14,
-    w: 4.6,
-    h: 2.4,
+    u: 0.58,
+    v: 0.32,
+    w: 10,
+    h: 5.5,
     items: [
       { label: 'HELTER SKELTER', meta: 'New Year’s Eve', detail: '1994' },
       { label: 'DREAMSCAPE', meta: 'Aerodrome', detail: '1995' },
@@ -157,10 +161,10 @@ export const SECTIONS: Section[] = [
     intro:
       'Still takes 10p. The number on the card behind the glass hasn’t changed since ’93 — ring it and somebody actually answers.',
     accent: '#ff5e5e',
-    u: 0.905,
-    v: 0.27,
-    w: 1.5,
-    h: 3.4,
+    u: 0.62,
+    v: 0.4,
+    w: 4.2,
+    h: 9,
     items: [
       { label: 'demos@vcrrecords.fm', meta: 'Send a dubplate', detail: 'WAV / 320' },
       { label: 'bookings@vcrrecords.fm', meta: 'Soundsystem hire', detail: 'UK + EU' },
@@ -178,10 +182,10 @@ export const SECTIONS: Section[] = [
     intro:
       'Past the EXIT sign and the beaded curtain. This is where the label started: one borrowed sampler, two decks, and a fridge full of nothing.',
     accent: '#c9a6ff',
-    u: 0.585,
-    v: 0.4,
-    w: 1.7,
-    h: 3.6,
+    u: 0.55,
+    v: 0.45,
+    w: 4,
+    h: 8.5,
     items: [
       { label: 'Est. 1993', meta: 'Origin', detail: 'A back room in the rain' },
       { label: 'VCR — Video Cassette Recordings', meta: 'The name', detail: 'Tape culture' },

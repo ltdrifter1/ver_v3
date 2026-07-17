@@ -4,11 +4,11 @@ import { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { makeDotTexture } from '@/lib/sprites';
-import { PLANE_W, PLANE_H } from '@/lib/pano';
 import { useSceneEnv } from './sceneContext';
 
-const SPREAD_X = PLANE_W * 1.2;
-const SPREAD_Y = PLANE_H * 1.1;
+/** Dust floats in a shell around the eye so turning the view reveals depth. */
+const RADIUS_MIN = 2.5;
+const RADIUS_MAX = 14;
 
 export default function DustField({ count = 200 }: { count?: number }) {
   const points = useRef<THREE.Points>(null);
@@ -20,9 +20,15 @@ export default function DustField({ count = 200 }: { count?: number }) {
     const speeds = new Float32Array(count);
     const sizes = new Float32Array(count);
     for (let i = 0; i < count; i++) {
-      positions[i * 3] = (Math.random() - 0.5) * SPREAD_X;
-      positions[i * 3 + 1] = (Math.random() - 0.5) * SPREAD_Y;
-      positions[i * 3 + 2] = (Math.random() - 0.5) * 2.5;
+      const u = Math.random();
+      const v = Math.random();
+      const r = RADIUS_MIN + Math.random() * (RADIUS_MAX - RADIUS_MIN);
+      const yaw = (u - 0.5) * Math.PI * 2;
+      const pitch = (0.5 - v) * Math.PI * 0.85;
+      const cp = Math.cos(pitch);
+      positions[i * 3] = Math.sin(yaw) * cp * r;
+      positions[i * 3 + 1] = Math.sin(pitch) * r;
+      positions[i * 3 + 2] = -Math.cos(yaw) * cp * r;
       speeds[i] = 0.05 + Math.random() * 0.18;
       sizes[i] = 0.04 + Math.random() * 0.12;
     }
@@ -37,9 +43,10 @@ export default function DustField({ count = 200 }: { count?: number }) {
     const t = env.time;
     for (let i = 0; i < count; i++) {
       const ix = i * 3;
-      arr[ix + 1] += speeds[i] * d * 0.6;
-      arr[ix] += Math.sin(t * 0.4 + i) * 0.0016;
-      if (arr[ix + 1] > SPREAD_Y / 2) arr[ix + 1] = -SPREAD_Y / 2;
+      arr[ix + 1] += speeds[i] * d * 0.55;
+      arr[ix] += Math.sin(t * 0.4 + i) * 0.0014;
+      // recycle above the eye back below
+      if (arr[ix + 1] > RADIUS_MAX * 0.7) arr[ix + 1] = -RADIUS_MAX * 0.55;
     }
     p.geometry.attributes.position.needsUpdate = true;
   });
@@ -52,7 +59,7 @@ export default function DustField({ count = 200 }: { count?: number }) {
       </bufferGeometry>
       <pointsMaterial
         map={tex}
-        size={0.14}
+        size={0.12}
         sizeAttenuation
         transparent
         depthWrite={false}

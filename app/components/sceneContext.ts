@@ -5,28 +5,22 @@ import { createContext, useContext } from 'react';
 export type Vec2 = { x: number; y: number };
 
 export type Controls = {
-  /** smoothed pan target in [-1,1], driven by pointer + drag */
-  panTarget: Vec2;
-  /** raw normalised pointer position in [-1,1] (desktop hover) */
-  pointer: Vec2;
-  /** true while a drag is in progress */
+  /** Look target in radians — x = yaw (wraps), y = pitch (clamped in Rig). */
+  lookTarget: Vec2;
+  /** Angular velocity (rad/s) for krpano-style drag inertia after release. */
+  velocity: Vec2;
+  /** True while a pointer drag is held. */
   dragging: boolean;
-  /** true if the last gesture moved beyond the click threshold */
+  /** True if the gesture moved past the click threshold. */
   dragged: boolean;
 };
 
 export type SceneEnv = {
-  /** smoothed current pan applied to layers (incl. breathing), in [-1,1] */
-  pan: Vec2;
-  /** how far each axis can travel in world units (set by responsive camera) */
-  range: Vec2;
-  /** elapsed time in seconds */
+  look: Vec2;
   time: number;
-  /** whether the experience is live (post-gate) */
+  /** Hotspots / hints live only after intro unlocks look. */
   live: { value: boolean };
-  /** whether a panel is open (dims hotspots) */
   panelOpen: { value: boolean };
-  /** honour reduced-motion */
   reduceMotion: boolean;
 };
 
