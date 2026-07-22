@@ -315,6 +315,10 @@ function Rig({
 function prepTex(tex: THREE.Texture, gl: THREE.WebGLRenderer) {
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.flipY = true;
+  // BackSide equirect sphere mirrors U — flip so poster/sign text reads LTR.
+  tex.wrapS = THREE.RepeatWrapping;
+  tex.repeat.x = -1;
+  tex.offset.x = 1;
   tex.anisotropy = Math.min(4, gl.capabilities.getMaxAnisotropy());
   tex.minFilter = THREE.LinearFilter;
   tex.magFilter = THREE.LinearFilter;

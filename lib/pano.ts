@@ -54,7 +54,8 @@ export const INTRO_DUR = 2;
  * Designed "front" of the store (listening booth / bins / CRT),
  * equivalent of krpano hlookat=0, vlookat=0 for this equirect.
  */
-export const START_LOOK_U = 0.55;
+/** Front of store after BackSide U-flip (texture u ↔ 1−u). */
+export const START_LOOK_U = 0.45;
 export const START_LOOK_V = 0.48;
 
 /**
@@ -152,8 +153,9 @@ export function uvToLocal(u: number, v: number): [number, number, number] {
   return uvToSpherical(u, v, SPHERE_RADIUS - 0.35);
 }
 
-export const TEXTURE_SRC = '/textures/store_pano.webp';
+/** v2 paths bust the year-long immutable CDN cache from earlier deploys. */
+export const TEXTURE_SRC = '/textures/store_pano_v2.webp';
 /** Darkened twin of the store — balmingtiger lights_off scene. */
-export const TEXTURE_OFF_SRC = '/textures/store_pano_off.webp';
-export const LQIP_SRC = '/textures/store_pano_lqip.webp';
+export const TEXTURE_OFF_SRC = '/textures/store_pano_off_v2.webp';
+export const LQIP_SRC = '/textures/store_pano_lqip_v2.webp';
 export const CRT_VIDEO_SRC = '/videos/crt_loop.mp4';
