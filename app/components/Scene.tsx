@@ -32,8 +32,6 @@ import type { GyroHandle } from '@/lib/gyro';
 import { SECTIONS } from '@/app/data/sections';
 import { SceneContext, type SceneEnv, type Controls } from './sceneContext';
 import DustField from './DustField';
-import LightBeams from './LightBeams';
-import Flicker from './Flicker';
 import Hotspot from './Hotspot';
 import LampHotspot from './LampHotspot';
 import FisheyePass from './FisheyePass';
@@ -64,6 +62,7 @@ type Props = {
   lightsOn?: boolean;
   onToggleLights?: () => void;
   activeId?: string | null;
+  crtArmed?: boolean;
   gyroRef?: { current: GyroHandle };
 };
 
@@ -335,6 +334,7 @@ export default function Scene({
   lightsOn = true,
   onToggleLights,
   activeId = null,
+  crtArmed = false,
   gyroRef,
 }: Props) {
   const [texOn, texOff] = useTexture([TEXTURE_SRC, TEXTURE_OFF_SRC]);
@@ -386,7 +386,7 @@ export default function Scene({
         gyroRef={gyroRef}
       />
 
-      <color attach="background" args={['#ebe4d6']} />
+      <color attach="background" args={['#000000']} />
 
       {/* Lights-on sphere */}
       <mesh>
@@ -399,7 +399,7 @@ export default function Scene({
           depthWrite={false}
           transparent
           opacity={1}
-          color="#fff6ea"
+          color="#ffffff"
         />
       </mesh>
 
@@ -414,14 +414,12 @@ export default function Scene({
           depthWrite={false}
           transparent
           opacity={0}
-          color="#d8cfc0"
+          color="#ffffff"
         />
       </mesh>
 
       <group>
-        <LightBeams />
-        <Flicker />
-        <CrtScreen activeId={activeId} />
+        <CrtScreen activeId={activeId} armed={crtArmed} />
         {SECTIONS.map((s) => (
           <Hotspot
             key={s.id}
@@ -437,7 +435,8 @@ export default function Scene({
         )}
       </group>
 
-      <DustField count={reduceMotion ? 20 : 50} />
+      {/* Tiny floating flecks only — cel rooms don't want tungsten beams/dust storms */}
+      <DustField count={reduceMotion ? 0 : 12} />
 
       <FisheyePass amountRef={fisheyeRef} />
     </SceneContext.Provider>

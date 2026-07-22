@@ -10,10 +10,9 @@ import FilmFX from './FilmFX';
 import TopNav from './TopNav';
 import CustomCursor from './CustomCursor';
 import MuteControl from './MuteControl';
-import LightsToggle from './LightsToggle';
 import GyroButton, { createGyro } from './GyroButton';
 import { usePanControls } from './usePanControls';
-import { SECTION_BY_ID } from '@/app/data/sections';
+import { SECTION_BY_ID, SHOP_URL } from '@/app/data/sections';
 import { lookToSection, resetCamera } from '@/lib/lookTo';
 import { MFOV_EXPLORE, START_LOOK_U, START_LOOK_V, uToYaw, vToPitch } from '@/lib/pano';
 import { playSfx, unlockAudio } from '@/lib/audio';
@@ -26,8 +25,10 @@ export default function Experience() {
   const panelOpenRef = useRef({ value: false });
   const gyroRef = useRef(createGyro());
   const onDragEndRef = useRef<(() => void) | null>(null);
+  const activeRef = useRef<string | null>(null);
 
   const [active, setActive] = useState<string | null>(null);
+  const [crtArmed, setCrtArmed] = useState(false);
   const [live, setLive] = useState(false);
   const [canLook, setCanLook] = useState(false);
   const [showCompass, setShowCompass] = useState(false);
@@ -37,6 +38,10 @@ export default function Experience() {
   const [lightsOn, setLightsOn] = useState(true);
 
   const controls = usePanControls(stageRef, lookEnabledRef, onDragEndRef);
+
+  useEffect(() => {
+    activeRef.current = active;
+  }, [active]);
 
   useEffect(() => {
     setDebug(new URLSearchParams(window.location.search).has('debug'));
@@ -97,6 +102,7 @@ export default function Experience() {
       if (!opts?.force && Date.now() - openedAt.current < 350) return;
       panelOpenRef.current.value = false;
       setActive(null);
+      setCrtArmed(false);
       if (!opts?.silent) playSfx('click');
       if (!reduceMotion) resetCamera(controls, 2);
       else snapFront();
@@ -104,10 +110,10 @@ export default function Experience() {
     [controls, reduceMotion, snapFront],
   );
 
-  // Drag exits focus (balmingtiger: dragging away leaves the punched-in view).
+  // balmingtiger: drag-end exits primarily in video mode
   useEffect(() => {
     onDragEndRef.current = () => {
-      if (panelOpenRef.current.value) close({ force: true });
+      if (activeRef.current === 'crt-tv') close({ force: true });
     };
     return () => {
       onDragEndRef.current = null;
@@ -117,6 +123,26 @@ export default function Experience() {
   const open = useCallback(
     (id: string) => {
       if (!lookEnabledRef.current || controls.lookAnimating) return;
+
+      // Shop = outbound only (balmingtiger shop URL, no panel)
+      if (id === 'cash-register') {
+        playSfx('shop');
+        const section = SECTION_BY_ID[id];
+        if (section && !reduceMotion) {
+          lookToSection(controls, section, { duration: 2 });
+        } else if (section) {
+          controls.lookTarget.x = uToYaw(section.lookU ?? section.u);
+          controls.lookTarget.y = vToPitch(section.lookV ?? section.v);
+          controls.mfov = section.lookFov;
+        }
+        window.open(SHOP_URL, '_blank', 'noopener,noreferrer');
+        if (panelOpenRef.current.value) {
+          panelOpenRef.current.value = false;
+          setActive(null);
+          setCrtArmed(false);
+        }
+        return;
+      }
 
       if (active === id) {
         close({ force: true });
@@ -129,6 +155,7 @@ export default function Experience() {
       openedAt.current = Date.now();
       panelOpenRef.current.value = true;
       setActive(id);
+      setCrtArmed(false);
       setShowCompass(false);
       playSfx(section.sfx || 'focus');
 
@@ -136,9 +163,15 @@ export default function Experience() {
         controls.lookTarget.x = uToYaw(section.lookU ?? section.u);
         controls.lookTarget.y = vToPitch(section.lookV ?? section.v);
         controls.mfov = section.lookFov;
+        if (id === 'crt-tv') setCrtArmed(true);
         return;
       }
-      lookToSection(controls, section, { duration: 2 });
+      lookToSection(controls, section, {
+        duration: 2,
+        onComplete: () => {
+          if (id === 'crt-tv') setCrtArmed(true);
+        },
+      });
     },
     [active, close, controls, reduceMotion],
   );
@@ -158,11 +191,11 @@ export default function Experience() {
           antialias: true,
           alpha: false,
           powerPreference: 'high-performance',
-          preserveDrawingBuffer: true,
+          preserveDrawingBuffer: false,
         }}
         camera={{ fov: 100, position: [0, 0, 0], near: 0.1, far: 200 }}
         onCreated={({ gl, camera }) => {
-          gl.setClearColor('#ebe4d6', 1);
+          gl.setClearColor('#000000', 1);
           camera.rotation.order = 'YXZ';
         }}
       >
@@ -179,6 +212,7 @@ export default function Experience() {
             lightsOn={lightsOn}
             onToggleLights={toggleLights}
             activeId={active}
+            crtArmed={crtArmed}
             gyroRef={gyroRef}
           />
         </Suspense>
@@ -186,8 +220,7 @@ export default function Experience() {
 
       <FilmFX />
       <CustomCursor enabled={canLook} />
-      <MuteControl visible={canLook && !videoFocused} unlocked={live} />
-      <LightsToggle visible={canLook} lightsOn={lightsOn} onToggle={toggleLights} />
+      <MuteControl visible={canLook} unlocked={live} faded={videoFocused} />
       <GyroButton visible={canLook} gyroRef={gyroRef} />
       <TopNav visible={canLook} activeId={active} onOpen={open} />
 

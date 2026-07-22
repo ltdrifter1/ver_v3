@@ -87,10 +87,10 @@ export const SECTIONS: Section[] = [
     intro:
       'The foam ear-cups still smell of cigarettes and rain. Drop the needle and the room disappears — just you, a stool, and 174 beats per minute.',
     accent: '#ffb347',
-    u: 0.78,
+    u: 0.52,
     v: 0.42,
     w: 6,
-    h: 11,
+    h: 9,
     lookFov: 60,
     sfx: 'music',
     items: [
@@ -174,11 +174,11 @@ export const SECTIONS: Section[] = [
     intro:
       'Static rolls until it doesn’t. Hand-dubbed VHS sets, pirate TV idents and grainy warehouse footage nobody was supposed to keep.',
     accent: '#7ad7ff',
-    u: 0.7,
-    v: 0.46,
+    u: 0.66,
+    v: 0.42,
     w: 4.5,
     h: 4.2,
-    lookFov: 28,
+    lookFov: 20,
     sfx: 'video',
     items: [
       { label: 'Warehouse Tape — Sector 7', meta: 'VHS transfer', detail: '1994', cta: 'Play', thumb: 'VH', href: '#play' },
@@ -197,10 +197,10 @@ export const SECTIONS: Section[] = [
     intro:
       'Cardboard sleeves softened by a thousand thumbs. Every divider is a name; every name kept this place breathing after dark.',
     accent: '#ff7a9c',
-    u: 0.72,
-    v: 0.7,
-    w: 14,
-    h: 7.5,
+    u: 0.45,
+    v: 0.82,
+    w: 16,
+    h: 7,
     lookFov: 85,
     sfx: 'artists',
     items: [
@@ -222,10 +222,10 @@ export const SECTIONS: Section[] = [
     intro:
       'The drawer sticks unless you hit it just right. Fresh pressings, dusty repress, and a tin of badges by the till.',
     accent: '#9dff8a',
-    u: 0.52,
+    u: 0.55,
     v: 0.5,
-    w: 6.5,
-    h: 5.5,
+    w: 5.5,
+    h: 5,
     lookFov: 70,
     sfx: 'shop',
     items: [
@@ -246,10 +246,10 @@ export const SECTIONS: Section[] = [
     intro:
       'Layer over layer over layer. Pull one flyer and three come with it. Every party that ever mattered is buried in here somewhere.',
     accent: '#ffe66d',
-    u: 0.58,
-    v: 0.32,
-    w: 10,
-    h: 5.5,
+    u: 0.55,
+    v: 0.24,
+    w: 12,
+    h: 6,
     lookFov: 80,
     sfx: 'archive',
     items: [
@@ -270,10 +270,10 @@ export const SECTIONS: Section[] = [
     intro:
       'Still takes 10p. The number on the card behind the glass hasn’t changed since ’93 — ring it and somebody actually answers.',
     accent: '#ff5e5e',
-    u: 0.62,
-    v: 0.4,
-    w: 4.2,
-    h: 9,
+    u: 0.6,
+    v: 0.45,
+    w: 3.8,
+    h: 8,
     lookFov: 60,
     sfx: 'phone',
     items: [
@@ -293,10 +293,10 @@ export const SECTIONS: Section[] = [
     intro:
       'Past the EXIT sign and the beaded curtain. This is where the label started: one borrowed sampler, two decks, and a fridge full of nothing.',
     accent: '#c9a6ff',
-    u: 0.55,
-    v: 0.45,
-    w: 4,
-    h: 8.5,
+    u: 0.88,
+    v: 0.48,
+    w: 3.8,
+    h: 8,
     lookFov: 70,
     sfx: 'door',
     items: [
@@ -311,6 +311,9 @@ export const SECTIONS: Section[] = [
 export const SECTION_BY_ID = Object.fromEntries(
   SECTIONS.map((s) => [s.id, s]),
 ) as Record<string, Section>;
+
+/** Outbound shop — balmingtiger shop opens a blank tab (no panel). */
+export const SHOP_URL = 'https://vcrrecords.bandcamp.com';
 
 /** Primary conveyor nav order (balmingtiger: music / video / …). */
 export const NAV_ORDER = [
