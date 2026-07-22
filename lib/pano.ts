@@ -12,11 +12,9 @@
  *   skin_settings followmousecontrol="true"
  *     → followrange=10, followspeed=0.05
  *
- * Enter (site_scripts.js clickIntro):
- *   gsap.fromTo(view, { fisheye:1, fov:160 },
- *     { fisheye:0.3, fov:120, hlookat:0, vlookat:0,
- *       duration:2, ease:"power3.inOut", delay:0.4,
- *       onComplete: set(control.usercontrol, all) })
+ * Enter (site_scripts.js clickIntro + little-planet-style settle):
+ *   start at ceiling → soft yaw pan → land on listening booth
+ *   while fisheye 1→0.3 and fov 160→explore over ~3s
  */
 export const PANO_WIDTH = 2048;
 export const PANO_HEIGHT = 1024;
@@ -46,9 +44,15 @@ export const MFOV_LOOKTO_MIN = 20;
 export const FISHEYE_EXPLORE = 0.3;
 export const FISHEYE_INTRO = 1.0;
 
-/** Enter tween — mirrors balmingtiger clickIntro. */
-export const INTRO_DELAY = 0.4;
-export const INTRO_DUR = 2;
+/** Enter tween — ceiling → pan → settle on hotspot. */
+export const INTRO_DELAY = 0.35;
+export const INTRO_DUR = 3.0;
+/** Looking up at the lamp / ceiling at enter (equirect v). */
+export const INTRO_CEILING_V = 0.1;
+/** Soft yaw swing amplitude during the drop (degrees). */
+export const INTRO_PAN_DEG = 16;
+/** Hotspot the intro lands on (camera only — no panel). */
+export const INTRO_SETTLE_ID = 'listening-booth';
 
 /**
  * Designed "front" of the store (listening booth / bins / CRT),

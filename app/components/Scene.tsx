@@ -8,18 +8,15 @@ import * as THREE from 'three';
 
 import {
   DRAG_FRICTION,
-  FISHEYE_EXPLORE,
   FISHEYE_INTRO,
   FOLLOW_RANGE_DEG,
   FOLLOW_SPEED,
   FRICTION_STOP,
-  INTRO_DELAY,
-  INTRO_DUR,
-  MFOV_EXPLORE,
+  INTRO_CEILING_V,
+  INTRO_SETTLE_ID,
   MFOV_INTRO,
   SPHERE_RADIUS,
   START_LOOK_U,
-  START_LOOK_V,
   TEXTURE_OFF_SRC,
   TEXTURE_SRC,
   autoPitchLimit,
@@ -28,8 +25,9 @@ import {
   uToYaw,
   vToPitch,
 } from '@/lib/pano';
+import { playEnterIntro } from '@/lib/intro';
 import type { GyroHandle } from '@/lib/gyro';
-import { SECTIONS } from '@/app/data/sections';
+import { SECTIONS, SECTION_BY_ID } from '@/app/data/sections';
 import { SceneContext, type SceneEnv, type Controls } from './sceneContext';
 import DustField from './DustField';
 import Hotspot from './Hotspot';
@@ -67,8 +65,9 @@ type Props = {
 };
 
 /**
- * Camera rig — exact balmingtiger / krpano parity:
- * - MFOV 130 explore, intro 160→130 + fisheye 1→0.3 over 2s (power3.inOut, delay 0.4)
+ * Camera rig — balmingtiger / krpano parity + cinematic enter:
+ * - Enter: ceiling → soft yaw pan → settle on listening booth
+ *   while MFOV 160→130 + fisheye 1→0.3 (power3.inOut)
  * - Look locked during intro; usercontrol=all on complete
  * - Click-and-drag with instant tracking + draginertia/dragfriction
  * - followmousecontrol lean on desktop (view.rx / view.ry)
@@ -90,10 +89,11 @@ function Rig({
   gyroRef?: { current: GyroHandle };
 }) {
   const { camera, size } = useThree();
-  const startYaw = uToYaw(START_LOOK_U);
-  const startPitch = vToPitch(START_LOOK_V);
-  const yaw = useRef(startYaw);
-  const pitch = useRef(startPitch);
+  const settle = SECTION_BY_ID[INTRO_SETTLE_ID];
+  const settleYaw = uToYaw(settle?.u ?? START_LOOK_U);
+  const ceilingPitch = vToPitch(INTRO_CEILING_V);
+  const yaw = useRef(settleYaw);
+  const pitch = useRef(ceilingPitch);
   const followYaw = useRef(0);
   const followPitch = useRef(0);
   const wasEntered = useRef(false);
@@ -108,8 +108,9 @@ function Rig({
     cam.far = SPHERE_RADIUS * 3;
     cam.position.set(0, 0, 0);
     cam.rotation.order = 'YXZ';
-    controls.lookTarget.x = startYaw;
-    controls.lookTarget.y = startPitch;
+    // Pre-enter: aimed at the ceiling so CLICK TO ENTER reveals the drop
+    controls.lookTarget.x = settleYaw;
+    controls.lookTarget.y = ceilingPitch;
     controls.velocity.x = 0;
     controls.velocity.y = 0;
     controls.mfov = MFOV_INTRO;
@@ -118,8 +119,8 @@ function Rig({
     controls.userControl = false;
     controls.lookAnimating = false;
     fisheyeRef.current = FISHEYE_INTRO;
-    yaw.current = startYaw;
-    pitch.current = startPitch;
+    yaw.current = settleYaw;
+    pitch.current = ceilingPitch;
     followYaw.current = 0;
     followPitch.current = 0;
     wasEntered.current = false;
@@ -127,7 +128,7 @@ function Rig({
     return () => {
       introTween.current?.kill();
     };
-  }, [camera, controls, startYaw, startPitch, fisheyeRef]);
+  }, [camera, controls, settleYaw, ceilingPitch, fisheyeRef]);
 
   useFrame((state, delta) => {
     const t = state.clock.elapsedTime;
@@ -136,83 +137,21 @@ function Rig({
     const aspect = size.width / Math.max(1, size.height);
     const dt = Math.min(0.05, delta);
 
-    // —— Intro: gate opened → GSAP power3.inOut FOV + fisheye (balmingtiger clickIntro) ——
+    // —— Intro: ceiling → pan → settle on hotspot ——
     if (enteredRef.value && !wasEntered.current) {
       wasEntered.current = true;
-      controls.lookTarget.x = startYaw;
-      controls.lookTarget.y = startPitch;
-      controls.velocity.x = 0;
-      controls.velocity.y = 0;
-      yaw.current = startYaw;
-      pitch.current = startPitch;
-      controls.userControl = false;
-      controls.followFactor = 0;
-
-      const view = {
-        mfov: MFOV_INTRO,
-        fisheye: FISHEYE_INTRO,
-      };
-      controls.mfov = view.mfov;
-      controls.fisheye = view.fisheye;
-      fisheyeRef.current = view.fisheye;
-
-      if (env.reduceMotion) {
-        controls.mfov = MFOV_EXPLORE;
-        controls.fisheye = FISHEYE_EXPLORE;
-        fisheyeRef.current = FISHEYE_EXPLORE;
-        introDone.current = true;
-        controls.userControl = true;
-        // Desktop lean on after unlock (touch keeps followFactor at 0)
-        if (!window.matchMedia('(pointer: coarse)').matches) {
-          controls.followFactor = 1;
-        }
-        onIntroCompleteRef.current?.();
-      } else {
-        introTween.current?.kill();
-        introTween.current = gsap.fromTo(
-          view,
-          { mfov: MFOV_INTRO, fisheye: FISHEYE_INTRO },
-          {
-            mfov: MFOV_EXPLORE,
-            fisheye: FISHEYE_EXPLORE,
-            duration: INTRO_DUR,
-            delay: INTRO_DELAY,
-            ease: 'power3.inOut',
-            onUpdate: () => {
-              controls.mfov = view.mfov;
-              controls.fisheye = view.fisheye;
-              fisheyeRef.current = view.fisheye;
-              // Look stays locked to start pose during intro (hlookat/vlookat 0)
-              controls.lookTarget.x = startYaw;
-              controls.lookTarget.y = startPitch;
-              yaw.current = startYaw;
-              pitch.current = startPitch;
-              controls.velocity.x = 0;
-              controls.velocity.y = 0;
-            },
-            onComplete: () => {
-              controls.mfov = MFOV_EXPLORE;
-              controls.fisheye = FISHEYE_EXPLORE;
-              fisheyeRef.current = FISHEYE_EXPLORE;
-              introDone.current = true;
-              // set(control.usercontrol, all)
-              controls.userControl = true;
-              if (!window.matchMedia('(pointer: coarse)').matches) {
-                controls.followFactor = 1;
-              }
-              onIntroCompleteRef.current?.();
-            },
+      introTween.current?.kill();
+      introTween.current = playEnterIntro(
+        controls,
+        { yaw, pitch, fisheye: fisheyeRef },
+        {
+          reduceMotion: env.reduceMotion,
+          onComplete: () => {
+            introDone.current = true;
+            onIntroCompleteRef.current?.();
           },
-        );
-      }
-    }
-
-    if (!introDone.current && wasEntered.current) {
-      // Hold look during intro tween
-      controls.lookTarget.x = startYaw;
-      controls.lookTarget.y = startPitch;
-      yaw.current = startYaw;
-      pitch.current = startPitch;
+        },
+      );
     }
 
     cam.fov = mfovToVerticalFov(controls.mfov, aspect);
@@ -221,7 +160,11 @@ function Rig({
     const looking = introDone.current;
     const maxPitch = autoPitchLimit(controls.mfov, aspect);
 
-    if (looking) {
+    if (!looking) {
+      // Intro owns lookTarget / yaw / pitch via playEnterIntro onUpdate
+      yaw.current = controls.lookTarget.x;
+      pitch.current = controls.lookTarget.y;
+    } else {
       controls.lookTarget.y = THREE.MathUtils.clamp(
         controls.lookTarget.y,
         -maxPitch,
@@ -268,11 +211,7 @@ function Rig({
     let fPitch = 0;
     if (looking && !env.reduceMotion && controls.followFactor > 0.001) {
       const z = followZoomScale(controls.mfov, aspect);
-      // vtourskin: new_r* = followfactor/zoomscale * followrange * (mouse/stage - 0.5)
-      // pointer is already (mouse/stage - 0.5), so range at edges is ±followrange/2… 
-      // actually formula multiplies the ±0.5 directly by followrange → ±5° at edges.
       const amp = (controls.followFactor / z) * FOLLOW_RANGE;
-      // mouse right → +view.ry; our camera yaw sign matches pano-drag (right lean → look right)
       const targetYaw = -controls.pointer.x * amp;
       const targetPitch = -controls.pointer.y * amp;
       followYaw.current += (targetYaw - followYaw.current) * FOLLOW_SPEED;
