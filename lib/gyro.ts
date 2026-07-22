@@ -1,5 +1,6 @@
 /**
  * Mobile device-orientation look — krpano gyro plugin parity (simplified).
+ * softstart="1.0" — ease offsets in over 1s when enabling (no snap).
  * Requires a user gesture on iOS 13+ (DeviceOrientationEvent.requestPermission).
  */
 
@@ -8,12 +9,16 @@ export type GyroHandle = {
   /** Radians offset applied on top of lookTarget while active. */
   yaw: number;
   pitch: number;
+  /** Epoch ms when gyro was enabled — used for soft-start. */
+  enabledAt: number;
 };
 
 const DEG = Math.PI / 180;
+/** krpano gyro2 softstart="1.0" */
+const SOFTSTART_MS = 1000;
 
 export function createGyro(): GyroHandle {
-  return { enabled: false, yaw: 0, pitch: 0 };
+  return { enabled: false, yaw: 0, pitch: 0, enabledAt: 0 };
 }
 
 export async function requestGyroPermission(): Promise<boolean> {
@@ -31,9 +36,15 @@ export async function requestGyroPermission(): Promise<boolean> {
   return true;
 }
 
+function smoothstep(t: number) {
+  const x = Math.max(0, Math.min(1, t));
+  return x * x * (3 - 2 * x);
+}
+
 export function attachGyro(handle: GyroHandle): () => void {
   let baseAlpha: number | null = null;
   let baseBeta: number | null = null;
+  handle.enabledAt = performance.now();
 
   const onOrient = (e: DeviceOrientationEvent) => {
     if (!handle.enabled) return;
@@ -42,14 +53,16 @@ export function attachGyro(handle: GyroHandle): () => void {
     if (baseAlpha == null) {
       baseAlpha = e.alpha;
       baseBeta = e.beta;
+      handle.enabledAt = performance.now();
     }
 
     // alpha: compass yaw, beta: front-back tilt
     const dAlpha = ((e.alpha - baseAlpha!) + 540) % 360 - 180;
     const dBeta = e.beta - (baseBeta ?? 0);
 
-    handle.yaw = -dAlpha * DEG;
-    handle.pitch = THREE_CLAMP((-dBeta * DEG) * 0.65, -0.6, 0.6);
+    const soft = smoothstep((performance.now() - handle.enabledAt) / SOFTSTART_MS);
+    handle.yaw = -dAlpha * DEG * soft;
+    handle.pitch = THREE_CLAMP((-dBeta * DEG) * 0.65 * soft, -0.6, 0.6);
   };
 
   window.addEventListener('deviceorientation', onOrient, true);
@@ -58,6 +71,7 @@ export function attachGyro(handle: GyroHandle): () => void {
     handle.enabled = false;
     handle.yaw = 0;
     handle.pitch = 0;
+    handle.enabledAt = 0;
     baseAlpha = null;
     baseBeta = null;
   };
