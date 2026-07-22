@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <title>Charlie Archer — Lions' Gate | VCR Recordings</title>
+  <meta name="description" content="Lions' Gate by Charlie Archer — digital single. VCR Recordings."/>
+  <meta name="theme-color" content="#f5f5f7"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f5f5f7;
+      --surface: #ffffff;
+      --text: #1d1d1f;
+      --muted: #6e6e73;
+      --dim: #86868b;
+      --line: rgba(0,0,0,.08);
+      --line-hi: rgba(0,0,0,.12);
+      --fill: rgba(0,0,0,.04);
+      --fill-hi: rgba(0,0,0,.07);
+      --shadow: 0 2px 16px rgba(0,0,0,.05);
+      --shadow-lg: 0 12px 40px rgba(0,0,0,.08);
+      --green: #34c759;
+      --red: #ff3b30;
+      --radius: 18px;
+      --pill: 980px;
+      --ease: cubic-bezier(.25,.1,.25,1);
+      --dur: 300ms;
+      --sans: 'Manrope', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+      --safe-b: env(safe-area-inset-bottom, 0px);
+      --safe-t: env(safe-area-inset-top, 0px);
+      --wrap: 1080px;
+      --nav-h: 56px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+      min-height: 100dvh;
+      font-size: 17px;
+      line-height: 1.47;
+      letter-spacing: -.01em;
+    }
+    img { display: block; max-width: 100%; }
+    a { color: inherit; text-decoration: none; }
+    button, input {
+      font-family: inherit;
+      -webkit-tap-highlight-color: transparent;
+    }
+    button { cursor: pointer; border: none; background: none; }
+    ::selection { background: rgba(0,0,0,.12); }
+
+    .nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 300;
+      height: calc(var(--nav-h) + var(--safe-t));
+      padding-top: var(--safe-t);
+      background: rgba(245,245,247,.82);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      border-bottom: 1px solid transparent;
+      transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
+    }
+    .nav.scrolled {
+      background: rgba(255,255,255,.9);
+      border-bottom-color: var(--line);
+    }
+    .nav-inner {
+      max-width: var(--wrap);
+      margin: 0 auto;
+      height: var(--nav-h);
+      padding: 0 22px;
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    }
+    .nav-logo {
+      display: flex; align-items: center;
+      transition: opacity var(--dur) var(--ease);
+    }
+    .nav-logo img { height: 40px; width: auto; display: block; }
+    @media (hover:hover) { .nav-logo:hover { opacity: .65; } }
+    .nav-links { display: flex; gap: 2px; }
+    .nav-links a {
+      padding: 8px 12px;
+      font-size: 12px; font-weight: 500;
+      color: var(--muted);
+      border-radius: var(--pill);
+      transition: color var(--dur) var(--ease), background var(--dur) var(--ease);
+    }
+    @media (hover:hover) {
+      .nav-links a:hover { color: var(--text); background: var(--fill-hi); }
+    }
+    @media (max-width: 520px) { .nav-links { display: none; } }
+
+    .page {
+      max-width: var(--wrap);
+      margin: 0 auto;
+      padding: calc(var(--nav-h) + var(--safe-t) + 20px) 22px calc(60px + var(--safe-b));
+    }
+
+    .crumbs {
+      padding: 0 0 24px;
+      font-size: 13px; font-weight: 500;
+      color: var(--dim);
+    }
+    .crumbs a { color: var(--dim); transition: color var(--dur) var(--ease); }
+    @media (hover:hover) { .crumbs a:hover { color: var(--text); } }
+    .crumbs span { margin: 0 6px; opacity: .45; }
+
+    .product-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+    @media (min-width: 780px) {
+      .product-grid {
+        grid-template-columns: minmax(280px, 400px) 1fr;
+        gap: 24px;
+        align-items: start;
+      }
+    }
+
+    .left-col {
+      background: var(--surface);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+    @media (min-width: 780px) {
+      .left-col { position: sticky; top: calc(var(--nav-h) + var(--safe-t) + 16px); }
+    }
+
+    .artwork-wrap {
+      position: relative; overflow: hidden;
+      aspect-ratio: 1/1; background: #e8e8ed;
+      cursor: zoom-in;
+    }
+    .artwork-wrap img {
+      width: 100%; height: 100%; object-fit: cover;
+      transition: transform .5s var(--ease);
+    }
+    @media (hover:hover) { .artwork-wrap:hover img { transform: scale(1.03); } }
+    .artwork-badge {
+      position: absolute; top: 14px; left: 14px; z-index: 2;
+      font-size: 11px; font-weight: 600;
+      letter-spacing: .04em; text-transform: uppercase;
+      color: var(--text);
+      background: rgba(255,255,255,.88);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,.5);
+      padding: 6px 10px; border-radius: var(--pill);
+    }
+
+    .player { padding: 18px 18px 20px; border-top: 1px solid var(--line); }
+    .player-head {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      margin-bottom: 14px;
+    }
+    .player-lbl {
+      font-size: 11px; font-weight: 600;
+      letter-spacing: .04em; text-transform: uppercase;
+      color: var(--dim);
+    }
+    .player-track {
+      font-size: 14px; font-weight: 600;
+      max-width: 65%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      text-align: right; letter-spacing: -.01em;
+    }
+    .player-controls {
+      display: grid; grid-template-columns: 48px 1fr; gap: 14px; align-items: center;
+      margin-bottom: 10px;
+    }
+    .play-btn {
+      width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0;
+      background: var(--text);
+      display: grid; place-items: center;
+      transition: transform var(--dur) var(--ease), opacity var(--dur) var(--ease);
+    }
+    .play-btn:active { transform: scale(0.94); }
+    @media (hover:hover) { .play-btn:hover { transform: scale(1.05); opacity: .9; } }
+    .play-btn svg { width: 17px; height: 17px; fill: #fff; }
+    .play-btn .i-pause { display: none; }
+    .play-btn.on .i-play { display: none; }
+    .play-btn.on .i-pause { display: block; }
+    .play-btn .i-play { margin-left: 2px; }
+    .seek-col { display: flex; flex-direction: column; gap: 6px; }
+    .times {
+      display: flex; justify-content: space-between;
+      font-size: 11px; font-weight: 500; color: var(--dim);
+      font-variant-numeric: tabular-nums;
+    }
+    .vol-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+    .vol-row svg { width: 12px; height: 12px; fill: var(--dim); flex-shrink: 0; }
+    @media (max-width: 480px) { .vol-row { display: none; } }
+
+    input[type="range"] {
+      -webkit-appearance: none; appearance: none;
+      width: 100%; background: transparent; cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-runnable-track {
+      height: 4px; border-radius: 999px; background: rgba(0,0,0,.1);
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px; height: 14px; border-radius: 50%;
+      margin-top: -5px; background: var(--text);
+      box-shadow: 0 1px 4px rgba(0,0,0,.2);
+    }
+    input[type="range"]::-moz-range-track {
+      height: 4px; border-radius: 999px; background: rgba(0,0,0,.1);
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 14px; height: 14px; border-radius: 50%;
+      background: var(--text); border: none;
+    }
+
+    .wave {
+      display: flex; align-items: flex-end; gap: 2px;
+      height: 18px; overflow: hidden; margin-top: 10px;
+    }
+    .wave span {
+      display: block; width: 2px; min-height: 2px; border-radius: 999px;
+      flex-shrink: 0; background: rgba(0,0,0,.12); transform-origin: bottom;
+    }
+    .wave.on span {
+      background: var(--text); opacity: .45;
+      animation: wv 1s ease-in-out infinite;
+    }
+    @keyframes wv { 0%,100% { transform: scaleY(.2); } 50% { transform: scaleY(1); } }
+    .p-msg {
+      font-size: 12px; font-weight: 500; color: var(--dim);
+      min-height: 14px; margin-top: 8px;
+    }
+    .p-msg.err { color: var(--red); }
+
+    .right-col {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .r-block { padding: 24px 26px; border-bottom: 1px solid var(--line); }
+    .r-block:last-child { border-bottom: none; }
+
+    .r-artist {
+      font-size: 12px; font-weight: 600;
+      letter-spacing: .04em; text-transform: uppercase;
+      color: var(--dim); margin-bottom: 8px;
+    }
+    .r-title {
+      font-size: clamp(32px, 5vw, 48px);
+      font-weight: 600;
+      line-height: 1.02;
+      letter-spacing: -.035em;
+    }
+    .r-meta-row {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; margin-top: 16px; flex-wrap: wrap;
+    }
+    .r-price {
+      font-size: 28px; font-weight: 600;
+      letter-spacing: -.03em; line-height: 1;
+    }
+    .r-price-note {
+      font-size: 12px; font-weight: 500; color: var(--dim); margin-top: 4px;
+    }
+    .r-stock {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 12px; font-weight: 600;
+      color: var(--green);
+    }
+    .r-stock::before {
+      content: ''; width: 6px; height: 6px; border-radius: 50%;
+      background: var(--green);
+    }
+    .r-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+    .tag {
+      font-size: 11px; font-weight: 500;
+      padding: 5px 10px; border-radius: var(--pill);
+      background: var(--fill-hi); color: var(--muted);
+    }
+
+    .buy-stack { display: flex; flex-direction: column; gap: 10px; }
+    .btn {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      width: 100%; height: 48px; border-radius: var(--pill);
+      font-size: 14px; font-weight: 500;
+      border: none;
+      transition: opacity var(--dur) var(--ease), transform 180ms var(--ease), background var(--dur) var(--ease);
+      cursor: pointer; white-space: nowrap;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-fill { background: var(--text); color: #fff; }
+    .btn-ghost { background: var(--fill-hi); color: var(--text); }
+    .btn-bc { background: #1da0c3; color: #fff; }
+    @media (hover:hover) {
+      .btn-fill:hover { opacity: .86; }
+      .btn-ghost:hover { background: rgba(0,0,0,.1); }
+      .btn-bc:hover { opacity: .9; }
+    }
+    .small-note {
+      font-size: 12px; font-weight: 500; color: var(--dim);
+      margin-top: 10px; line-height: 1.5;
+    }
+
+    .redeem-head {
+      font-size: 11px; font-weight: 600;
+      letter-spacing: .04em; text-transform: uppercase;
+      color: var(--dim); margin-bottom: 10px;
+    }
+    .redeem-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+    .redeem-input {
+      height: 46px; border-radius: 12px;
+      border: 1px solid var(--line); background: var(--bg);
+      color: var(--text); padding: 0 14px;
+      font-size: 14px; font-weight: 500;
+      letter-spacing: .06em; text-transform: uppercase;
+      outline: none; -webkit-appearance: none;
+      transition: border-color var(--dur) var(--ease);
+    }
+    .redeem-input::placeholder {
+      color: var(--dim); text-transform: none; letter-spacing: 0; font-weight: 400;
+    }
+    .redeem-input:focus { border-color: var(--line-hi); }
+    .redeem-btn {
+      height: 46px; padding: 0 18px; border-radius: var(--pill);
+      border: none; background: var(--fill-hi); color: var(--text);
+      font-size: 13px; font-weight: 500; white-space: nowrap;
+      transition: background var(--dur) var(--ease);
+    }
+    .redeem-btn:active { transform: scale(0.97); }
+    @media (hover:hover) { .redeem-btn:hover { background: rgba(0,0,0,.1); } }
+    .redeem-status {
+      font-size: 12px; font-weight: 500; color: var(--muted);
+      min-height: 14px; margin-top: 10px; line-height: 1.5;
+    }
+    .dl-links { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+    .hidden { display: none !important; }
+
+    .tab-bar { display: flex; gap: 0; border-bottom: 1px solid var(--line); }
+    .tab-btn {
+      background: none; border: none;
+      border-bottom: 2px solid transparent;
+      padding: 10px 14px; margin-bottom: -1px;
+      font-size: 13px; font-weight: 600;
+      color: var(--dim);
+      transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+    }
+    @media (hover:hover) { .tab-btn:hover { color: var(--muted); } }
+    .tab-btn[aria-selected="true"] {
+      color: var(--text); border-bottom-color: var(--text);
+    }
+    .tab-panel { display: none; padding: 16px 0 0; }
+    .tab-panel.on { display: block; }
+    .details-text {
+      font-size: 15px; color: var(--muted); line-height: 1.55;
+    }
+
+    .tracklist { display: flex; flex-direction: column; }
+    .track-row {
+      display: grid;
+      grid-template-columns: 2.2rem 1fr auto auto;
+      gap: 10px; align-items: center;
+      padding: 12px 8px;
+      margin: 0 -8px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background var(--dur) var(--ease);
+    }
+    .track-row:active { background: var(--fill); }
+    @media (hover:hover) { .track-row:hover { background: var(--fill); } }
+    .track-row.is-active { background: var(--fill-hi); }
+    .track-no {
+      font-size: 12px; font-weight: 500; color: var(--dim);
+      text-align: right; font-variant-numeric: tabular-nums;
+    }
+    .track-title { font-size: 15px; font-weight: 500; color: var(--muted); }
+    .track-row.is-active .track-title { color: var(--text); font-weight: 600; }
+    .track-dur {
+      font-size: 12px; color: var(--dim);
+      font-variant-numeric: tabular-nums; white-space: nowrap;
+    }
+    .track-play-btn {
+      width: 30px; height: 30px; border-radius: 50%;
+      border: 1px solid var(--line); background: transparent;
+      display: grid; place-items: center; flex-shrink: 0;
+      transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+    }
+    .track-play-btn svg { width: 10px; height: 10px; fill: var(--muted); }
+    .track-play-btn .icon-pause { display: none; }
+    .track-row.is-active .track-play-btn {
+      border-color: var(--text); background: var(--text);
+    }
+    .track-row.is-active .track-play-btn .icon-play { display: none; }
+    .track-row.is-active .track-play-btn .icon-pause { display: block; }
+    .track-row.is-active .track-play-btn svg { fill: #fff; }
+    .track-play-btn .icon-play { margin-left: 1px; }
+
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 500;
+      background: rgba(0,0,0,.4);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      display: none; align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 32px 28px;
+      max-width: 420px; width: 100%;
+      position: relative;
+      box-shadow: var(--shadow-lg);
+      animation: mIn .3s var(--ease);
+    }
+    @keyframes mIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: none; }
+    }
+    .modal-close {
+      position: absolute; top: 14px; right: 14px;
+      width: 30px; height: 30px; border-radius: 50%;
+      background: var(--fill-hi); color: var(--dim);
+      font-size: 1rem; display: grid; place-items: center;
+      transition: color var(--dur) var(--ease);
+    }
+    .modal-close:hover { color: var(--text); }
+    .modal-check {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: rgba(52,199,89,.12);
+      display: grid; place-items: center;
+      margin: 0 auto 16px;
+    }
+    .modal-check svg { width: 18px; height: 18px; fill: var(--green); }
+    .modal h2 {
+      font-size: 22px; font-weight: 600;
+      letter-spacing: -.02em; text-align: center; margin-bottom: 6px;
+    }
+    .modal p {
+      font-size: 15px; color: var(--muted);
+      text-align: center; margin-bottom: 20px; line-height: 1.5;
+    }
+    .modal-btns { display: flex; flex-direction: column; gap: 8px; }
+
+    .zoom {
+      position: fixed; inset: 0; z-index: 400;
+      background: rgba(0,0,0,.88);
+      display: none; align-items: center; justify-content: center;
+      cursor: zoom-out;
+    }
+    .zoom img { max-width: 88vw; max-height: 88vh; border-radius: 12px; }
+    .zoom-close {
+      position: absolute; top: 16px; right: 16px;
+      background: rgba(255,255,255,.12);
+      border-radius: 50%; width: 32px; height: 32px;
+      display: grid; place-items: center;
+      color: #fff; font-size: 1rem; cursor: pointer;
+    }
+
+    .footer {
+      background: #fff;
+      border-top: 1px solid var(--line);
+      padding: 64px 0 calc(36px + var(--safe-b));
+      margin-top: 40px;
+    }
+    .footer-inner {
+      max-width: var(--wrap);
+      margin: 0 auto;
+      padding: 0 22px;
+    }
+    .footer-top {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      margin-bottom: 48px;
+    }
+    @media (max-width: 700px) { .footer-top { grid-template-columns: 1fr; } }
+    .footer-logo {
+      width: min(140px, 42vw);
+      margin-bottom: 18px;
+    }
+    .footer-manifesto {
+      font-size: 22px; font-weight: 600;
+      letter-spacing: -.025em; line-height: 1.25;
+      max-width: 16ch;
+    }
+    .footer-manifesto span {
+      display: block; font-weight: 400; color: var(--muted); margin-top: 4px;
+    }
+    .footer-newsletter label {
+      display: block; font-size: 12px; font-weight: 600;
+      color: var(--dim); margin-bottom: 10px;
+    }
+    .footer-form {
+      display: flex; gap: 8px; padding: 4px;
+      border-radius: var(--pill);
+      background: var(--bg);
+      border: 1px solid var(--line);
+    }
+    .footer-form input[type="email"] {
+      flex: 1; min-width: 0; height: 40px; padding: 0 16px;
+      border: none; outline: none; background: transparent;
+      font-size: 15px; color: var(--text);
+    }
+    .footer-form input::placeholder { color: var(--dim); }
+    .footer-form button {
+      height: 40px; padding: 0 18px; border-radius: var(--pill);
+      background: var(--text); color: #fff;
+      font-size: 13px; font-weight: 500; white-space: nowrap;
+    }
+    .footer-consent {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 12px; color: var(--dim); margin-top: 10px;
+    }
+    .footer-consent input { width: 14px; height: 14px; accent-color: var(--text); }
+    .footer-bottom {
+      display: flex; flex-wrap: wrap; gap: 16px;
+      justify-content: space-between; align-items: center;
+      padding-top: 24px; border-top: 1px solid var(--line);
+    }
+    .footer-copy { font-size: 12px; color: var(--dim); }
+    .footer-links { display: flex; flex-wrap: wrap; gap: 6px; }
+    .footer-links a {
+      padding: 8px 12px; border-radius: var(--pill);
+      font-size: 13px; font-weight: 500; color: var(--muted);
+      background: var(--fill);
+      transition: color var(--dur) var(--ease), background var(--dur) var(--ease);
+    }
+    @media (hover:hover) {
+      .footer-links a:hover { color: var(--text); background: var(--fill-hi); }
+    }
+
+    .fade-up {
+      opacity: 0; transform: translateY(12px);
+      transition: opacity .5s var(--ease), transform .5s var(--ease);
+    }
+    .fade-up.is-visible { opacity: 1; transform: none; }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: .01ms !important;
+        transition-duration: .01ms !important;
+      }
+      .fade-up { opacity: 1; transform: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="modal-overlay" id="purchaseModal">
+  <div class="modal">
+    <button class="modal-close" id="modalClose" aria-label="Close">×</button>
+    <div class="modal-check">
+      <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+    </div>
+    <h2>Purchase complete</h2>
+    <p>Thanks for supporting independent music. Your download is ready.</p>
+    <div class="modal-btns">
+      <a class="btn btn-fill" id="dlMp3Modal" href="lionsgate.mp3" download="Charlie Archer - Lions Gate.mp3">Download MP3</a>
+      <button class="btn btn-ghost" id="modalDismiss">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="zoom" id="zoom">
+  <button class="zoom-close">×</button>
+  <img id="zoomImg" alt=""/>
+</div>
+
+<header class="nav" id="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo" aria-label="VCR Records home">
+      <img src="vcr-globe.svg" alt="VCR Records" width="280" height="200"/>
+    </a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="index.html">Home</a>
+      <a href="index.html#releases">Releases</a>
+      <a href="index.html#artists">Artists</a>
+      <a href="index.html#merch">Merch</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="page">
+    <div class="crumbs">
+      <a href="index.html">Home</a><span>/</span>
+      <a href="index.html#releases">Releases</a><span>/</span>
+      Lions' Gate
+    </div>
+
+    <div class="product-grid" itemscope itemtype="https://schema.org/Product">
+
+      <div class="left-col fade-up">
+        <div class="artwork-wrap" id="artworkWrap">
+          <span class="artwork-badge">Digital</span>
+          <img id="heroImg" src="blank1400.png" alt="Lions' Gate artwork" itemprop="image"/>
+        </div>
+
+        <div class="player">
+          <div class="player-head">
+            <span class="player-lbl">Now playing</span>
+            <span class="player-track" id="ipTrackName">Lions' Gate</span>
+          </div>
+          <div class="player-controls">
+            <button class="play-btn" id="ipPlay" aria-label="Play / pause">
+              <svg class="i-play"  viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+              <svg class="i-pause" viewBox="0 0 24 24"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+            </button>
+            <div class="seek-col">
+              <input type="range" min="0" value="0" step="0.01" id="ipSeek" aria-label="Seek"/>
+              <div class="times">
+                <span id="ipElapsed">0:00</span>
+                <span id="ipRemaining">-0:00</span>
+              </div>
+            </div>
+          </div>
+          <div class="vol-row">
+            <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+            <input type="range" min="0" max="1" step="0.01" value="0.8" id="ipVolume" aria-label="Volume"/>
+          </div>
+          <div class="wave" id="wave" aria-hidden="true"></div>
+          <div class="p-msg" id="pMsg" aria-live="polite"></div>
+        </div>
+      </div>
+
+      <div class="right-col fade-up" style="transition-delay:.06s"
+           itemprop="offers" itemscope itemtype="https://schema.org/Offer">
+
+        <div class="r-block">
+          <div class="r-artist">Charlie Archer</div>
+          <h1 class="r-title" itemprop="name">Lions' Gate</h1>
+          <div class="r-meta-row">
+            <div>
+              <div class="r-price" id="priceDisplay">
+                <meta itemprop="priceCurrency" content="USD"/>
+                <meta itemprop="price" content="0.98"/>
+                $0.98
+              </div>
+              <div class="r-price-note">USD</div>
+            </div>
+            <div class="r-stock">In stock</div>
+          </div>
+          <div class="r-tags">
+            <span class="tag">Digital</span>
+            <span class="tag">Single</span>
+          </div>
+        </div>
+
+        <div class="r-block">
+          <div class="buy-stack">
+            <a class="btn btn-fill" id="buyBtn"
+               href="https://buy.stripe.com/bJe7sM4vt9wc63K9c1frW0i"
+               target="_blank" rel="noopener">Buy Digital — $0.98</a>
+            <a class="btn btn-bc"
+               href="https://drifta.bandcamp.com"
+               target="_blank" rel="noopener">
+              <svg viewBox="0 0 24 24" style="width:12px;height:12px;fill:#fff;flex-shrink:0;"><path d="M0 18.75l7.437-13.5H24l-7.438 13.5z"/></svg>
+              Bandcamp
+            </a>
+          </div>
+          <p class="small-note">Secure checkout via Stripe · Instant digital delivery</p>
+        </div>
+
+        <div class="r-block">
+          <div class="redeem-head">Download code</div>
+          <div class="redeem-row">
+            <input class="redeem-input" id="redeemCode" type="text"
+                   inputmode="text" autocomplete="one-time-code" placeholder="Enter code"/>
+            <button class="redeem-btn" id="redeemBtn" type="button">Redeem</button>
+          </div>
+          <div class="redeem-status" id="redeemStatus" role="status" aria-live="polite"></div>
+          <div class="dl-links hidden" id="redeemDownloads">
+            <a class="btn btn-fill" href="lionsgate.mp3" download="Charlie Archer - Lions Gate.mp3">Download MP3</a>
+          </div>
+        </div>
+
+        <div class="r-block">
+          <div class="tab-bar" role="tablist">
+            <button class="tab-btn" role="tab" aria-selected="true" aria-controls="tab-track">Tracklist</button>
+            <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-details">Details</button>
+          </div>
+
+          <div class="tab-panel on" id="tab-track" role="tabpanel" style="padding-top:14px;">
+            <div class="tracklist">
+              <div class="track-row">
+                <span class="track-no">A1</span>
+                <span class="track-title">Lions' Gate</span>
+                <span class="track-dur" id="trackDuration">—</span>
+                <button class="track-play-btn" aria-label="Play" type="button">
+                  <svg class="icon-play"  viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                  <svg class="icon-pause" viewBox="0 0 24 24"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="tab-panel" id="tab-details" role="tabpanel" style="padding-top:14px;">
+            <p class="details-text">Lions' Gate by Charlie Archer. Digital single on VCR Recordings.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-top">
+      <div>
+        <img class="footer-logo" src="vcr-globe.svg" alt="VCR Records" width="280" height="200" loading="lazy"/>
+        <p class="footer-manifesto">
+    
+      
+        </p>
+      </div>
+      <div>
+        <label for="newsletterEmail">Stay in the loop</label>
+        <form class="footer-form" id="newsletterForm"
+              action="https://formspree.io/f/xdkwjzzr" method="POST" novalidate>
+          <input type="text" name="_gotcha" tabindex="-1" autocomplete="off"
+                 style="position:absolute;left:-9999px" aria-hidden="true">
+          <input type="email" id="newsletterEmail" name="email" placeholder="Email" aria-label="Email" required/>
+          <input type="hidden" name="source" value="Lions Gate — release page">
+          <input type="hidden" name="page" value="" id="signupPageField">
+          <button type="submit">Join</button>
+        </form>
+        <label class="footer-consent">
+          <input type="checkbox" name="consent" value="yes" form="newsletterForm" required/>
+          I agree to receive emails
+        </label>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p class="footer-copy">© 2025 VCR Recordings</p>
+      <div class="footer-links">
+        <a href="index.html#releases">Releases</a>
+        <a href="https://drifta.bandcamp.com" target="_blank" rel="noopener">Bandcamp</a>
+        <a href="https://www.instagram.com/vcr_recordings" target="_blank" rel="noopener">Instagram</a>
+        <a href="mailto:charlie@vcrrecords.com">Contact</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+const CONFIG = {
+  mp3:         'lionsgate.mp3',
+  artistName:  'Charlie Archer',
+  releaseName: "Lions' Gate",
+  stripeUrl:   'https://buy.stripe.com/dRm7sMaTR7o4dwc4VLfrW0d'
+};
+
+const audio = new Audio();
+audio.preload = 'auto';
+audio.src     = CONFIG.mp3;
+audio.volume  = 0.8;
+
+const fmt = s => {
+  if (!isFinite(s)) return '0:00';
+  s = Math.max(0, Math.floor(s));
+  return Math.floor(s/60) + ':' + (s%60 < 10 ? '0' : '') + (s%60);
+};
+
+const waveEl = document.getElementById('wave');
+for (let i = 0; i < 44; i++) {
+  const b = document.createElement('span');
+  b.style.cssText = `height:${2+Math.random()*14}px;animation-delay:${(Math.random()*1.2).toFixed(2)}s;animation-duration:${(.8+Math.random()*.6).toFixed(2)}s`;
+  waveEl.appendChild(b);
+}
+
+const playBtn  = document.getElementById('ipPlay');
+const seek     = document.getElementById('ipSeek');
+const volEl    = document.getElementById('ipVolume');
+const elapsed  = document.getElementById('ipElapsed');
+const remain   = document.getElementById('ipRemaining');
+const trackDur = document.getElementById('trackDuration');
+const pMsg     = document.getElementById('pMsg');
+
+function setMsg(t, e) { pMsg.textContent = t||''; pMsg.className = 'p-msg'+(e?' err':''); }
+function setPlaying(on) {
+  playBtn.classList.toggle('on', on);
+  waveEl.classList.toggle('on', on);
+  document.querySelectorAll('.track-row').forEach(r => r.classList.toggle('is-active', on));
+}
+
+async function safePlay() {
+  if (audio.error) {
+    const m = {1:'Aborted.',2:'Network error.',3:'Decode error.',4:'File not found.'};
+    setMsg(m[audio.error.code]||'Load failed.', true); return;
+  }
+  try { setMsg('Loading…'); await audio.play(); setMsg(''); }
+  catch(e) {
+    if (e.name==='NotAllowedError') setMsg('Tap again to start.',true);
+    else setMsg('Could not play — check lionsgate.mp3 exists.',true);
+  }
+}
+
+audio.addEventListener('loadedmetadata', () => { seek.max = audio.duration; trackDur.textContent = fmt(audio.duration); setMsg(''); });
+audio.addEventListener('canplay',        () => setMsg(''));
+audio.addEventListener('play',           () => { setPlaying(true); setMsg(''); });
+audio.addEventListener('pause',          () => setPlaying(false));
+audio.addEventListener('ended',          () => setPlaying(false));
+audio.addEventListener('waiting',        () => setMsg('Buffering…'));
+audio.addEventListener('error', () => {
+  const m = {1:'Aborted.',2:'Network error.',3:'Decode error.',4:'File not found or unsupported.'};
+  setMsg((m[audio.error?.code]||'Load failed.')+' Check lionsgate.mp3 exists.',true);
+});
+audio.addEventListener('timeupdate', () => {
+  if (!isFinite(audio.duration)) return;
+  seek.max   = audio.duration;
+  seek.value = audio.currentTime;
+  elapsed.textContent = fmt(audio.currentTime);
+  remain.textContent  = '-'+fmt(audio.duration - audio.currentTime);
+});
+
+playBtn.addEventListener('click', () => audio.paused ? safePlay() : audio.pause());
+seek.addEventListener('input',  () => { audio.currentTime = +seek.value||0; });
+volEl.addEventListener('input',  () => { audio.volume = +volEl.value||0.8; });
+
+document.querySelectorAll('.track-row').forEach(row => {
+  row.addEventListener('click', () => audio.paused ? safePlay() : audio.pause());
+});
+
+const modal = document.getElementById('purchaseModal');
+const openM  = () => { modal.classList.add('show'); document.body.style.overflow='hidden'; };
+const closeM = () => {
+  modal.classList.remove('show'); document.body.style.overflow='';
+  const u = new URL(location.href);
+  ['purchase','session_id'].forEach(k => u.searchParams.delete(k));
+  history.replaceState({},'',u);
+};
+document.getElementById('modalClose').addEventListener('click', closeM);
+document.getElementById('modalDismiss').addEventListener('click', closeM);
+modal.addEventListener('click', e => { if (e.target===modal) closeM(); });
+const sp = new URLSearchParams(location.search);
+if (sp.get('purchase')==='success'||sp.has('session_id')) setTimeout(openM, 600);
+
+const CODE_BANK = new Set([
+  'AFR9Z7M','AFR2K4Y','AFR8Q5C','AFR6E2B','AFR3A7D','AFR2N8H','AFR7U2L','AFR6D4R',
+  'AFR3Y9X','AFR5F1V','AFR4E3T','AFR7K9P','AFR9V2E','AFR6T7N','AFR8M3K','AFR4P6J',
+  'AFR5Z8H','AFR7C2R','AFR3D5Q','AFR9F6S','AFR8G4T','AFR2H7V','AFR5J9W','AFR6K2X',
+  'AFR4L8Y','AFR7M1Z','AFR2N5C','AFR9P7D','AFR3Q9E','AFR5R2F','AFR7S4G','AFR9T6H',
+  'AFR2V8J','AFR4W1K','AFR6X3L','AFR8Y5M','AFR2Z7N','AFR3A9P','AFR5B2Q','AFR7C4R',
+  'AFR9D6S','AFR2E8T','AFR4F2V','AFR6G3W','AFR8H5X','AFR2J7Y','AFR4K9Z','AFR6L3Y',
+  'AFR8M5C','AFR2N7D'
+].map(c => c.toUpperCase()));
+
+const USED   = new Set(JSON.parse(localStorage.getItem('afr_used_codes_lionsgate')||'[]'));
+const saveU  = () => localStorage.setItem('afr_used_codes_lionsgate', JSON.stringify([...USED]));
+const rdStat = document.getElementById('redeemStatus');
+const rdDL   = document.getElementById('redeemDownloads');
+
+async function forceDownload(url, name) {
+  try {
+    const r = await fetch(url); if (!r.ok) throw 0;
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(await r.blob()); a.download = name;
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1500);
+  } catch { window.location.href = url; }
+}
+
+async function redeem() {
+  const code = (document.getElementById('redeemCode').value||'').trim().toUpperCase();
+  rdDL.classList.add('hidden'); rdStat.textContent='';
+  if (!code)                { rdStat.textContent='Enter your code.';   return; }
+  if (USED.has(code))       { rdStat.textContent='Code already used.'; return; }
+  if (!CODE_BANK.has(code)) { rdStat.textContent='Invalid code.';      return; }
+  USED.add(code); saveU();
+  rdStat.textContent='Accepted — starting download…';
+  try {
+    await forceDownload(CONFIG.mp3, "Charlie Archer - Lions Gate.mp3");
+    rdStat.textContent='Download started.'; rdDL.classList.remove('hidden');
+  } catch { rdStat.textContent='Use the button below.'; rdDL.classList.remove('hidden'); }
+}
+document.getElementById('redeemBtn').addEventListener('click', redeem);
+document.getElementById('redeemCode').addEventListener('keydown', e => { if(e.key==='Enter') redeem(); });
+
+(function() {
+  const btns   = document.querySelectorAll('[role="tab"]');
+  const panels = document.querySelectorAll('.tab-panel');
+  btns.forEach(btn => btn.addEventListener('click', () => {
+    btns.forEach(b => b.setAttribute('aria-selected','false'));
+    panels.forEach(p => p.classList.remove('on'));
+    btn.setAttribute('aria-selected','true');
+    document.getElementById(btn.getAttribute('aria-controls'))?.classList.add('on');
+  }));
+})();
+
+(function() {
+  const zo  = document.getElementById('zoom');
+  const zi  = document.getElementById('zoomImg');
+  const src = document.getElementById('heroImg');
+  const aw  = document.getElementById('artworkWrap');
+  aw.addEventListener('click', () => { zi.src=src.src; zo.style.display='flex'; });
+  zo.addEventListener('click', e => { if (e.target!==zi) zo.style.display='none'; });
+  zo.querySelector('.zoom-close').addEventListener('click', () => zo.style.display='none');
+})();
+
+(function () {
+  const nav = document.getElementById('nav');
+  let ticking = false;
+  window.addEventListener('scroll', function () {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(function () {
+      nav.classList.toggle('scrolled', window.scrollY > 12);
+      ticking = false;
+    });
+  }, { passive: true });
+})();
+
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting){e.target.classList.add('is-visible');obs.unobserve(e.target);} });
+},{threshold:0.08});
+document.querySelectorAll('.fade-up').forEach(el => obs.observe(el));
+
+(function(){ const f=document.getElementById('signupPageField'); if(f) f.value=location.href; })();
+</script>
+</body>
+</html>

@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <title>LT Drifta — Summer Madness | VCR Recordings</title>
+  <meta name="description" content="Summer Madness by LT Drifta — digital + cassette. VCR Recordings."/>
+  <meta name="theme-color" content="#000000"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --black:  #000;
+      --bg:     #0a0a0a;
+      --sur:    #111;
+      --raise:  #181818;
+      --line:   rgba(255,255,255,.09);
+      --line-hi:rgba(255,255,255,.16);
+      --text:   #f2f2ee;
+      --sub:    rgba(242,242,238,.50);
+      --dim:    rgba(242,242,238,.28);
+      --green:  #3ecf8e;
+      --red:    #f87171;
+      --sans:   'Archivo', ui-sans-serif, system-ui, -apple-system, sans-serif;
+      --safe-b: env(safe-area-inset-bottom, 0px);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+    body { font-family: var(--sans); background: var(--black); color: var(--text); -webkit-font-smoothing: antialiased; overflow-x: hidden; min-height: 100dvh; }
+    img  { display: block; max-width: 100%; }
+    a    { color: inherit; text-decoration: none; }
+    button { font-family: inherit; cursor: pointer; border: none; background: none; -webkit-tap-highlight-color: transparent; }
+    input  { font-family: inherit; -webkit-tap-highlight-color: transparent; }
+
+    .nav { position: sticky; top: 0; z-index: 200; background: rgba(0,0,0,.88); backdrop-filter: blur(20px) saturate(140%); -webkit-backdrop-filter: blur(20px) saturate(140%); border-bottom: 1px solid var(--line); height: 52px; }
+    .nav-inner { max-width: 1100px; margin: 0 auto; padding: 0 20px; height: 100%; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .nav-brand { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text); white-space: nowrap; }
+    .nav-links { display: flex; gap: 2px; }
+    .nav-links a { padding: 7px 10px; border-radius: 4px; font-size: 0.62rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--sub); transition: color .15s, background .15s; }
+    @media (hover:hover) { .nav-links a:hover { color: var(--text); background: rgba(255,255,255,.05); } }
+    @media (max-width: 520px) { .nav-links { display: none; } }
+
+    .page { max-width: 1100px; margin: 0 auto; padding: 0 20px calc(60px + var(--safe-b)); }
+
+    .crumbs { padding: 16px 0 20px; font-size: 0.62rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--dim); }
+    .crumbs a { color: var(--dim); transition: color .15s; }
+    @media (hover:hover) { .crumbs a:hover { color: var(--sub); } }
+    .crumbs span { margin: 0 6px; opacity: .4; }
+
+    .product-grid { display: grid; grid-template-columns: 1fr; gap: 0; }
+    @media (min-width: 720px) { .product-grid { grid-template-columns: minmax(240px, 360px) 1fr; gap: 0; align-items: start; border: 1px solid var(--line); } }
+    @media (min-width: 960px) { .product-grid { grid-template-columns: minmax(300px, 420px) 1fr; } }
+
+    .left-col { display: flex; flex-direction: column; }
+    @media (min-width: 720px) { .left-col { position: sticky; top: 52px; border-right: 1px solid var(--line); } }
+
+    .artwork-wrap { position: relative; overflow: hidden; aspect-ratio: 1/1; background: var(--sur); cursor: zoom-in; }
+    .artwork-wrap img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s ease; display: block; }
+    @media (hover:hover) { .artwork-wrap:hover img { transform: scale(1.03); } }
+    .artwork-badge { position: absolute; top: 14px; left: 14px; z-index: 2; font-size: 0.58rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--sub); background: rgba(0,0,0,.75); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid var(--line-hi); padding: 5px 10px; border-radius: 2px; }
+
+    .player { padding: 16px 18px; border-top: 1px solid var(--line); background: var(--sur); }
+    .player-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+    .player-lbl { font-size: 0.58rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); }
+    .player-track { font-size: 0.78rem; font-weight: 600; max-width: 65%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: right; }
+    .player-controls { display: grid; grid-template-columns: 46px 1fr; gap: 12px; align-items: center; margin-bottom: 8px; }
+    .play-btn { width: 46px; height: 46px; border-radius: 50%; flex-shrink: 0; background: var(--text); display: grid; place-items: center; transition: transform .13s, background .13s; }
+    .play-btn:active { transform: scale(0.92); }
+    @media (hover:hover) { .play-btn:hover { transform: scale(1.05); background: #fff; } }
+    .play-btn svg { width: 17px; height: 17px; fill: #000; }
+    .play-btn .i-pause { display: none; }
+    .play-btn.on .i-play  { display: none; }
+    .play-btn.on .i-pause { display: block; }
+    .play-btn .i-play { margin-left: 2px; }
+    .seek-col { display: flex; flex-direction: column; gap: 5px; }
+    .times { display: flex; justify-content: space-between; font-size: 0.60rem; font-weight: 600; color: var(--dim); font-variant-numeric: tabular-nums; }
+    .vol-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+    .vol-row svg { width: 12px; height: 12px; fill: var(--dim); flex-shrink: 0; }
+    @media (max-width: 480px) { .vol-row { display: none; } }
+
+    input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; background: transparent; cursor: pointer; }
+    input[type="range"]::-webkit-slider-runnable-track { height: 3px; border-radius: 999px; background: rgba(255,255,255,.12); }
+    input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; margin-top: -5.5px; background: var(--text); box-shadow: 0 1px 4px rgba(0,0,0,.4); }
+    input[type="range"]::-moz-range-track { height: 3px; border-radius: 999px; background: rgba(255,255,255,.12); }
+    input[type="range"]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: var(--text); border: none; }
+
+    .wave { display: flex; align-items: flex-end; gap: 2px; height: 18px; overflow: hidden; margin-top: 8px; }
+    .wave span { display: block; width: 2px; min-height: 2px; border-radius: 999px; flex-shrink: 0; background: rgba(255,255,255,.14); transform-origin: bottom; }
+    .wave.on span { background: var(--text); opacity: .55; animation: wv 1.0s ease-in-out infinite; }
+    @keyframes wv { 0%,100% { transform: scaleY(.2); } 50% { transform: scaleY(1); } }
+    .p-msg { font-size: 0.60rem; font-weight: 600; color: var(--dim); min-height: 12px; margin-top: 6px; }
+    .p-msg.err { color: var(--red); }
+
+    .right-col { display: flex; flex-direction: column; }
+    .r-block { padding: 22px 24px; border-bottom: 1px solid var(--line); }
+    .r-block:last-child { border-bottom: none; }
+    @media (max-width: 719px) { .r-block { border-bottom: 1px solid var(--line); border-top: 1px solid var(--line); margin-top: -1px; } }
+
+    .r-artist { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); margin-bottom: 8px; }
+    .r-title { font-size: clamp(2rem, 6vw, 3rem); font-weight: 900; line-height: 0.92; letter-spacing: -0.04em; }
+    .r-meta-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; flex-wrap: wrap; }
+    .r-price { font-size: 1.6rem; font-weight: 900; letter-spacing: -0.04em; line-height: 1; }
+    .r-price-note { font-size: 0.62rem; font-weight: 600; color: var(--dim); margin-top: 2px; }
+    .r-stock { display: flex; align-items: center; gap: 5px; font-size: 0.60rem; font-weight: 700; letter-spacing: 0.10em; text-transform: uppercase; color: var(--green); }
+    .r-stock::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--green); box-shadow: 0 0 5px var(--green); }
+    .r-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+    .tag { font-size: 0.56rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 4px 9px; border-radius: 2px; border: 1px solid var(--line); color: var(--dim); }
+
+    /* ── FORMAT DROPDOWN ────────────────────────────── */
+    .format-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: end; margin-bottom: 14px; }
+    .format-label { font-size: 0.58rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); margin-bottom: 6px; }
+    .format-select-wrap { position: relative; }
+    .format-trigger { width: 100%; height: 44px; border-radius: 3px; border: 1px solid var(--line); background: var(--sur); color: var(--text); padding: 0 32px 0 12px; display: flex; align-items: center; font-size: 0.82rem; font-weight: 600; font-family: var(--sans); cursor: pointer; position: relative; }
+    .format-chev { position: absolute; right: 12px; top: 50%; width: 7px; height: 7px; border-right: 1.5px solid var(--sub); border-bottom: 1.5px solid var(--sub); transform: translateY(-65%) rotate(45deg); transition: transform .15s; pointer-events: none; }
+    .format-menu { position: absolute; inset-inline: 0; top: calc(100% + 4px); background: var(--sur); border: 1px solid var(--line-hi); border-radius: 3px; padding: 4px; z-index: 30; box-shadow: 0 8px 24px rgba(0,0,0,.6); display: flex; flex-direction: column; gap: 2px; }
+    .format-menu[hidden] { display: none; }
+    .format-opt { height: 40px; border-radius: 2px; border: 1px solid transparent; background: transparent; color: var(--text); padding: 0 10px; display: flex; align-items: center; justify-content: space-between; font-size: 0.82rem; font-weight: 600; font-family: var(--sans); cursor: pointer; }
+    .format-opt.on { background: rgba(255,255,255,.06); }
+    .format-opt-price { font-size: 0.60rem; color: var(--dim); }
+    .qty-wrap { display: flex; align-items: center; height: 44px; padding: 3px; border-radius: 3px; border: 1px solid var(--line); background: var(--sur); }
+    .qty-btn { width: 34px; height: 34px; border: none; border-radius: 2px; background: rgba(255,255,255,.05); color: var(--text); font-size: 1.1rem; display: grid; place-items: center; font-family: var(--sans); cursor: pointer; }
+    .qty-input { width: 40px; text-align: center; border: none; background: transparent; color: var(--text); font-weight: 700; font-size: 0.88rem; font-family: var(--sans); }
+
+    /* ── BUTTONS ────────────────────────────────────── */
+    .buy-stack { display: flex; flex-direction: column; gap: 8px; }
+    .btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: 48px; border-radius: 3px; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.10em; text-transform: uppercase; border: 1px solid transparent; transition: background .13s, border-color .13s, color .13s, transform .10s; cursor: pointer; white-space: nowrap; -webkit-tap-highlight-color: transparent; }
+    .btn:active { transform: scale(0.97); }
+    .btn-fill  { background: var(--text); color: #000; border-color: var(--text); }
+    .btn-ghost { background: transparent; color: var(--sub); border-color: var(--line-hi); }
+    .btn-bc    { background: #1da0c3; color: #fff; border-color: transparent; }
+    @media (hover:hover) { .btn-fill:hover { background: #fff; border-color: #fff; } .btn-ghost:hover { color: var(--text); border-color: var(--text); } .btn-bc:hover { background: #1890b0; } }
+    .small-note { font-size: 0.60rem; font-weight: 600; color: var(--dim); margin-top: 8px; line-height: 1.5; }
+
+    /* ── REDEEM ─────────────────────────────────────── */
+    .redeem-head { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.10em; text-transform: uppercase; color: var(--dim); margin-bottom: 10px; }
+    .redeem-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+    .redeem-input { height: 46px; border-radius: 3px; border: 1px solid var(--line); background: var(--sur); color: var(--text); padding: 0 14px; font-size: 0.80rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; outline: none; -webkit-appearance: none; transition: border-color .15s; }
+    .redeem-input::placeholder { color: var(--dim); text-transform: none; letter-spacing: 0; font-weight: 400; }
+    .redeem-input:focus { border-color: var(--line-hi); }
+    .redeem-btn { height: 46px; padding: 0 16px; border-radius: 3px; border: 1px solid var(--line); background: var(--sur); color: var(--sub); font-size: 0.66rem; font-weight: 700; letter-spacing: 0.10em; text-transform: uppercase; white-space: nowrap; transition: border-color .15s, color .15s; }
+    .redeem-btn:active { transform: scale(0.96); }
+    @media (hover:hover) { .redeem-btn:hover { border-color: var(--line-hi); color: var(--text); } }
+    .redeem-status { font-size: 0.62rem; font-weight: 600; color: var(--sub); min-height: 12px; margin-top: 8px; line-height: 1.5; }
+    .dl-links { display: flex; flex-direction: column; gap: 7px; margin-top: 10px; }
+    .hidden { display: none !important; }
+
+    /* ── TABS ───────────────────────────────────────── */
+    .tab-bar { display: flex; gap: 0; border-bottom: 1px solid var(--line); margin-bottom: 0; }
+    .tab-btn { background: none; border: none; border-bottom: 2px solid transparent; padding: 10px 14px; margin-bottom: -1px; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.10em; text-transform: uppercase; color: var(--dim); transition: color .15s, border-color .15s; }
+    @media (hover:hover) { .tab-btn:hover { color: var(--sub); } }
+    .tab-btn[aria-selected="true"] { color: var(--text); border-bottom-color: var(--text); }
+    .tab-panel { display: none; padding: 16px 0 0; }
+    .tab-panel.on { display: block; }
+
+    /* ── TRACKLIST ──────────────────────────────────── */
+    .tracklist { display: flex; flex-direction: column; }
+    .track-row { display: grid; grid-template-columns: 2.2rem 1fr auto auto; gap: 10px; align-items: center; padding: 11px 0; border-top: 1px solid var(--line); cursor: pointer; -webkit-tap-highlight-color: transparent; transition: background .12s; }
+    .track-row:first-child { border-top: none; }
+    .track-row:active { background: rgba(255,255,255,.02); }
+    @media (hover:hover) { .track-row:hover { background: rgba(255,255,255,.02); } }
+    .track-row.is-active { background: rgba(255,255,255,.03); }
+    .track-no { font-size: 0.62rem; font-weight: 600; color: var(--dim); text-align: right; font-variant-numeric: tabular-nums; }
+    .track-title { font-size: 0.86rem; font-weight: 500; color: var(--sub); line-height: 1.3; }
+    .track-title small { display: block; font-size: 0.68rem; color: var(--dim); font-weight: 400; margin-top: 1px; }
+    .track-row.is-active .track-title { color: var(--text); }
+    .track-dur { font-size: 0.60rem; color: var(--dim); font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .track-play-btn { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--line); background: transparent; display: grid; place-items: center; flex-shrink: 0; transition: border-color .15s; }
+    .track-play-btn svg { width: 10px; height: 10px; fill: var(--sub); }
+    .track-play-btn .icon-pause { display: none; }
+    .track-row.is-active .track-play-btn { border-color: var(--line-hi); }
+    .track-row.is-active .track-play-btn .icon-play  { display: none; }
+    .track-row.is-active .track-play-btn .icon-pause { display: block; fill: var(--text); }
+    .track-row.is-active .track-play-btn svg { fill: var(--text); }
+    .track-play-btn .icon-play { margin-left: 1px; }
+    .details-text { font-size: 0.86rem; color: var(--sub); line-height: 1.7; }
+
+    /* ── MODAL ──────────────────────────────────────── */
+    .modal-overlay { position: fixed; inset: 0; z-index: 500; background: rgba(0,0,0,.82); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); display: none; align-items: center; justify-content: center; padding: 20px; }
+    .modal-overlay.show { display: flex; }
+    .modal { background: var(--sur); border: 1px solid var(--line-hi); border-radius: 8px; padding: 32px 28px; max-width: 420px; width: 100%; position: relative; animation: mIn .3s ease; }
+    @keyframes mIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:none; } }
+    .modal-close { position: absolute; top: 14px; right: 14px; width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--line); background: transparent; color: var(--dim); font-size: 0.9rem; display: grid; place-items: center; transition: color .15s; }
+    .modal-close:hover { color: var(--text); }
+    .modal-check { width: 42px; height: 42px; border-radius: 50%; background: rgba(62,207,142,.10); border: 1px solid rgba(62,207,142,.20); display: grid; place-items: center; margin: 0 auto 16px; }
+    .modal-check svg { width: 18px; height: 18px; fill: var(--green); }
+    .modal h2 { font-size: 1.3rem; font-weight: 800; letter-spacing: -0.03em; text-align: center; margin-bottom: 6px; }
+    .modal p { font-size: 0.82rem; color: var(--sub); text-align: center; margin-bottom: 20px; line-height: 1.6; }
+    .modal-btns { display: flex; flex-direction: column; gap: 8px; }
+
+    /* ── ZOOM ───────────────────────────────────────── */
+    .zoom { position: fixed; inset: 0; z-index: 400; background: rgba(0,0,0,.94); display: none; align-items: center; justify-content: center; cursor: zoom-out; }
+    .zoom img { max-width: 88vw; max-height: 88vh; border-radius: 2px; }
+    .zoom-close { position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15); border-radius: 50%; width: 32px; height: 32px; display: grid; place-items: center; color: var(--sub); font-size: 1rem; cursor: pointer; }
+
+    /* ── FOOTER ─────────────────────────────────────── */
+    .site-footer { border-top: 1px solid var(--line); margin-top: 40px; padding: 32px 0 calc(28px + var(--safe-b)); background: var(--black); }
+    .footer-wrap { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
+    .footer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+    @media (max-width: 640px) { .footer-grid { grid-template-columns: 1fr; gap: 28px; } }
+    .footer-brand { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text); margin-bottom: 6px; }
+    .footer-text { font-size: 0.78rem; color: var(--dim); line-height: 1.6; }
+    .footer-social { display: flex; gap: 6px; margin-top: 14px; }
+    .footer-social a { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); display: grid; place-items: center; color: var(--dim); transition: color .15s, border-color .15s; }
+    @media (hover:hover) { .footer-social a:hover { color: var(--text); border-color: var(--line-hi); } }
+    .footer-social svg { width: 14px; height: 14px; fill: currentColor; }
+    .signup-card { background: var(--sur); border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+    .sc-row { padding: 14px 18px; border-top: 1px solid var(--line); }
+    .sc-row:first-child { border-top: none; }
+    .sc-title { font-size: 0.88rem; font-weight: 700; color: var(--text); }
+    .sc-row input[type="email"] { width: 100%; background: transparent; border: none; outline: none; color: var(--text); font-size: 0.86rem; height: 32px; font-family: var(--sans); }
+    .sc-row input[type="email"]::placeholder { color: var(--dim); }
+    .sc-row label { display: flex; align-items: center; gap: 8px; font-size: 0.74rem; color: var(--dim); }
+    .sc-row input[type="checkbox"] { width: 14px; height: 14px; accent-color: var(--text); }
+    .signup-submit { width: 100%; height: 44px; background: var(--text); color: #000; border: none; font-family: var(--sans); font-size: 0.66rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; transition: background .15s; }
+    .signup-submit:hover { background: #fff; }
+    .footer-bottom { margin-top: 28px; padding-top: 18px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; font-size: 0.60rem; font-weight: 600; letter-spacing: 0.06em; color: var(--dim); }
+    .footer-bottom a { color: var(--dim); transition: color .15s; }
+    @media (hover:hover) { .footer-bottom a:hover { color: var(--sub); } }
+    .footer-bottom-links { display: flex; gap: 14px; }
+
+    .fade-up { opacity: 0; transform: translateY(12px); transition: opacity .5s ease, transform .5s ease; }
+    .fade-up.is-visible { opacity: 1; transform: none; }
+  </style>
+</head>
+<body>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="purchaseModal">
+  <div class="modal">
+    <button class="modal-close" id="modalClose" aria-label="Close">×</button>
+    <div class="modal-check">
+      <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+    </div>
+    <h2>Purchase complete</h2>
+    <p>Thanks for supporting independent music. Your download is ready.</p>
+    <div class="modal-btns">
+      <a class="btn btn-fill" id="dlMp3Modal" href="summermix1.mp3" download="LT Drifta - Summer Madness.mp3">Download MP3</a>
+      <button class="btn btn-ghost" id="modalDismiss">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ZOOM -->
+<div class="zoom" id="zoom">
+  <button class="zoom-close">×</button>
+  <img id="zoomImg" alt=""/>
+</div>
+
+<!-- NAV -->
+<header class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-brand">VCR Recordings</a>
+    <nav class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="index.html#releases">Releases</a>
+      <a href="index.html#artists">Artists</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="page">
+    <div class="crumbs">
+      <a href="index.html">Home</a><span>/</span>
+      <a href="index.html#releases">Releases</a><span>/</span>
+      Summer Madness
+    </div>
+
+    <div class="product-grid" itemscope itemtype="https://schema.org/Product">
+
+      <!-- LEFT: artwork + player -->
+      <div class="left-col fade-up">
+        <div class="artwork-wrap" id="artworkWrap">
+          <span class="artwork-badge">Digital + Cassette</span>
+          <img id="heroImg" src="summer.PNG" alt="Summer Madness artwork" itemprop="image"/>
+        </div>
+
+        <div class="player">
+          <div class="player-head">
+            <span class="player-lbl">Now playing</span>
+            <span class="player-track" id="ipTrackName">Summer Madness</span>
+          </div>
+          <div class="player-controls">
+            <button class="play-btn" id="ipPlay" aria-label="Play / pause">
+              <svg class="i-play"  viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+              <svg class="i-pause" viewBox="0 0 24 24"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+            </button>
+            <div class="seek-col">
+              <input type="range" min="0" value="0" step="0.01" id="ipSeek" aria-label="Seek"/>
+              <div class="times">
+                <span id="ipElapsed">0:00</span>
+                <span id="ipRemaining">-0:00</span>
+              </div>
+            </div>
+          </div>
+          <div class="vol-row">
+            <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+            <input type="range" min="0" max="1" step="0.01" value="0.8" id="ipVolume" aria-label="Volume"/>
+          </div>
+          <div class="wave" id="wave" aria-hidden="true"></div>
+          <div class="p-msg" id="pMsg" aria-live="polite"></div>
+        </div>
+      </div>
+
+      <!-- RIGHT: meta + purchase -->
+      <div class="right-col fade-up" style="transition-delay:.06s"
+           itemprop="offers" itemscope itemtype="https://schema.org/Offer">
+
+        <div class="r-block">
+          <div class="r-artist">LT Drifta</div>
+          <h1 class="r-title" itemprop="name">Summer<br>Madness</h1>
+          <div class="r-meta-row">
+            <div>
+              <div class="r-price" id="priceDisplay">
+                <meta itemprop="priceCurrency" content="USD"/>
+                <meta itemprop="price" content="7.98"/>
+                <span id="priceAmount">$7.98</span>
+              </div>
+              <div class="r-price-note" id="priceFormat">USD</div>
+            </div>
+            <div class="r-stock">In stock</div>
+          </div>
+          <div class="r-tags">
+            <span class="tag">Electronic</span>
+            <span class="tag">Drum &amp; Bass</span>
+            <span class="tag">Jazz</span>
+          </div>
+        </div>
+
+        <!-- FORMAT + BUY -->
+        <div class="r-block">
+          <div class="format-row">
+            <div>
+              <div class="format-label">Format</div>
+              <div class="format-select-wrap" id="fpWrap">
+                <button type="button" id="fpTrigger" class="format-trigger" aria-haspopup="listbox" aria-expanded="false">
+                  <span id="fpLabel">Digital MP3</span>
+                  <span class="format-chev" id="fpChev"></span>
+                </button>
+                <div id="fpMenu" class="format-menu" role="listbox" hidden>
+                  <button type="button" class="format-opt on" data-value="digital" role="option" aria-selected="true">
+                    <span>Digital MP3</span><span class="format-opt-price">$7.98</span>
+                  </button>
+                  <button type="button" class="format-opt" data-value="cassette" role="option" aria-selected="false">
+                    <span>Cassette</span><span class="format-opt-price">$9.98</span>
+                  </button>
+                </div>
+                <input type="hidden" id="variantVal" value="digital"/>
+              </div>
+            </div>
+            <div>
+              <div class="format-label">Qty</div>
+              <div class="qty-wrap">
+                <button type="button" class="qty-btn" id="qtyMinus" aria-label="Decrease">−</button>
+                <input type="number" class="qty-input" id="qtyInput" min="1" value="1" inputmode="numeric" aria-label="Quantity"/>
+                <button type="button" class="qty-btn" id="qtyPlus" aria-label="Increase">+</button>
+              </div>
+            </div>
+          </div>
+          <div class="buy-stack">
+            <a class="btn btn-fill" id="buyBtn"
+               href="https://buy.stripe.com/00w14o5zxdMs2Ry73TfrW0s"
+               target="_blank" rel="noopener">Buy Digital — $7.98</a>
+            <a class="btn btn-bc"
+               href="https://ltdrifta.bandcamp.com"
+               target="_blank" rel="noopener">
+              <svg viewBox="0 0 24 24" style="width:12px;height:12px;fill:#fff;flex-shrink:0;"><path d="M0 18.75l7.437-13.5H24l-7.438 13.5z"/></svg>
+              Also on Bandcamp
+            </a>
+          </div>
+          <p class="small-note" id="buyNote">Secure checkout via Stripe · Instant digital delivery</p>
+        </div>
+
+        <!-- REDEEM -->
+        <div class="r-block">
+          <div class="redeem-head">Download code</div>
+          <div class="redeem-row">
+            <input class="redeem-input" id="redeemCode" type="text"
+                   inputmode="text" autocomplete="one-time-code" placeholder="Enter code"/>
+            <button class="redeem-btn" id="redeemBtn" type="button">Redeem</button>
+          </div>
+          <div class="redeem-status" id="redeemStatus" role="status" aria-live="polite"></div>
+          <div class="dl-links hidden" id="redeemDownloads">
+            <a class="btn btn-fill" href="summermix1.mp3" download="LT Drifta - Summer Madness.mp3">Download MP3</a>
+          </div>
+        </div>
+
+        <!-- TABS -->
+        <div class="r-block">
+          <div class="tab-bar" role="tablist">
+            <button class="tab-btn" role="tab" aria-selected="true"  aria-controls="tab-track">Tracklist</button>
+            <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-details">Details</button>
+          </div>
+
+          <div class="tab-panel on" id="tab-track" role="tabpanel" style="padding-top:14px;">
+            <div class="tracklist">
+
+              <div class="track-row is-active" data-index="0">
+                <span class="track-no">1</span>
+                <span class="track-title">Summer Madness</span>
+                <span class="track-dur">3:20</span>
+                <button class="track-play-btn" type="button" aria-label="Play Summer Madness">
+                  <svg class="icon-play"  viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                  <svg class="icon-pause" viewBox="0 0 24 24"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+                </button>
+              </div>
+
+              <div class="track-row" data-index="1">
+                <span class="track-no">2</span>
+                <span class="track-title">Too Far</span>
+                <span class="track-dur">2:55</span>
+                <button class="track-play-btn" type="button" aria-label="Play Too Far">
+                  <svg class="icon-play"  viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                  <svg class="icon-pause" viewBox="0 0 24 24"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+                </button>
+              </div>
+
+              <div class="track-row" data-index="2">
+                <span class="track-no">3</span>
+                <span class="track-title">Naima</span>
+                <span class="track-dur">7:54</span>
+                <button class="track-play-btn" type="button" aria-label="Play Naima">
+                  <svg class="icon-play"  viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                  <svg class="icon-pause" viewBox="0 0 24 24"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+                </button>
+              </div>
+
+              <div class="track-row" data-index="3">
+                <span class="track-no">4</span>
+                <span class="track-title">Space and Time</span>
+                <span class="track-dur">2:07</span>
+                <button class="track-play-btn" type="button" aria-label="Play Space and Time">
+                  <svg class="icon-play"  viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                  <svg class="icon-pause" viewBox="0 0 24 24"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+                </button>
+              </div>
+
+              <div class="track-row" data-index="4">
+                <span class="track-no">5</span>
+                <span class="track-title">Go!</span>
+                <span class="track-dur">3:37</span>
+                <button class="track-play-btn" type="button" aria-label="Play Go!">
+                  <svg class="icon-play"  viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                  <svg class="icon-pause" viewBox="0 0 24 24"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+                </button>
+              </div>
+
+              <div class="track-row" data-index="5">
+                <span class="track-no">6</span>
+                <span class="track-title">Next Up</span>
+                <span class="track-dur">2:52</span>
+                <button class="track-play-btn" type="button" aria-label="Play Next Up">
+                  <svg class="icon-play"  viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                  <svg class="icon-pause" viewBox="0 0 24 24"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+                </button>
+              </div>
+
+              <div class="track-row" data-index="6">
+                <span class="track-no">7</span>
+                <span class="track-title">Colours of You</span>
+                <span class="track-dur">3:32</span>
+                <button class="track-play-btn" type="button" aria-label="Play Colours of You">
+                  <svg class="icon-play"  viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                  <svg class="icon-pause" viewBox="0 0 24 24"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+                </button>
+              </div>
+
+              <div class="track-row" data-index="7">
+                <span class="track-no">8</span>
+                <span class="track-title">Nu Saigon</span>
+                <span class="track-dur">1:04</span>
+                <button class="track-play-btn" type="button" aria-label="Play Nu Saigon">
+                  <svg class="icon-play"  viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                  <svg class="icon-pause" viewBox="0 0 24 24"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+                </button>
+              </div>
+
+              <div class="track-row" data-index="8">
+                <span class="track-no">9</span>
+                <span class="track-title">You're My</span>
+                <span class="track-dur">2:51</span>
+                <button class="track-play-btn" type="button" aria-label="Play You're My">
+                  <svg class="icon-play"  viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                  <svg class="icon-pause" viewBox="0 0 24 24"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+                </button>
+              </div>
+
+              <div class="track-row" data-index="9">
+                <span class="track-no">10</span>
+                <span class="track-title">So What</span>
+                <span class="track-dur">1:43</span>
+                <button class="track-play-btn" type="button" aria-label="Play So What">
+                  <svg class="icon-play"  viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                  <svg class="icon-pause" viewBox="0 0 24 24"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+                </button>
+              </div>
+
+              <div class="track-row" data-index="10">
+                <span class="track-no">11</span>
+                <span class="track-title">Mood Indigo</span>
+                <span class="track-dur">3:02</span>
+                <button class="track-play-btn" type="button" aria-label="Play Mood Indigo">
+                  <svg class="icon-play"  viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                  <svg class="icon-pause" viewBox="0 0 24 24"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+                </button>
+              </div>
+
+            </div>
+          </div>
+
+          <div class="tab-panel" id="tab-details" role="tabpanel" style="padding-top:14px;">
+            <p class="details-text">Summer Madness by LT Drifta. Available on digital download and limited cassette. 34:57 total runtime. 11 tracks.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="footer-wrap">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand">VCR Recordings</div>
+        <p class="footer-text">Independent electronic music.</p>
+        <div class="footer-social">
+          <a href="https://ltdrifta.bandcamp.com" target="_blank" rel="noopener" aria-label="Bandcamp">
+            <svg viewBox="0 0 24 24"><path d="M0 18.75l7.437-13.5H24l-7.438 13.5z"/></svg>
+          </a>
+          <a href="https://www.instagram.com/ltdrifta" target="_blank" rel="noopener" aria-label="Instagram">
+            <svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8z"/></svg>
+          </a>
+        </div>
+      </div>
+
+      <form class="signup-card" id="newsletterForm"
+            action="https://formspree.io/f/xdkwjzzr" method="POST" novalidate>
+        <input type="text" name="_gotcha" tabindex="-1" autocomplete="off"
+               style="position:absolute;left:-9999px" aria-hidden="true">
+        <div class="sc-row"><div class="sc-title">Get the newsletter.</div></div>
+        <div class="sc-row">
+          <input type="email" name="email" placeholder="your@email.com" aria-label="Email" required/>
+        </div>
+        <div class="sc-row">
+          <label><input type="checkbox" name="consent" value="yes" required/> I agree to receive emails</label>
+        </div>
+        <input type="hidden" name="source" value="Summer Madness — release page">
+        <input type="hidden" name="page" value="" id="signupPageField">
+        <button class="signup-submit" type="submit">Subscribe</button>
+      </form>
+    </div>
+
+    <div class="footer-bottom">
+      <span>© 2025 VCR Recordings</span>
+      <div class="footer-bottom-links">
+        <a href="mailto:info@vcrrecords.com">Contact</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ── CONFIG ──────────────────────────────────────────── */
+const CONFIG = {
+  mp3:            'summermix1.mp3',
+  stripeDigital:  'https://buy.stripe.com/00w14o5zxdMs2Ry73TfrW0s',
+  stripeCassette: 'https://buy.stripe.com/00w14o5zxdMs2Ry73TfrW0s'
+};
+
+/* ── TRACK CUE POINTS (seconds) ─────────────────────── */
+const TRACKS = [
+  { title: 'Summer Madness',  start: 0,    end: 200  },
+  { title: 'Too Far',         start: 200,  end: 375  },
+  { title: 'Naima',           start: 375,  end: 849  },
+  { title: 'Space and Time',  start: 849,  end: 976  },
+  { title: 'Go!',             start: 976,  end: 1193 },
+  { title: 'Next Up',         start: 1193, end: 1365 },
+  { title: 'Colours of You',  start: 1365, end: 1577 },
+  { title: 'Nu Saigon',       start: 1577, end: 1641 },
+  { title: "You're My",       start: 1641, end: 1812 },
+  { title: 'So What',         start: 1812, end: 1915 },
+  { title: 'Mood Indigo',     start: 1915, end: Infinity },
+];
+
+/* ── AUDIO ───────────────────────────────────────────── */
+const audio = new Audio();
+audio.preload = 'auto';
+audio.volume  = 0.8;
+audio.src     = CONFIG.mp3;
+audio.load();
+
+const fmt = s => { s = Math.max(0, Math.floor(isFinite(s) ? s : 0)); return Math.floor(s/60) + ':' + String(s%60).padStart(2,'0'); };
+const $   = id => document.getElementById(id);
+
+let dragging  = false;
+let activeIdx = 0;
+
+const playBtn   = $('ipPlay');
+const seekEl    = $('ipSeek');
+const volEl     = $('ipVolume');
+const elapsedEl = $('ipElapsed');
+const remainEl  = $('ipRemaining');
+const trackName = $('ipTrackName');
+const waveEl    = $('wave');
+const pMsg      = $('pMsg');
+const trackRows = [...document.querySelectorAll('.track-row')];
+
+for (let i = 0; i < 44; i++) {
+  const b = document.createElement('span');
+  b.style.cssText = `height:${2+Math.random()*14}px;animation-delay:${(Math.random()*1.2).toFixed(2)}s;animation-duration:${(.8+Math.random()*.6).toFixed(2)}s`;
+  waveEl.appendChild(b);
+}
+
+function setMsg(t, e) { pMsg.textContent = t||''; pMsg.className = 'p-msg'+(e?' err':''); }
+function getDur() { return isFinite(audio.duration) && audio.duration > 0 ? audio.duration : TRACKS[TRACKS.length-2].end; }
+function setPlaying(on) { playBtn.classList.toggle('on', on); waveEl.classList.toggle('on', on); }
+
+function setActive(idx) {
+  if (idx < 0 || idx >= TRACKS.length) return;
+  activeIdx = idx;
+  trackName.textContent = TRACKS[idx].title;
+  trackRows.forEach((r, i) => r.classList.toggle('is-active', i === idx));
+}
+
+function detectTrack(t) {
+  const i = TRACKS.findIndex((tr, j) => t >= tr.start && (!TRACKS[j+1] || t < TRACKS[j+1].start));
+  if (i >= 0 && i !== activeIdx) setActive(i);
+}
+
+function playTrack(idx) {
+  setActive(idx);
+  audio.currentTime = TRACKS[idx].start;
+  safePlay();
+}
+
+async function safePlay() {
+  if (audio.error) {
+    const m = {1:'Aborted.',2:'Network error.',3:'Decode error.',4:'File not found — place summermix1.mp3 beside this file.'};
+    setMsg(m[audio.error.code]||'Load failed.', true); return;
+  }
+  try { setMsg('Loading…'); await audio.play(); setMsg(''); }
+  catch(e) {
+    if (e.name==='NotAllowedError') setMsg('Tap again to start.', true);
+    else setMsg('Could not play — check summermix1.mp3 exists.', true);
+  }
+}
+
+audio.addEventListener('loadstart',      () => setMsg('Loading…'));
+audio.addEventListener('loadedmetadata', () => { seekEl.max = String(getDur()); setMsg(''); });
+audio.addEventListener('canplay',        () => setMsg(''));
+audio.addEventListener('play',           () => { setPlaying(true); setMsg(''); });
+audio.addEventListener('pause',          () => setPlaying(false));
+audio.addEventListener('ended',          () => setPlaying(false));
+audio.addEventListener('waiting',        () => setMsg('Buffering…'));
+audio.addEventListener('error', () => {
+  const m = {1:'Aborted.',2:'Network error.',3:'Decode error.',4:'File not found or unsupported.'};
+  setMsg((m[audio.error?.code]||'Load failed.')+' Check summermix1.mp3 exists.', true);
+});
+audio.addEventListener('timeupdate', () => {
+  const d = getDur();
+  if (!dragging) seekEl.value = String(audio.currentTime || 0);
+  elapsedEl.textContent = fmt(audio.currentTime);
+  remainEl.textContent  = '-' + fmt(d - audio.currentTime);
+  detectTrack(audio.currentTime);
+});
+
+playBtn.addEventListener('click', () => audio.paused ? safePlay() : audio.pause());
+seekEl.addEventListener('pointerdown', () => dragging = true);
+seekEl.addEventListener('pointerup',   () => { dragging = false; });
+seekEl.addEventListener('input',  () => { elapsedEl.textContent = fmt(+seekEl.value||0); detectTrack(+seekEl.value); });
+seekEl.addEventListener('change', () => { audio.currentTime = +seekEl.value||0; detectTrack(audio.currentTime); });
+volEl.addEventListener('input',   () => audio.volume = +volEl.value || 0.8);
+
+trackRows.forEach((row, idx) => {
+  row.addEventListener('click', () => {
+    idx === activeIdx ? (audio.paused ? safePlay() : audio.pause()) : playTrack(idx);
+  });
+});
+
+setActive(0);
+
+/* ── FORMAT PICKER ───────────────────────────────────── */
+(function() {
+  const fpWrap = $('fpWrap');
+  const fpTrig = $('fpTrigger');
+  const fpMenu = $('fpMenu');
+  const fpChev = $('fpChev');
+  const fpOpts = [...document.querySelectorAll('.format-opt')];
+  const varVal = $('variantVal');
+
+  function isOpen() { return !fpMenu.hidden; }
+  function openDropdown()  { fpMenu.hidden = false; fpTrig.setAttribute('aria-expanded','true');  fpChev.style.transform = 'translateY(-35%) rotate(-135deg)'; }
+  function closeDropdown() { fpMenu.hidden = true;  fpTrig.setAttribute('aria-expanded','false'); fpChev.style.transform = 'translateY(-65%) rotate(45deg)'; }
+
+  fpTrig.addEventListener('click', () => isOpen() ? closeDropdown() : openDropdown());
+  document.addEventListener('click', e => { if (!fpWrap.contains(e.target)) closeDropdown(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDropdown(); });
+
+  const VARIANTS = {
+    digital:  { label: 'Digital MP3', price: '$7.98', priceMeta: '7.98', note: 'USD', btnText: 'Buy Digital — $7.98',  stripeHref: CONFIG.stripeDigital,  buyNote: 'Secure checkout via Stripe · Instant digital delivery' },
+    cassette: { label: 'Cassette',    price: '$9.98', priceMeta: '9.98', note: 'USD', btnText: 'Buy Cassette — $9.98', stripeHref: CONFIG.stripeCassette, buyNote: 'Secure checkout via Stripe · Physical · Ships worldwide' }
+  };
+
+  function updateVariant() {
+    const v = VARIANTS[varVal.value] || VARIANTS.digital;
+    $('priceAmount').textContent  = v.price;
+    $('priceDisplay').querySelector('meta[itemprop="price"]').content = v.priceMeta;
+    $('priceFormat').textContent  = v.note;
+    $('buyBtn').textContent = v.btnText;
+    $('buyBtn').href        = v.stripeHref;
+    $('fpLabel').textContent = v.label;
+    $('buyNote').textContent = v.buyNote;
+    fpOpts.forEach(o => {
+      const sel = o.dataset.value === varVal.value;
+      o.setAttribute('aria-selected', sel ? 'true' : 'false');
+      o.classList.toggle('on', sel);
+    });
+  }
+
+  fpOpts.forEach(o => o.addEventListener('click', () => {
+    varVal.value = o.dataset.value;
+    updateVariant();
+    closeDropdown();
+  }));
+
+  updateVariant();
+
+  $('qtyMinus').addEventListener('click', () => $('qtyInput').value = Math.max(1, +$('qtyInput').value - 1));
+  $('qtyPlus').addEventListener('click',  () => $('qtyInput').value = Math.max(1, +$('qtyInput').value + 1));
+})();
+
+/* ── PURCHASE MODAL ──────────────────────────────────── */
+const modal = $('purchaseModal');
+const openM  = () => { modal.classList.add('show'); document.body.style.overflow = 'hidden'; };
+const closeM = () => {
+  modal.classList.remove('show'); document.body.style.overflow = '';
+  const u = new URL(location.href);
+  ['purchase','session_id'].forEach(k => u.searchParams.delete(k));
+  history.replaceState({},'',u);
+};
+$('modalClose').addEventListener('click', closeM);
+$('modalDismiss').addEventListener('click', closeM);
+modal.addEventListener('click', e => { if (e.target === modal) closeM(); });
+$('dlMp3Modal').href = CONFIG.mp3;
+const sp = new URLSearchParams(location.search);
+if (sp.get('purchase') === 'success' || sp.has('session_id')) setTimeout(openM, 600);
+
+/* ── REDEEM ──────────────────────────────────────────── */
+// TODO: Replace with Summer Madness redeem codes
+const CODE_BANK = new Set([
+  'SMR1A2B','SMR3C4D','SMR5E6F','SMR7G8H','SMR9J1K',
+  'SMR2L3M','SMR4N5P','SMR6Q7R','SMR8S9T','SMR1U2V',
+].map(c => c.toUpperCase()));
+
+const USED  = new Set(JSON.parse(localStorage.getItem('vcr_used_codes_summermadness')||'[]'));
+const saveU = () => localStorage.setItem('vcr_used_codes_summermadness', JSON.stringify([...USED]));
+const rdSt  = $('redeemStatus'), rdDL = $('redeemDownloads');
+
+async function forceDownload(url, name) {
+  try {
+    const r = await fetch(url); if (!r.ok) throw 0;
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(await r.blob()); a.download = name;
+    document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+  } catch { window.location.href = url; }
+}
+
+async function redeem() {
+  const code = ($('redeemCode').value||'').trim().toUpperCase();
+  rdDL.classList.add('hidden'); rdSt.textContent = '';
+  if (!code)                { rdSt.textContent = 'Enter your code.';   return; }
+  if (USED.has(code))       { rdSt.textContent = 'Code already used.'; return; }
+  if (!CODE_BANK.has(code)) { rdSt.textContent = 'Invalid code.';      return; }
+  USED.add(code); saveU();
+  rdSt.textContent = 'Accepted — starting download…';
+  try {
+    await forceDownload(CONFIG.mp3, 'LT Drifta - Summer Madness.mp3');
+    rdSt.textContent = 'Download started.'; rdDL.classList.remove('hidden');
+  } catch { rdSt.textContent = 'Use the button below.'; rdDL.classList.remove('hidden'); }
+}
+$('redeemBtn').addEventListener('click', redeem);
+$('redeemCode').addEventListener('keydown', e => { if (e.key === 'Enter') redeem(); });
+
+/* ── TABS ────────────────────────────────────────────── */
+(function() {
+  const btns = document.querySelectorAll('[role="tab"]');
+  const panels = document.querySelectorAll('.tab-panel');
+  btns.forEach(btn => btn.addEventListener('click', () => {
+    btns.forEach(b => b.setAttribute('aria-selected','false'));
+    panels.forEach(p => p.classList.remove('on'));
+    btn.setAttribute('aria-selected','true');
+    document.getElementById(btn.getAttribute('aria-controls'))?.classList.add('on');
+  }));
+})();
+
+/* ── ZOOM ────────────────────────────────────────────── */
+(function() {
+  const zo = $('zoom'), zi = $('zoomImg');
+  const aw = $('artworkWrap'), src = $('heroImg');
+  aw.addEventListener('click', () => { zi.src = src.src; zo.style.display = 'flex'; });
+  zo.addEventListener('click', e => { if (e.target !== zi) zo.style.display = 'none'; });
+  zo.querySelector('.zoom-close').addEventListener('click', () => zo.style.display = 'none');
+})();
+
+/* ── FADE IN ─────────────────────────────────────────── */
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('is-visible'); obs.unobserve(e.target); } });
+}, { threshold: 0.08 });
+document.querySelectorAll('.fade-up').forEach(el => obs.observe(el));
+
+(function(){ const f = $('signupPageField'); if (f) f.value = location.href; })();
+</script>
+</body>
+</html>

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+  />
+  <title>Analog Fog Recordings</title>
+  <link href="static/style.css" rel="stylesheet" />
+
+  <!-- Page‑specific style overrides -->
+  <style>
+    /* exactly like home.html: push content below header */
+    body.contact-page main {
+      margin-top: 100px !important;
+      padding-top: 20px !important;
+    }
+  </style>
+</head>
+
+
+    <body class="contact-page">
+  …
+</body>
+
+  <header>
+    <div class="hamburger-menu">
+      <button
+        class="hamburger-icon"
+        aria-label="Toggle Navigation"
+        onclick="toggleMenu()"
+      >
+        ☰
+      </button>
+
+      <nav class="header-links" aria-label="Main Navigation">
+        <ul>
+          <li><a href="home.html">Browse</a></li>
+          <li><a href="shop.html">Shop</a></li>
+          <li><a href="contact.html">Contact</a></li>
+        </ul>
+      </nav>
+    </div>
+
+
+    <div class="logo-container">
+      <a href="home.html">
+        <img src="static/text.png" alt="Logo" class="logo" />
+      </a>
+    </div>
+
+    <div class="cart-container">
+      <a href="cart.html">
+        <img src="static/cart.png" alt="Shopping Cart" class="cart-icon" />
+        <span id="cart-count"></span>
+      </a>
+    </div>
+  </header>
+
+<p></p>
+
+<p></p>
+
+
+
+
+
+
+<main>
+<div class="mix-container"><!-- New section of text above MP3 links -->
+
+
+</div>
+
+
+
+
+
+<section class="mix-set">
+
+   
+  <div class="contact-info-box">
+      
+    <p>
+      <span style="display: block; font-size: 1.2rem; font-weight: 500; margin-bottom: 0.5rem; color: #e0e0e0;">Mailing Address</span>
+
+   
+      <strong></strong>
+      
+      Box 704 <br>
+      
+      Cumberland BC/<br> VOR 1S0<br><div style="line-height: 0.9;">&nbsp;</div> 2731 Dunsmuir Ave<br><br><br> 
+      
+      <span style="display: block; font-size: 1.2rem; font-weight: 500; margin-bottom: 0.5rem; color: #e0e0e0;">Contact Info</span>
+      
+ <div class="contact-info">
+  <strong>e:</strong> <a href="mailto:charlie@vcrrecords.com">charlie@vcrrecords.com</a><br>
+  <div style="line-height: 0.5;"> </div>
+  <strong>t:</strong> <a href="tel:2502010936">201-0936</a><br><br><br><br>
+  (P)(C) Dub-plate music
+</div>
+</section>
+
+
+
+
+    </div>
+</main>
+
+    <footer class="footer">
+        <p>&copy; 2025 Analog Fog Recordings.</p>
+    </footer>
+</body>
+
+<script>
+    function toggleMenu() {
+        document.querySelector('.header-links').classList.toggle('show');
+    }
+</script>
+
+ <script>
+    function updateCartCount() {
+      const cart = JSON.parse(localStorage.getItem('cart')) || [];
+      const cartCount = cart.reduce((total, item) => total + item.quantity, 0);
+      document.getElementById('cart-count').textContent = cartCount;
+    }
+
+    function addToCart(name, price) {
+      let cart = JSON.parse(localStorage.getItem('cart')) || [];
+      const existingItem = cart.find(item => item.name === name);
+      if (existingItem) {
+        existingItem.quantity += 1;
+      } else {
+        cart.push({ name, price, quantity: 1 });
+      }
+      localStorage.setItem('cart', JSON.stringify(cart));
+      alert(`${name} added to cart!`);
+      updateCartCount();
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      document.querySelectorAll('.add-to-cart-btn').forEach(button => {
+        button.addEventListener('click', () => {
+          const name = button.getAttribute('data-name');
+          const price = parseFloat(button.getAttribute('data-price'));
+          addToCart(name, price);
+        });
+      });
+      updateCartCount();
+    });
+
+    function toggleMenu() {
+      document.querySelector('.header-links').classList.toggle('show');
+    }
+</script>
+
+</html>
+</html>

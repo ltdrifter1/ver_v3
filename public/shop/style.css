@@ -1,0 +1,952 @@
+:root {
+  --bg: #0d0d0d;
+  --text: #f5f5f5;
+  --accent: #ff2d55;
+}
+
+/* ===== Base ===== */
+body {
+  font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  margin: 0;
+}
+
+a { text-decoration: none; color: var(--text); }
+
+/* ===== Header ===== */
+.site-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #000; /* solid black */
+  border-bottom: 1px solid #222;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  padding: calc(1rem + env(safe-area-inset-top, 0px)) 2rem 1rem;
+}
+
+
+.left-group { display: flex; align-items: center; gap: 2rem; }
+.logo img { height: 35px; width: auto; display: block; }
+.nav { display: flex; gap: 1.2rem; }
+.nav a { font-weight: 500; }
+
+/* ===== Live Pill (kept for future) ===== */
+.live-pill {
+  display: flex; align-items: center; background: #333; border-radius: 999px; overflow: hidden; cursor: pointer;
+  width: 110px; height: 42px; box-shadow: 0 2px 6px rgba(0,0,0,0.3); transition: background 0.2s ease;
+}
+.live-pill img { width: 32px; height: 32px; object-fit: cover; flex-shrink: 0; }
+.pill-button { flex: 1; display: flex; align-items: center; justify-content: center; background: transparent; }
+.pill-button svg { width: 20px; height: 20px; fill: white; pointer-events: none; }
+
+/* ===== Main Layout ===== */
+.main-wrapper { max-width: 1280px; margin: 0 auto; padding: 2rem; }
+.section-block { max-width: 1280px; margin: 0 auto 2rem; padding: 0 2rem; box-sizing: border-box; }
+.section-block h2 { font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem; letter-spacing: 0.6px; text-align: left; }
+
+/* ===== Row A: Two Cards ===== */
+.row { display: flex; gap: 1rem; margin-bottom: 2rem; }
+.two-wide .rect-card { flex: 1; display: flex; background: #1d1d1d; border-radius: 12px; overflow: hidden; min-height: 120px; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+.rect-card img { width: 120px; height: 100%; object-fit: cover; }
+.rect-content { padding: 1rem; display: flex; flex-direction: column; justify-content: space-between; color: white; flex: 1; position: relative; }
+.rect-content .label { font-size: 0.75rem; color: #bbb; font-weight: 600; text-transform: uppercase; margin-bottom: 0.2rem; }
+.rect-content .up-next { font-size: 0.8rem; color: #aaa; margin-bottom: 0.3rem; }
+.rect-content .time { font-size: 0.9rem; margin-top: 0.5rem; }
+.rect-content .time strong { font-size: 1rem; font-weight: 600; }
+.rect-content .muted { color: #666; margin-left: 0.5rem; }
+.rect-content .channel { font-size: 0.7rem; color: #666; text-transform: uppercase; position: absolute; bottom: 1rem; right: 1rem; }
+.rect-content .title { font-size: 1.1rem; font-weight: 700; margin-top: 0.3rem; }
+
+/* Keep row flush with section padding */
+.section-block > .row.two-wide { margin-left: -2rem; margin-right: -2rem; }
+
+/* ===== Horizontal Rows (carousels) ===== */
+.row-wrapper { padding-left: 0; }
+.row-scroll { padding-left: 0; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 1rem; padding-bottom: 1rem; align-items: flex-start; }
+.row-scroll::-webkit-scrollbar { display: none; }
+
+/* ===== Square Cards ===== */
+.square-card { display: flex; flex-direction: column; flex: 0 0 auto; width: 200px; gap: 4px; background: transparent; border-radius: 8px; scroll-snap-align: start; }
+.square-card .card-inner { position: relative; width: 100%; aspect-ratio: 1 / 1; overflow: hidden; border-radius: 8px; background: #222; }
+.square-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.square-card .overlay { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 0.5rem; color: white; }
+.square-card .overlay h4 { font-size: 0.9rem; margin: 0; }
+
+/* Tags below image */
+.square-card .tags-below { display: flex; gap: 0.3rem; overflow: hidden; white-space: nowrap; padding: 0 0.3rem 6px 0; }
+.square-card .tags-below span { flex: 0 0 auto; background: #444; padding: 0.25rem 0.6rem; font-size: 0.65rem; color: #eee; border-radius: 999px; text-overflow: ellipsis; }
+
+/* ===== Small round play button on cards ===== */
+.play-button {
+  position: absolute; top: 8px; left: 8px; width: 24px; height: 24px; background-color: rgba(128, 128, 128, 0.95);
+  border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 2; padding: 1px; cursor: pointer;
+  transition: transform .12s ease, box-shadow .2s ease, background-color .2s ease;
+}
+.play-button:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,.35); }
+.play-button:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(255,255,255,.7), 0 0 0 5px rgba(0,0,0,.5); }
+.play-button svg { width: 14px; height: 14px; fill: white; pointer-events: none; }
+
+/* ===== Episode (list items) ===== */
+.episode { background: #2a2a2a; border-radius: 12px; padding: 1rem; margin-bottom: 2rem; display: flex; gap: 1.5rem; align-items: flex-start; }
+.episode img { width: 120px; height: 120px; object-fit: cover; border-radius: 8px; }
+.episode-content { flex: 1; }
+.episode-content h3 { margin: 0 0 0.5rem; font-size: 1.2rem; }
+.episode-content p { margin-bottom: 1rem; color: #ccc; }
+.episode-content audio { width: 100%; margin-bottom: 1rem; filter: invert(1) brightness(1.3); }
+
+/* ===== Tags (generic) ===== */
+.tags { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.tags span { background: #444; padding: 0.3rem 0.8rem; font-size: 0.75rem; color: #eee; border-radius: 999px; }
+
+/* ===== Native audio UI tint ===== */
+audio { background: transparent; outline: none; border: none; height: 28px; }
+audio::-webkit-media-controls-panel { background: transparent !important; }
+audio::-webkit-media-controls-enclosure { background-color: transparent !important; }
+audio::-webkit-media-controls-play-button,
+audio::-webkit-media-controls-current-time-display,
+audio::-webkit-media-controls-time-remaining-display,
+audio::-webkit-media-controls-timeline,
+audio::-webkit-media-controls-volume-slider { filter: invert(1) brightness(1.2); }
+
+/* ===== Footer ===== */
+.site-footer { background: #0b0b0b; color: #f5f5f5; padding: 3rem 2rem 2rem; font-size: 0.9rem; }
+.footer-columns { display: flex; flex-wrap: wrap; gap: 2rem; justify-content: space-between; max-width: 1200px; margin: 0 auto; }
+.footer-col { flex: 1 1 300px; min-width: 260px; }
+.footer-col h4, .footer-col h5 { font-size: 0.95rem; text-transform: uppercase; font-weight: bold; margin-bottom: 1rem; }
+.footer-col ul { list-style: none; padding: 0; margin-bottom: 1.5rem; }
+.footer-col ul li { margin-bottom: 0.5rem; }
+.footer-col ul li a { color: #f5f5f5; text-decoration: none; }
+.footer-col p { margin-bottom: 1rem; line-height: 1.4; }
+.app-buttons img { height: 40px; margin-right: 0.5rem; }
+.newsletter-form input[type="email"] { background: transparent; border: none; border-bottom: 1px solid #555; padding: 0.5rem 0; width: 100%; margin-bottom: 1rem; color: white; }
+.newsletter-form label { display: flex; align-items: center; font-size: 0.8rem; margin-bottom: 1rem; }
+.newsletter-form input[type="checkbox"] { margin-right: 0.5rem; }
+.newsletter-form button { background: #333; color: white; border: none; padding: 0.7rem 1.2rem; font-weight: bold; cursor: pointer; }
+
+.footer-bottom { border-top: 1px solid #222; margin-top: 2rem; padding-top: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; text-align: center; }
+.footer-bottom img { height: 30px; }
+.footer-bottom p { font-size: 0.75rem; color: #aaa; }
+
+/* ===== Listen Button (modern pill) ===== */
+.listen-button {
+  --btn-bg: #f2f2f2;
+  --btn-bg-hover: #ffffff;
+  --btn-border: rgba(0,0,0,0.15);
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 0.45rem 0.9rem; min-height: 36px;
+  background: var(--btn-bg); color: #000 !important; -webkit-text-fill-color: #000;
+  border: none; border-radius: 999px;
+  box-shadow: inset 0 0 0 1px var(--btn-border), 0 2px 6px rgba(0,0,0,0.18);
+  font-size: 0.82rem; font-weight: 600; letter-spacing: .2px; cursor: pointer; backdrop-filter: saturate(140%);
+  transition: background .2s ease, transform .12s ease, box-shadow .2s ease;
+}
+.listen-button:hover { background: var(--btn-bg-hover); transform: translateY(-1px) scale(1.02); box-shadow: inset 0 0 0 1px var(--btn-border), 0 6px 16px rgba(0,0,0,0.24); }
+.listen-button:active { transform: translateY(0) scale(0.98); box-shadow: inset 0 0 0 1px var(--btn-border), 0 2px 6px rgba(0,0,0,0.18); }
+.listen-button:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(255,255,255,0.9), 0 0 0 5px rgba(0,0,0,0.45), inset 0 0 0 1px var(--btn-border); }
+.listen-button .play-icon { width: 14px; height: 14px; fill: currentColor; flex-shrink: 0; margin-left: 2px; }
+
+/* Position Listen pill in Row A cards */
+.two-wide .rect-card .rect-content .listen-button { position: absolute; right: 12px; bottom: 12px; }
+.two-wide .rect-card .rect-content { padding-bottom: 3rem; }
+.two-wide .rect-card .rect-content .channel { left: 1rem; right: auto; }
+.label-row { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0; flex-wrap: wrap; }
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+  .main-wrapper { padding: 1rem; }
+  .section-block { padding: 0 1rem; }
+  .row { flex-direction: column; }
+  .rect-card { flex-direction: column; }
+  .rect-card img { width: 100%; height: auto; }
+  .square-card { width: 160px; }
+  .episode { flex-direction: column; }
+  .episode img { width: 100%; height: auto; }
+}
+
+/* ===== Row A: mobile layout fix — keep CHANNEL tag at the bottom ===== */
+@media (max-width: 420px){
+  .row.two-wide { flex-direction: column; gap: 0.75rem; }
+
+  .row.two-wide .rect-card{
+    flex-direction: row; align-items: center; min-height: unset;
+    position: relative; /* anchor for absolutely-positioned bits */
+  }
+
+  .row.two-wide .rect-card img{
+    width: 96px; height: 96px; object-fit: cover; flex-shrink: 0;
+  }
+
+  .row.two-wide .rect-content{
+    padding: 0.75rem 0.75rem 2.6rem; /* bottom padding for channel + button */
+    position: relative;              /* needed for absolute children */
+  }
+
+  .row.two-wide .rect-content .title{
+    font-size: 1rem; margin-top: 0.25rem;
+  }
+
+  .row.two-wide .rect-content .time{
+    font-size: 0.85rem; margin-top: 0.35rem;
+  }
+
+  /* pin the CHANNEL tag at the bottom-left */
+  .row.two-wide .rect-content .channel{
+    position: absolute;
+    left: 0.75rem;
+    right: auto;
+    bottom: 0.55rem;
+    font-size: 0.7rem;
+    color: #888;
+  }
+
+  /* keep the Listen pill bottom-right on mobile */
+  .row.two-wide .rect-card .rect-content .listen-button{
+    position: absolute;
+    right: 10px;
+    bottom: 8px;
+    padding: 0.25rem 0.6rem;
+    font-size: 0.72rem;
+  }
+}
+
+
+/* Motion */
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+/* Footer spacing tweaks */
+.footer-columns{ column-gap: clamp(3rem, 8vw, 10rem); gap: clamp(3rem, 8vw, 10rem); }
+.footer-columns .footer-col:first-child{ max-width: 560px; }
+
+/* --- New Releases (existing v2 styles kept if needed) --- */
+.release-card.v2{
+  display:grid; grid-template-columns: 84px 1fr; gap:14px; align-items:center;
+  background: linear-gradient(180deg,#2b2b2b,#242424);
+  border: 1px solid #3a3a3a; border-radius: 16px;
+  box-shadow: 0 1px 0 rgba(255,255,255,.05) inset, 0 -1px 0 rgba(0,0,0,.10) inset, 0 10px 20px rgba(0,0,0,.20);
+  padding:14px 16px; margin-bottom: 26px;
+}
+.release-card.v2 .release-art{ width:84px; height:84px; border-radius:12px; object-fit:cover; display:block; box-shadow: 0 8px 18px rgba(0,0,0,.35); }
+.release-card.v2 .release-meta{ display:flex; flex-direction:column; gap:8px; min-width:0; }
+.release-title{ margin:0; font-size: clamp(18px, 4.5vw, 22px); line-height: 1.22; letter-spacing:.2px; }
+.release-sub{ margin:0; color:#bdbdbd; font-size:.95rem; }
+.spaced{ letter-spacing:.22em; text-transform: lowercase; }
+.release-actions{ display:flex; align-items:center; gap:10px; }
+.clamp-2{ display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+@media (max-width:480px){
+  .release-card.v2{ grid-template-columns:72px 1fr; padding:12px 14px; gap:12px; }
+  .release-card.v2 .release-art{ width:72px; height:72px; border-radius:10px; }
+}
+
+/* --- New Releases (clean variant used in HTML) --- */
+.release-card.clean{
+  display:flex; align-items:center; gap:14px;
+  background: linear-gradient(180deg,#2b2b2b,#242424);
+  border:1px solid #3a3a3a; border-radius:16px;
+  box-shadow:0 1px 0 rgba(255,255,255,.05) inset, 0 -1px 0 rgba(0,0,0,.10) inset, 0 10px 20px rgba(0,0,0,.20);
+  padding:14px 16px; margin-bottom:20px;
+}
+.release-card.clean .release-art{
+  width:84px; height:84px; flex:0 0 84px;
+  border-radius:12px; object-fit:cover; display:block;
+  box-shadow: 0 8px 18px rgba(0,0,0,.35);
+}
+.release-card.clean .release-body{ flex:1; min-width:0; }
+.release-card.clean .release-title{
+  margin:0 0 4px; font-size:clamp(18px, 2.2vw, 22px);
+  line-height:1.22; letter-spacing:.2px;
+}
+.release-card.clean .release-meta{
+  margin:0; color:#bdbdbd; font-size:.95rem;
+  overflow:hidden; white-space:nowrap; text-overflow:ellipsis;
+}
+.release-card.clean .release-meta .dot{ margin:0 6px; opacity:.6; }
+.release-card.clean .listen-button{ margin-left:auto; }
+.release-card.clean .duration{ margin-left:10px; color:#bdbdbd; font-size:.9rem; white-space:nowrap; }
+@media (max-width:520px){
+  .release-card.clean{ gap:12px; padding:12px 14px; }
+  .release-card.clean .release-art{ width:72px; height:72px; flex-basis:72px; border-radius:10px; }
+  .release-card.clean .duration{ display:none; }
+}
+
+
+/* ================================
+   Now Playing – NTS-style dark bar
+   ================================ */
+
+
+/* main row: controls pill + track pill */
+.now-playing .np-row{
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* shared pill styling */
+.np-pill{
+  background: #050505;
+  border: 1px solid #222;
+  border-radius: 999px;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.03) inset,
+              0 -1px 0 rgba(0,0,0,0.6) inset;
+}
+
+/* left pill = playback controls */
+.np-pill.np-controls{
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  flex-shrink: 0;
+}
+
+/* right pill = time + seek */
+.np-pill.np-track{
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+/* buttons — always visible */
+.np-btn{
+  background: #111;                 /* slightly lighter than pure black */
+  border: 1px solid #444;           /* visible border */
+  padding: 0;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  color: var(--text);               /* <-- icons always visible */
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.1s ease;
+}
+
+.np-btn.big{
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+}
+
+.np-btn svg{
+  width: 18px;
+  height: 18px;
+  fill: currentColor;               /* <-- inherit the light text color */
+}
+
+/* 30s skip buttons: clean icon + CSS badge (no SVG text) */
+.now-playing .np-btn.np-skip{
+  position: relative;
+}
+
+.now-playing .np-btn .np-icon{
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
+.now-playing .np-badge{
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  font-size: 9px;
+  line-height: 1;
+  font-weight: 800;
+  padding: 3px 4px;
+  border-radius: 7px;
+  color: rgba(255,255,255,.92);
+  background: rgba(0,0,0,.35);
+  border: 1px solid rgba(255,255,255,.14);
+  letter-spacing: .02em;
+  pointer-events: none;
+}
+
+.now-playing{
+  --np-accent: #4aa3ff;   /* blue */
+}
+
+/* Force thumb color so it can’t inherit the red accent */
+.now-playing .np-seek::-webkit-slider-thumb{
+  background: radial-gradient(circle at 30% 30%, #ffffff, #dbe9ff 55%, #9cc7ff 100%) !important;
+}
+.now-playing .np-seek::-moz-range-thumb{
+  background: radial-gradient(circle at 30% 30%, #ffffff, #dbe9ff 55%, #9cc7ff 100%) !important;
+}
+
+
+
+
+
+/* hover: invert like NTS */
+.np-btn:hover{
+  background: var(--text);
+  color: #000;
+  border-color: var(--text);
+  transform: translateY(-1px);
+}
+
+
+/* times + slider */
+.np-time{
+  width: 52px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.65rem;
+  color: #ccc;
+}
+.np-time.left{
+  text-align: left;
+}
+
+input[type="range"].np-seek{
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 3px;
+  background: #333;
+  border-radius: 999px;
+  outline: none;
+  min-width: 0;
+}
+
+/* WebKit thumb */
+input[type="range"].np-seek::-webkit-slider-thumb{
+  -webkit-appearance: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: none;
+  margin-top: -3.5px; /* center on track */
+}
+
+/* Firefox thumb */
+input[type="range"].np-seek::-moz-range-thumb{
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: none;
+}
+input[type="range"].np-seek::-moz-range-track{
+  height: 3px;
+  border-radius: 999px;
+  background: #333;
+}
+
+/* meta row under the bar: show title + message */
+.np-meta{
+  max-width: 1100px;
+  margin: 4px auto 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  font-size: 0.65rem;
+  text-transform: none;
+  letter-spacing: 0;
+  color: #bbb;
+}
+#npTitle{
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-weight: 600;
+  color: var(--text);
+}
+.np-msg{
+  font-size: 0.6rem;
+  opacity: 0.8;
+}
+
+/* mobile: stack controls + track vertically */
+@media (max-width: 640px){
+  .now-playing{
+    padding-inline: 10px;
+  }
+  .now-playing .np-row{
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .np-pill.np-controls,
+  .np-pill.np-track{
+    width: 100%;
+    justify-content: center;
+  }
+  .np-pill.np-track{
+    grid-template-columns: auto 1fr auto;
+  }
+}
+
+
+
+
+/* Stack container for the two buy buttons */
+.buy-stack{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  margin-left:auto; /* keeps the block on the right side of the card */
+}
+
+/* Primary buy button (matches your pill style, no icon) */
+.buy-button{
+  --btn-bg:#f2f2f2;
+  --btn-bg-hover:#ffffff;
+  --btn-border:rgba(0,0,0,0.15);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  padding:0.45rem 0.9rem;
+  min-height:36px;
+  background:var(--btn-bg);
+  color:#000 !important; -webkit-text-fill-color:#000;
+  border:none;
+  border-radius:999px;
+  box-shadow:inset 0 0 0 1px var(--btn-border), 0 2px 6px rgba(0,0,0,0.18);
+  font-size:0.82rem;
+  font-weight:600;
+  letter-spacing:.2px;
+  cursor:pointer;
+  backdrop-filter:saturate(140%);
+  transition:background .2s ease, transform .12s ease, box-shadow .2s ease;
+  text-decoration:none;
+}
+.buy-button:hover{
+  background:var(--btn-bg-hover);
+  transform:translateY(-1px) scale(1.02);
+  box-shadow:inset 0 0 0 1px var(--btn-border), 0 6px 16px rgba(0,0,0,0.24);
+}
+.buy-button:active{
+  transform:translateY(0) scale(0.98);
+  box-shadow:inset 0 0 0 1px var(--btn-border), 0 2px 6px rgba(0,0,0,0.18);
+}
+.buy-button:focus-visible{
+  outline:none;
+  box-shadow:0 0 0 2px rgba(255,255,255,0.9), 0 0 0 5px rgba(0,0,0,0.45), inset 0 0 0 1px var(--btn-border);
+}
+
+/* ============ New Releases – COMPACT (single, final source of truth) ============ */
+
+/* narrow buttons column; text gets the rest */
+.release-card.clean.compact{
+  --art: 84px;          /* art size on normal phones */
+  --buy-col: 112px;     /* width of the right button column */
+  display: grid;
+  grid-template-columns: var(--art) minmax(0,1fr) var(--buy-col); /* art | text | buttons */
+  align-items: center;
+  gap: 12px;
+}
+
+/* text side must be allowed to shrink + ellipsize */
+.release-card.clean.compact .release-body{ min-width: 0; }
+.release-card.clean.compact .release-title,
+.release-card.clean.compact .release-meta{
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* tighter title + subtitle so they fit */
+.release-card.clean.compact .release-title{
+  font-size: clamp(15px, 4vw, 17px);
+  font-weight: 500;
+  line-height: 1.1;
+  margin: 0 0 2px;
+}
+.release-card.clean.compact .release-meta{
+  font-size: clamp(12px, 3.2vw, 13.5px);
+  line-height: 1.1;
+  letter-spacing: .01em;
+  color: #cfcfcf;
+  margin: 0;
+}
+
+/* right column: two compact pills, fixed width */
+.release-card.clean.compact .buy-stack{
+  display: flex; flex-direction: column; gap: 8px;
+  width: var(--buy-col); flex: 0 0 var(--buy-col);
+}
+
+/* compact pill buttons */
+.release-card.clean.compact .buy-button{
+  white-space: nowrap;
+  font-size: clamp(10.5px, 3.1vw, 12px);
+  padding: .26rem .58rem;
+  min-height: 26px;
+  border-radius: 999px;
+  background: #f2f2f2; color:#000 !important;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.12), 0 2px 5px rgba(0,0,0,.16);
+  text-align: center;
+}
+.release-card.clean.compact .buy-button.secondary{ background:#e9e9e9; }
+
+/* ---- small iPhones (mini widths, SE etc.) ---- */
+@media (max-width: 390px){
+  .release-card.clean.compact{
+    --art: 72px;
+    --buy-col: 102px;       /* skinnier button column */
+    gap: 10px;
+  }
+  .release-card.clean.compact .buy-stack{ gap: 6px; }
+  .release-card.clean.compact .buy-button{
+    font-size: clamp(10px, 3.2vw, 11.5px);
+    padding: .22rem .46rem;
+    min-height: 24px;
+  }
+  .release-card.clean.compact .release-title{ font-size: clamp(14px, 3.8vw, 16px); }
+  .release-card.clean.compact .release-meta{  font-size: clamp(11.5px, 3.1vw, 12.5px); }
+}
+
+/* ultra-narrow fallback */
+@media (max-width: 350px){
+  .release-card.clean.compact{ --buy-col: 96px; }
+}
+.release-art.cover-play { cursor: pointer; }
+
+
+/* --- New Releases .tracks: hard overrides to beat .clean + .buy-button --- */
+.release-card.clean.tracks{
+  /* switch flex -> grid and remove inner padding so art can be edge-to-edge */
+  --art: 84px;
+  --buy-col: 108px;                 /* same width for both buttons */
+  display: grid !important;         /* beat .clean's flex */
+  grid-template-columns: var(--art) minmax(0,1fr) var(--buy-col);
+  align-items: stretch;
+  gap: 0 12px;                      /* no extra vertical gap */
+  padding: 0 !important;            /* remove .clean padding that made side gaps */
+  overflow: hidden;                 /* keep rounded corners tidy */
+  border-radius: 16px;
+}
+
+/* Artwork: fill the left column (no spaces) */
+.release-card.clean.tracks .release-art{
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover;
+  border-radius: 16px 0 0 16px;     /* match outer corners */
+  box-shadow: none;                 /* optional: flatter like mock */
+}
+
+/* Text column: tighter left padding so titles get more room */
+.release-card.clean.tracks .release-body{
+  min-width: 0;
+  padding: 10px 0 10px 10px;        /* was 14/16 – reduced */
+}
+
+/* Label + title rows */
+.release-card.clean.tracks .track-row{
+  display: grid;
+  grid-template-columns: auto minmax(0,1fr);
+  column-gap: 8px;                  /* tighter gap -> more title room */
+  align-items: center;
+  margin: 2px 0;
+}
+.release-card.clean.tracks .track-label{ font-size: .9rem; color:#aeb3b8; white-space: nowrap; }
+.release-card.clean.tracks .track-title{
+  font-size: clamp(15px, 3.8vw, 18px);
+  line-height: 1.12;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.release-card.clean.tracks .release-meta{
+  margin: 6px 0 0; font-size: .9rem; color:#cfcfcf;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* Right column: stop cut-off, smaller pills, centered labels */
+.release-card.clean.tracks .buy-stack{
+  justify-self: end;
+  width: var(--buy-col);
+  flex: 0 0 var(--buy-col);
+  box-sizing: border-box;           /* include padding in width */
+  padding: 10px 8px 10px 0;         /* trimmed right pad fixes clipping */
+  margin-left: 0 !important;        /* beat global .buy-stack { margin-left:auto } */
+  display: flex; flex-direction: column; gap: 6px;
+}
+.release-card.clean.tracks .buy-button{
+  width: 100%;
+  text-align: center;
+  font-size: .78rem !important;
+  min-height: 24px !important;
+  padding: .20rem .44rem !important;
+  border-radius: 999px;
+}
+.release-card.clean.tracks .buy-button.secondary{ background:#e9e9e9; }
+
+/* Small phones */
+@media (max-width: 420px){
+  .release-card.clean.tracks{ --art: 72px; --buy-col: 100px; }
+  .release-card.clean.tracks .buy-button{
+    font-size: .76rem !important;
+    min-height: 22px !important;
+    padding: .18rem .36rem !important;
+  }
+}
+
+/* --- Row A art: make image fill the card & clip corners on iOS/mobile --- */
+@media (max-width: 420px){
+  .row.two-wide .rect-card{
+    /* make the image column stretch to full card height */
+    align-items: stretch;            /* was center */
+    overflow: hidden;                /* ensure clipping */
+    border-radius: 12px;             /* card owns the rounding */
+  }
+  .row.two-wide .rect-card img{
+    width: 96px;                     /* your mobile art width */
+    height: 100%;                    /* fill the card vertically */
+    object-fit: cover;               /* no letterboxing */
+    display: block;
+    border-radius: 0;                /* let parent clip the corners */
+    /* iOS overflow/rounding quirk fix: */
+    -webkit-mask-image: -webkit-radial-gradient(white, black);
+  }
+}
+
+/* ===============================
+   NOW PLAYING (iTunes-classic x modern)
+   =============================== */
+:root{
+  --np-bg-1: rgba(10,10,10,.86);
+  --np-bg-2: rgba(0,0,0,.92);
+  --np-border: rgba(255,255,255,.10);
+  --np-soft: rgba(255,255,255,.06);
+  --np-text: rgba(255,255,255,.92);
+  --np-muted: rgba(255,255,255,.68);
+
+  /* iTunes-ish accent (no red) */
+  --np-accent: #4aa3ff;
+  --np-accent-2: #2d7bff;
+}
+
+/* Container */
+.now-playing{
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  z-index: 2500;
+
+  color: var(--np-text);
+  border: 1px solid var(--np-border);
+  border-radius: 16px;
+  background: linear-gradient(180deg, var(--np-bg-1), var(--np-bg-2));
+  box-shadow:
+    0 18px 40px rgba(0,0,0,.35),
+    0 1px 0 rgba(255,255,255,.08) inset;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+
+  padding: 10px 12px 10px;
+}
+
+/* Hidden state */
+.now-playing.hidden{ display:none; }
+
+/* Top row layout */
+.now-playing .np-row{
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: center;
+}
+
+/* Pills become “chrome” segments */
+.now-playing .np-pill{
+  background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03));
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 14px;
+  padding: 8px 10px;
+  box-shadow: 0 1px 0 rgba(255,255,255,.10) inset;
+}
+
+/* Controls: classic segmented feel */
+.now-playing .np-controls{
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  padding: 8px;
+}
+
+/* Buttons */
+.now-playing .np-btn{
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(0,0,0,.22);
+  color: var(--np-text);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: transform .08s ease, background .12s ease, border-color .12s ease;
+}
+.now-playing .np-btn:hover{
+  background: rgba(255,255,255,.08);
+  border-color: rgba(255,255,255,.18);
+}
+.now-playing .np-btn:active{ transform: translateY(1px); }
+.now-playing .np-btn:focus-visible{
+  outline: 2px solid rgba(74,163,255,.65);
+  outline-offset: 2px;
+}
+
+/* Big play button (iTunes focal point) */
+.now-playing .np-btn.big{
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(74,163,255,.28), rgba(45,123,255,.18));
+  border-color: rgba(74,163,255,.40);
+  box-shadow: 0 0 0 1px rgba(0,0,0,.25) inset;
+}
+.now-playing .np-btn.big:hover{
+  background: linear-gradient(180deg, rgba(74,163,255,.34), rgba(45,123,255,.22));
+}
+
+/* SVG icons */
+.now-playing .np-btn svg{
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+.now-playing .np-btn.big svg{ width: 20px; height: 20px; }
+
+/* Seek pill */
+.now-playing .np-track{
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+}
+
+/* Time text */
+.now-playing .np-time{
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
+  color: var(--np-muted);
+  letter-spacing: .02em;
+  min-width: 44px;
+  text-align: right;
+}
+.now-playing .np-time.left{ text-align: left; }
+
+/* Range: remove red, add iTunes-like blue */
+.now-playing .np-seek{
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.14);
+  outline: none;
+  cursor: pointer;
+  position: relative;
+}
+
+/* WebKit track */
+.now-playing .np-seek::-webkit-slider-runnable-track{
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.14);
+}
+
+/* WebKit thumb */
+.now-playing .np-seek::-webkit-slider-thumb{
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: radial-gradient(circle at 30% 30%, #ffffff, #dbe9ff 55%, #9cc7ff 100%);
+  border: 1px solid rgba(0,0,0,.35);
+  box-shadow: 0 3px 10px rgba(0,0,0,.35);
+  margin-top: -4px; /* centers thumb on track */
+}
+
+/* Firefox */
+.now-playing .np-seek::-moz-range-track{
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.14);
+}
+.now-playing .np-seek::-moz-range-thumb{
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: radial-gradient(circle at 30% 30%, #ffffff, #dbe9ff 55%, #9cc7ff 100%);
+  border: 1px solid rgba(0,0,0,.35);
+  box-shadow: 0 3px 10px rgba(0,0,0,.35);
+}
+
+/* Bottom meta row (title + status) */
+.now-playing .np-meta{
+  margin-top: 8px;
+  padding: 6px 10px 2px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: center;
+  border-top: 1px solid rgba(255,255,255,.08);
+}
+
+/* Title: looks like iTunes track name */
+.now-playing #npTitle{
+  font-weight: 800;
+  letter-spacing: .02em;
+  font-size: 12px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.85);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Message: subtle */
+.now-playing .np-msg{
+  font-size: 12px;
+  color: var(--np-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 46vw;
+}
+
+/* Mobile: stack nicer */
+@media (max-width: 520px){
+  .now-playing{
+    left: 10px; right: 10px;
+    border-radius: 14px;
+    padding: 10px;
+  }
+  .now-playing .np-row{
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .now-playing .np-controls{
+    justify-content: center;
+  }
+  .now-playing .np-msg{ max-width: 100%; }
+}
+
+
+
+
+
+
+
+

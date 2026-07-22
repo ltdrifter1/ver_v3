@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>VCR Records</title>
+  <link rel="stylesheet" href="/static/style.css" />
+  <style>
+    /* ===============================
+       THEME
+       =============================== */
+    :root {
+      --paper-bg:   #f5f1e8;
+      --paper-line: #d9d2c2;      /* added to match home */
+      --ink:        #111;
+      --muted:      #555;
+      --gold:       #c8a455;
+      --gold-hover: #dbb769;
+      --overlay-bg: rgba(0,0,0,.9); /* added to match home */
+    }
+
+    body {
+      background: var(--paper-bg);
+      font-family: 'Inter', sans-serif;
+      color: var(--ink);
+      margin: 0;
+      padding: 0;
+    }
+
+    /* ===============================
+       HEADER (same look as home)
+       =============================== */
+    .site-header{
+      display:grid;
+      grid-template-columns: 44px 1fr 44px;
+      align-items:center;
+      gap: 0;
+      position: sticky; top: 0; z-index: 1000;
+      background:#000 url('static/assets/header.png') center/cover no-repeat !important;
+      border-bottom:1px solid #222;
+      padding: calc(1rem + env(safe-area-inset-top, 0px)) 12px 12px;
+    }
+    .center-logo{ justify-self:center; }
+    .center-logo img{ height: 35px; width:auto; display:block; }
+    .left-group{ display:none !important; }
+    .hamburger{
+      justify-self:start;
+      width:36px; height:36px;
+      border:none; background:transparent; padding:6px; cursor:pointer;
+      display:grid; place-items:center;
+    }
+    .hamburger span{
+      display:block; width:22px; height:2px; background:#f5f5f5; margin:3px 0; transition:transform .2s ease, opacity .2s ease;
+    }
+    .hamburger[aria-expanded="true"] span:nth-child(1){ transform: translateY(5px) rotate(45deg); }
+    .hamburger[aria-expanded="true"] span:nth-child(2){ opacity:0; }
+    .hamburger[aria-expanded="true"] span:nth-child(3){ transform: translateY(-5px) rotate(-45deg); }
+
+    .nav.drawer{
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      width: 260px;
+      background: rgba(0,0,0,.92);
+      backdrop-filter: blur(6px);
+      border-right: 1px solid rgba(255,255,255,.08);
+      transform: translateX(-100%);
+      transition: transform .22s ease;
+      padding: calc(16px + env(safe-area-inset-top,0)) 16px 16px;
+      display: flex; flex-direction: column; gap: 14px;
+      z-index: 1200;
+    }
+    .nav.drawer a{ color:#fff; font-weight:600; letter-spacing:.2px; }
+
+    .nav-scrim{
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.45);
+      backdrop-filter: blur(1px);
+      z-index: 1100;
+    }
+
+    .site-header.menu-open .nav.drawer{ transform: translateX(0); }
+    .site-header.menu-open .nav-scrim[hidden]{ display:block; }
+
+    @media (min-width: 900px){
+      .hamburger{ display:none; }
+      .header-spacer{ display:none; }
+      .site-header{ grid-template-columns: 1fr auto 1fr; }
+      .nav.drawer{
+        position: static; transform: none; transition: none;
+        width: auto; background: transparent; backdrop-filter:none;
+        border: none; padding: 0;
+        flex-direction: row; gap: 1.2rem; z-index: auto;
+      }
+      .nav.drawer a{ color:#f5f5f5; }
+      .nav-scrim{ display:none !important; }
+    }
+
+    /* ===============================
+       CONTACT CONTENT
+       =============================== */
+    .contact-wrapper {
+      max-width: 700px;
+      margin: 120px auto;
+      padding: 0 1.5rem;
+      text-align: left;
+    }
+  /* Contact title: slightly smaller + a bit more spacing */
+.contact-wrapper h1{
+  font-size: clamp(1.6rem, 3.4vw, 2rem);
+  margin-bottom: 1rem;
+}
+
+    .contact-wrapper p {
+      color: var(--muted);
+      font-size: 1.05rem;
+      margin-bottom: 2rem;
+      line-height: 1.6;
+    }
+    form.contact-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    form.contact-form input,
+    form.contact-form textarea {
+      width: 100%;
+      padding: 0.9rem 1rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 1rem;
+      font-family: inherit;
+      background: #fff;
+      transition: border-color 0.2s ease;
+    }
+    form.contact-form input:focus,
+    form.contact-form textarea:focus {
+      border-color: var(--gold);
+      outline: none;
+    }
+    form.contact-form textarea {
+      resize: vertical;
+      min-height: 140px;
+    }
+    form.contact-form button {
+      background: var(--gold);
+      color: #fff;
+      font-weight: 600;
+      padding: 1rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+      width: fit-content;
+    }
+    form.contact-form button:hover {
+      background: var(--gold-hover);
+    }
+
+    /* Optional spacing above footer */
+    footer.site-footer { margin-top: 100px; }
+
+    /* ===============================
+       VIDEO OVERLAY (shared)
+       =============================== */
+    .video-overlay{
+      position: fixed; inset: 0; background: var(--overlay-bg);
+      display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1rem; z-index: 3000; gap: 0.5rem;
+    }
+    .video-overlay.hidden{ display:none; }
+    .video-overlay video{ max-width: 90%; max-height: 80%; border-radius: 8px; width: 100%; height: auto; background: black; }
+    .video-overlay .close-btn{
+      position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,0.6); border: none; color: #fff; font-size: 1.5rem; cursor: pointer; padding: 6px 10px; border-radius: 4px; line-height: 1;
+    }
+
+    /* (Keep listen button styles in case a card appears on this page) */
+    .two-wide .rect-card .listen-button{
+      background: var(--paper-bg) !important;
+      color: var(--ink) !important;
+      -webkit-text-fill-color: var(--ink) !important;
+      border: 1px solid var(--paper-line) !important;
+      border-radius: 999px;
+      padding: .28rem .68rem;
+      font-weight: 700;
+      line-height: 1;
+      box-shadow: 0 1px 0 rgba(255,255,255,.6) inset;
+    }
+    .two-wide .rect-card .listen-button .play-icon,
+    .two-wide .rect-card .listen-button svg{
+      fill: #6a665b !important;
+      color: #6a665b !important;
+    }
+    .two-wide .rect-card .listen-button:hover{ background: #efe9dd !important; }
+    .two-wide .rect-card .listen-button:focus-visible{ outline: 2px solid #bcb5a5; outline-offset: 2px; }
+    .two-wide .rect-card .listen-button .play-icon,
+    .two-wide .rect-card .listen-button svg{
+      fill: #000 !important; color: #000 !important;
+    }
+
+    /* ===============================
+       FOOTER — identical to home.html
+       =============================== */
+    .site-footer{
+      position:relative; overflow:hidden;
+      background:var(--paper-bg) !important; color:var(--ink) !important;
+      border-top:1px solid var(--paper-line) !important;
+      padding:40px 12px 28px;
+      isolation:isolate;
+    }
+    .footer-wrap{ width:min(1100px,92vw); margin-inline:auto; display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+    @media (max-width:900px){ .footer-wrap{ grid-template-columns:1fr; } }
+
+    .footer-illus{
+      position:absolute; left:-70px; top:-20px; width:360px; opacity:.35; color:#b7ad98;
+      z-index:-1; pointer-events:none; user-select:none;
+    }
+    @media (max-width:900px){ .footer-illus{ width:280px; left:-40px; top:-10px; } }
+
+    .signup-card{ background:transparent; border:1px solid var(--paper-line); border-radius:0; box-shadow:none; }
+    .signup-card .row{ border-top:1px solid var(--paper-line); padding:16px; }
+    .signup-card .row:first-child{ border-top:none; }
+    .signup-title{ font-weight:900; letter-spacing:.02em; font-size:clamp(20px,3vw,32px); line-height:1.05; text-transform:uppercase; }
+    .signup-card input[type="email"], .signup-card select{ width:100%; background:transparent; border:0; outline:none; font:inherit; color:var(--ink); height:42px; }
+    .signup-card select{
+      appearance:none;
+      background-image:linear-gradient(45deg, transparent 50%, #111 50%), linear-gradient(135deg, #111 50%, transparent 50%);
+      background-position:calc(100% - 18px) 18px, calc(100% - 12px) 18px;
+      background-size:6px 6px, 6px 6px; background-repeat:no-repeat;
+    }
+    .signup-options{ display:grid; gap:8px; font-size:15px; }
+    .signup-options label{ display:flex; align-items:center; gap:10px; }
+    .signup-options input[type="checkbox"]{ width:18px; height:18px; accent-color:#111; }
+    .signup-btn{ width:100%; height:52px; font-weight:900; font-size:20px; letter-spacing:.02em; text-transform:uppercase; background:transparent; border:0; border-top:1px solid var(--paper-line); cursor:pointer; }
+    .signup-btn:hover{ background:#efe9dd; }
+    .legal-note{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; font-size:11px; color:#333; line-height:1.35; }
+
+    .footer-social{ display:flex; gap:18px; align-items:center; justify-content:center; margin:22px auto 10px; }
+    .footer-social a{ color:#111; text-decoration:none; font-size:22px; }
+    .footer-links{ display:flex; flex-wrap:wrap; gap:18px; justify-content:center; font-size:14px; margin:6px 0 8px; }
+    .footer-links a{ color:#111; text-decoration:none; }
+    .footer-links a:hover{ text-decoration:underline; }
+    .copyright{ text-align:center; font-size:14px; margin:6px 0 10px; }
+    .a11y-note{ text-align:center; font-size:12px; color:#333; max-width:900px; margin:0 auto; }
+  </style>
+</head>
+
+<body>
+   <!-- Header -->
+<header class="site-header">
+  <!-- Left: Hamburger -->
+  <button class="hamburger" aria-label="Open menu" aria-expanded="false" aria-controls="siteMenu">
+    <span></span><span></span><span></span>
+  </button>
+
+  <!-- Center: Logo -->
+  <a href="home.html" class="logo center-logo">
+    <img src="static/assets/vcr.avif" alt="AFR Logo" />
+  </a>
+
+  <!-- Right: spacer for balance -->
+  <div class="header-spacer" aria-hidden="true"></div>
+
+  <!-- Off-canvas nav (mobile) / inline (desktop) -->
+  <nav id="siteMenu" class="nav drawer">
+    <a href="home.html">Home</a>
+    <a href="home.html">Releases</a>
+    <a href="home.html">Library</a>
+     <a href="https://www.youtube.com/watch?v=AUAqGMaGjk4">About</a>
+    <a href="about.html">Contact</a>
+  </nav>
+
+  <!-- Dim background when drawer is open -->
+  <div class="nav-scrim" hidden></div>
+
+  <audio id="liveAudio" src="static/assets/live_audio.mp3"></audio>
+</header>
+
+
+  <main>
+    <div class="contact-wrapper">
+      <h1>Contact Us</h1>
+
+      <form class="contact-form" action="https://formspree.io/f/xdkwjzzr" method="POST">
+        <input type="text" name="name" placeholder="Your Name" required />
+        <input type="email" name="_replyto" placeholder="Email Address" required />
+        <input type="text" name="subject" placeholder="Subject" />
+        <textarea name="message" placeholder="Your Message..." required></textarea>
+        <button type="submit">SUBMIT</button>
+      </form>
+    </div>
+  </main>
+
+ <!-- FOOTER (same as home) -->
+  <footer class="site-footer">
+    <!-- Decorative cassette sketch -->
+    <svg class="footer-illus" viewBox="0 0 400 220" aria-hidden="true">
+      <g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="20" y="30" width="360" height="160" rx="8"/>
+        <rect x="110" y="70" width="180" height="60" rx="6"/>
+        <circle cx="170" cy="100" r="18"/><circle cx="230" cy="100" r="18"/>
+        <circle cx="170" cy="100" r="6"/><circle cx="230" cy="100" r="6"/>
+        <circle cx="40" cy="50" r="4"/><circle cx="360" cy="50" r="4"/>
+        <circle cx="40" cy="170" r="4"/><circle cx="360" cy="170" r="4"/>
+        <line x1="40" y1="140" x2="360" y2="140"/><line x1="40" y1="152" x2="360" y2="152"/>
+      </g>
+    </svg>
+
+    <div class="footer-wrap">
+      <div></div>
+
+      <!-- Newsletter signup -->
+      <form class="signup-card" id="newsletterForm"
+            action="https://formspree.io/f/xdkwjzzr" method="POST" novalidate>
+        <div class="row">
+          <div class="signup-title">Sign up for the VCR record club</div>
+        </div>
+
+        <!-- Honeypot -->
+        <input type="text" name="_gotcha" tabindex="-1" autocomplete="off"
+               style="position:absolute;left:-9999px" aria-hidden="true">
+
+        <div class="row">
+          <input type="email" name="email" placeholder="Enter your email" aria-label="Email" required />
+        </div>
+
+        <div class="row">
+          <div class="signup-options">
+            <label><input type="checkbox" name="consent" value="yes" required /> I agree to receive emails and accept the Privacy Policy.</label>
+          </div>
+        </div>
+
+        <input type="hidden" name="source" value="Footer form">
+        <input type="hidden" name="page"   value="" id="signupPageField">
+
+        <button class="signup-btn row" type="submit" id="signupSubmitBtn">Sign Up</button>
+      </form>
+    </div>
+
+ <br>
+
+<nav class="footer-social" aria-label="Social links">
+  <!-- Email -->
+  <a class="social" href="mailto:f_hastings@hotmail.com" aria-label="Email" title="Email">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="5" width="18" height="14" rx="2"></rect>
+      <path d="M3 7l9 6 9-6"></path>
+    </svg>
+  </a>
+
+  <!-- YouTube -->
+  <a class="social" href="#" aria-label="YouTube" title="YouTube">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="7" width="18" height="10" rx="3" ry="3"></rect>
+      <path d="M10 9.75L15.5 12 10 14.25z" fill="currentColor" stroke="none"></path>
+    </svg>
+  </a>
+
+  <!-- Instagram -->
+  <a class="social" href="https://www.instagram.com/felix_hastings?igsh=d2MyZ3oxZmx3aXF1&utm_source=qr" aria-label="Instagram" title="Instagram">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="4" y="4" width="16" height="16" rx="4"></rect>
+      <circle cx="12" cy="12" r="4.2"></circle>
+      <circle cx="16.5" cy="7.5" r="1.1" fill="currentColor" stroke="none"></circle>
+    </svg>
+  </a>
+</nav>
+
+
+    <br>
+
+    <div class="footer-links">
+      <a href="#">Help &amp; Support</a>
+      <a href="#">Terms</a>
+      <a href="#">Privacy</a>
+      <a href="#">Do not sell my personal information</a>
+      <a href="#">Cookie Choices</a>
+    </div>
+    <div class="copyright">&copy; 2025 VCR | Official Store</div>
+    <div class="a11y-note">
+      If you are using a screen reader and are having problems using this website, please call
+      <a href="tel:+1-866-682-4413">866-682-4413</a> for assistance.
+    </div>
+  </footer>
+
+  <!-- Minimal JS: header drawer + footer form page field -->
+  <script>
+    // Header menu drawer
+    (function(){
+      const header  = document.querySelector('.site-header');
+      if(!header) return;
+      const btn     = header.querySelector('.hamburger');
+      const menu    = header.querySelector('#siteMenu');
+      const scrim   = header.querySelector('.nav-scrim');
+      if(!btn || !menu || !scrim) return;
+
+      function closeMenu(){
+        header.classList.remove('menu-open');
+        btn.setAttribute('aria-expanded','false');
+        scrim.setAttribute('hidden','');
+      }
+      function openMenu(){
+        header.classList.add('menu-open');
+        btn.setAttribute('aria-expanded','true');
+        scrim.removeAttribute('hidden');
+      }
+      btn.addEventListener('click', () => {
+        const open = btn.getAttribute('aria-expanded') === 'true';
+        open ? closeMenu() : openMenu();
+      });
+      scrim.addEventListener('click', closeMenu);
+      window.addEventListener('keydown', e => { if(e.key === 'Escape') closeMenu(); });
+    })();
+
+    // Footer signup: capture page URL (even if you post normally)
+    (function(){
+      const pageField = document.getElementById('signupPageField');
+      if(pageField) pageField.value = location.href;
+    })();
+  </script>
+</body>
+</html>
