@@ -10,10 +10,13 @@ import FilmFX from './FilmFX';
 import TopNav from './TopNav';
 import CustomCursor from './CustomCursor';
 import MuteControl from './MuteControl';
+import LightsToggle from './LightsToggle';
+import GyroButton, { createGyro } from './GyroButton';
 import { usePanControls } from './usePanControls';
 import { SECTION_BY_ID } from '@/app/data/sections';
 import { lookToSection, restoreExploreFov } from '@/lib/lookTo';
 import { MFOV_EXPLORE } from '@/lib/pano';
+import { playSfx, unlockAudio } from '@/lib/audio';
 
 export default function Experience() {
   const stageRef = useRef<HTMLDivElement>(null);
@@ -21,6 +24,7 @@ export default function Experience() {
   const lookEnabledRef = useRef(false);
   const liveRef = useRef({ value: false });
   const panelOpenRef = useRef({ value: false });
+  const gyroRef = useRef(createGyro());
 
   const [active, setActive] = useState<string | null>(null);
   const [live, setLive] = useState(false);
@@ -29,6 +33,7 @@ export default function Experience() {
   const [reduceMotion, setReduceMotion] = useState(false);
   const [maxDpr, setMaxDpr] = useState(2);
   const [debug, setDebug] = useState(false);
+  const [lightsOn, setLightsOn] = useState(true);
 
   const controls = usePanControls(stageRef, lookEnabledRef);
 
@@ -54,6 +59,7 @@ export default function Experience() {
     setLive(true);
     setCanLook(false);
     setShowCompass(false);
+    void unlockAudio();
   }, []);
 
   const handleIntroComplete = useCallback(() => {
@@ -80,10 +86,10 @@ export default function Experience() {
     (id: string) => {
       if (!lookEnabledRef.current || controls.lookAnimating) return;
 
-      // Toggle close — restore explore FOV like leaving a focused hotspot
       if (active === id) {
         panelOpenRef.current.value = false;
         setActive(null);
+        playSfx('click');
         if (!reduceMotion) restoreExploreFov(controls, 1.2);
         else controls.mfov = MFOV_EXPLORE;
         return;
@@ -93,10 +99,10 @@ export default function Experience() {
       if (!section) return;
 
       openedAt.current = Date.now();
-      // balmingtiger: lookto + openPanel in parallel (panel while camera flies)
       panelOpenRef.current.value = true;
       setActive(id);
       setShowCompass(false);
+      playSfx('focus');
 
       if (reduceMotion) {
         controls.lookTarget.x = (section.u - 0.5) * Math.PI * 2;
@@ -113,8 +119,14 @@ export default function Experience() {
     if (Date.now() - openedAt.current < 350) return;
     panelOpenRef.current.value = false;
     setActive(null);
+    playSfx('click');
     if (!reduceMotion) restoreExploreFov(controls, 1.2);
   }, [controls, reduceMotion]);
+
+  const toggleLights = useCallback(() => {
+    setLightsOn((v) => !v);
+    playSfx('click');
+  }, []);
 
   return (
     <div className={`stage${canLook ? ' can-look' : ''}`} ref={stageRef}>
@@ -142,13 +154,18 @@ export default function Experience() {
             onOpen={open}
             onIntroComplete={handleIntroComplete}
             debug={debug}
+            lightsOn={lightsOn}
+            activeId={active}
+            gyroRef={gyroRef}
           />
         </Suspense>
       </Canvas>
 
       <FilmFX />
       <CustomCursor enabled={canLook} />
-      <MuteControl visible={canLook} />
+      <MuteControl visible={canLook} unlocked={live} />
+      <LightsToggle visible={canLook} lightsOn={lightsOn} onToggle={toggleLights} />
+      <GyroButton visible={canLook} gyroRef={gyroRef} />
       <TopNav visible={canLook} activeId={active} onOpen={open} />
 
       {live && (

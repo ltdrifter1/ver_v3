@@ -1,11 +1,14 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { FreeMode, Mousewheel } from 'swiper/modules';
+import 'swiper/css';
+
 import { SECTION_BY_ID } from '@/app/data/sections';
 
 /**
- * Floating overlay panel — closer to balmingtiger menu-panels than a side drawer:
- * centred card, soft scrim, horizontal item strip.
+ * Floating overlay + horizontal Swiper strip (balmingtiger menu-panel carousels).
  */
 export default function SectionPanel({
   activeId,
@@ -74,21 +77,32 @@ export default function SectionPanel({
             <p className="panel-kicker">{section.kicker}</p>
             <h2 className="panel-title">{section.title}</h2>
             <p className="panel-intro">{section.intro}</p>
-            <ul className="panel-list">
-              {section.items.map((it, i) => (
-                <li
-                  className="panel-item"
-                  key={i}
-                  style={{ transitionDelay: `${0.12 + i * 0.04}s` }}
-                >
-                  <span className="pi-label">{it.label}</span>
-                  {it.meta && <span className="pi-meta">{it.meta}</span>}
-                  {it.detail && <span className="pi-detail">{it.detail}</span>}
-                </li>
-              ))}
-            </ul>
+
+            <div className="panel-swiper-wrap">
+              <Swiper
+                modules={[FreeMode, Mousewheel]}
+                freeMode
+                mousewheel={{ forceToAxis: true }}
+                slidesPerView="auto"
+                spaceBetween={14}
+                className="panel-swiper"
+                key={section.id}
+              >
+                {section.items.map((it, i) => (
+                  <SwiperSlide key={i} className="panel-slide">
+                    <article className="panel-card" data-cursor="click">
+                      <span className="pc-index">{String(i + 1).padStart(2, '0')}</span>
+                      <span className="pc-label">{it.label}</span>
+                      {it.meta && <span className="pc-meta">{it.meta}</span>}
+                      {it.detail && <span className="pc-detail">{it.detail}</span>}
+                    </article>
+                  </SwiperSlide>
+                ))}
+              </Swiper>
+            </div>
+
             <p className="panel-foot">
-              {section.object} · {section.nav}
+              {section.object} · swipe for more · {section.nav}
             </p>
           </>
         )}

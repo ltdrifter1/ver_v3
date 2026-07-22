@@ -148,4 +148,7 @@ export function uvToLocal(u: number, v: number): [number, number, number] {
 }
 
 export const TEXTURE_SRC = '/textures/store_pano.webp';
+/** Darkened twin of the store — balmingtiger lights_off scene. */
+export const TEXTURE_OFF_SRC = '/textures/store_pano_off.webp';
 export const LQIP_SRC = '/textures/store_pano_lqip.webp';
+export const CRT_VIDEO_SRC = '/videos/crt_loop.mp4';

@@ -83,13 +83,11 @@ html.has-custom-cursor * {
   margin-left: -4px;
   margin-top: -4px;
 }
-.mute-control {
+.mute-control,
+.lights-control,
+.gyro-control {
   position: fixed;
-  left: clamp(14px, 2.5vw, 28px);
-  bottom: clamp(14px, 3vh, 28px);
   z-index: 32;
-  width: 44px;
-  height: 44px;
   border: 2px solid var(--line);
   border-radius: 8px;
   background: #fff;
@@ -99,8 +97,41 @@ html.has-custom-cursor * {
   padding: 0;
   cursor: pointer;
   transition: transform 0.15s ease, background 0.15s ease;
+  font-family: var(--font-body), system-ui, sans-serif;
+  font-weight: 800;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--ink);
 }
-.mute-control:hover {
+.mute-control {
+  left: clamp(14px, 2.5vw, 28px);
+  bottom: clamp(14px, 3vh, 28px);
+  width: 44px;
+  height: 44px;
+}
+.lights-control {
+  left: clamp(66px, 2.5vw + 52px, 84px);
+  bottom: clamp(14px, 3vh, 28px);
+  height: 44px;
+  padding: 0 12px;
+}
+.lights-control.is-off {
+  background: #2a221c;
+  color: #fff8ef;
+}
+.gyro-control {
+  left: clamp(14px, 2.5vw, 28px);
+  bottom: calc(clamp(14px, 3vh, 28px) + 52px);
+  height: 36px;
+  padding: 0 12px;
+}
+.gyro-control.is-on {
+  background: var(--amber);
+  color: #fff;
+}
+.mute-control:hover,
+.lights-control:hover,
+.gyro-control:hover {
   background: #ffe8c8;
   transform: translate(-1px, -1px);
 }
@@ -511,52 +542,59 @@ html.has-custom-cursor * {
   max-width: 42ch;
   margin: 0 0 30px;
 }
-.panel-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  border-top: 2px solid var(--line);
+/* Swiper strip inside panels */
+.panel-swiper-wrap {
+  margin: 0 -8px;
+  padding: 4px 0 8px;
 }
-.panel-item {
+.panel-swiper {
+  padding: 4px 8px 10px;
+  overflow: visible;
+}
+.panel-slide {
+  width: min(200px, 62vw) !important;
+  height: auto;
+}
+.panel-card {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 14px;
-  padding: 16px 4px;
-  border-bottom: 2px solid rgba(26, 20, 16, 0.12);
-  cursor: default;
-  opacity: 0;
-  transform: translateX(22px);
-  transition: padding-left 0.25s ease, background 0.25s ease,
-    opacity 0.45s ease, transform 0.45s ease;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 140px;
+  padding: 16px 14px;
+  background: #fff;
+  border: 2px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 rgba(26, 20, 16, 0.14);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
-.panel-root.open .panel-item {
-  opacity: 1;
-  transform: translateX(0);
+.panel-card:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 rgba(26, 20, 16, 0.18);
 }
-.panel-item:hover {
-  padding-left: 14px;
-  background: color-mix(in srgb, var(--panel-accent, var(--amber)) 12%, transparent);
+.pc-index {
+  font-weight: 800;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--panel-accent, var(--amber));
 }
-.panel-item .pi-label {
-  font-size: 16px;
-  font-weight: 700;
+.pc-label {
+  font-weight: 800;
+  font-size: 15px;
+  line-height: 1.25;
   color: var(--ink);
 }
-.panel-item .pi-meta {
-  font-family: var(--font-body), system-ui, sans-serif;
+.pc-meta {
   font-weight: 700;
   font-size: 11px;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--ink-dim);
 }
-.panel-item .pi-detail {
-  font-family: var(--font-body), system-ui, sans-serif;
+.pc-detail {
+  margin-top: auto;
   font-weight: 800;
   font-size: 12px;
   color: var(--panel-accent, var(--amber));
-  white-space: nowrap;
 }
 .panel-foot {
   margin-top: 34px;
