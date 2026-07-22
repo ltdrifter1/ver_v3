@@ -28,11 +28,11 @@ export const SPHERE_RADIUS = 48;
 export const MFOV_RATIO = 4 / 3;
 
 /**
- * Explore MFOV. krpano xml lists 120, but their stereographic fisheye=0.3
- * reads much wider than a plain rectilinear 120. Land at 140 (their fovmax)
- * so the post-intro room matches balmingtiger’s pulled-back frame.
+ * Explore MFOV. krpano xml lists 120; Three.js + fisheye=0.3 still reads
+ * narrower than their stereographic frame, so we land at 130 (P1 step
+ * toward 120 without collapsing the room).
  */
-export const MFOV_EXPLORE = 140;
+export const MFOV_EXPLORE = 130;
 export const MFOV_INTRO = 170;
 /** Allow video punch-in (balmingtiger video lookto ~20 MFOV). */
 export const MFOV_MIN = 20;
