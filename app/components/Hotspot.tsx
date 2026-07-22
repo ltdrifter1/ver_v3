@@ -15,19 +15,23 @@ const origin = new THREE.Vector3(0, 0, 0);
 
 /**
  * Hotspot — balmingtiger pattern:
- * invisible hit plane + authored glow PNG (0.4s power1.inOut) + latch while open.
+ *   invisible hit plane + authored glow PNG
+ *   hover → glow alpha 0→1 (0.4s power1.inOut)
+ *   focused (lookto lock) → glow stays latched; hoverOut is a no-op while focused
+ *   release focus → glow 1→0
  */
 export default function Hotspot({
   section,
   onOpen,
   controls,
-  activeId = null,
+  focusedId = null,
   debug = false,
 }: {
   section: Section;
   onOpen: (id: string) => void;
   controls: Controls;
-  activeId?: string | null;
+  /** Glow latch id (panel open OR shop lookto lock). */
+  focusedId?: string | null;
   debug?: boolean;
 }) {
   const mesh = useRef<THREE.Mesh>(null);
@@ -36,14 +40,18 @@ export default function Hotspot({
   const inner = useRef<HTMLDivElement>(null);
   const opacity = useRef(0);
   const glow = useRef({ a: 0 });
-  const prox = useRef(0);
   const [hovered, setHovered] = useState(false);
   const env = useSceneEnv();
   const { camera, gl } = useThree();
   const [x, y, z] = uvToSpherical(section.u, section.v, SPHERE_RADIUS - 0.5);
-  const isActive = activeId === section.id;
+  const isFocused = focusedId === section.id;
 
-  const glowMap = useTexture(`/hotspots/${section.id}_glow.webp`);
+  // Authored object glow — listening/cash use v2 silhouettes (BT-style)
+  const glowSrc =
+    section.id === 'listening-booth' || section.id === 'cash-register'
+      ? `/hotspots/${section.id}_glow_v2.webp`
+      : `/hotspots/${section.id}_glow.webp`;
+  const glowMap = useTexture(glowSrc);
   useLayoutEffect(() => {
     glowMap.colorSpace = THREE.SRGBColorSpace;
     glowMap.needsUpdate = true;
@@ -54,16 +62,16 @@ export default function Hotspot({
     glowMesh.current?.lookAt(origin);
   }, [x, y, z]);
 
-  // Latch / hover glow — balmingtiger 0.4s power1.inOut
+  // balmingtiger hoverIn / hoverOut — latch while focused (hoverOutMusic early-return)
   useLayoutEffect(() => {
-    const on = isActive || hovered;
+    const on = isFocused || hovered;
     gsap.to(glow.current, {
-      a: on ? 1 : Math.max(prox.current * 0.85, 0),
+      a: on ? 1 : 0,
       duration: 0.4,
       ease: 'power1.inOut',
       overwrite: true,
     });
-  }, [isActive, hovered]);
+  }, [isFocused, hovered]);
 
   useFrame(() => {
     const m = mesh.current;
@@ -76,26 +84,24 @@ export default function Hotspot({
     const proximity = inFront
       ? THREE.MathUtils.clamp(1 - (dist - 0.08) / 0.55, 0, 1)
       : 0;
-    prox.current = proximity;
 
-    let hintTarget = Math.max(proximity * 0.95, hovered ? 1 : 0);
-    if (!env.live.value || env.panelOpen.value) hintTarget = 0;
+    // Hints only — glow is GSAP/focus driven (BT has no proximity glow)
+    let hintTarget = Math.max(proximity * 0.95, hovered || isFocused ? 1 : 0);
+    if (!env.live.value || (env.panelOpen.value && !isFocused)) hintTarget = 0;
 
     opacity.current += (hintTarget - opacity.current) * 0.18;
     el.style.opacity = opacity.current.toFixed(3);
     el.style.visibility = opacity.current < 0.02 ? 'hidden' : 'visible';
 
-    // While not hovered/active, ease glow with proximity (look-at focus).
-    if (!isActive && !hovered && env.live.value && !env.panelOpen.value) {
-      const t = proximity * 0.85;
-      glow.current.a += (t - glow.current.a) * 0.14;
-    } else if (!isActive && !hovered && env.panelOpen.value) {
-      glow.current.a += (0 - glow.current.a) * 0.2;
-    }
-
     if (glowMat.current) {
       glowMat.current.opacity = glow.current.a;
       glowMat.current.visible = glow.current.a > 0.02;
+    }
+    if (glowMesh.current) {
+      const s = isFocused ? 1.06 : hovered ? 1.02 : 1;
+      glowMesh.current.scale.setScalar(
+        THREE.MathUtils.lerp(glowMesh.current.scale.x, s, 0.12),
+      );
     }
   });
 
@@ -108,7 +114,7 @@ export default function Hotspot({
   return (
     <group position={[x, y, z]}>
       <mesh ref={glowMesh} renderOrder={2} raycast={() => null}>
-        <planeGeometry args={[section.w * 1.85, section.h * 1.85]} />
+        <planeGeometry args={[section.w * 1.9, section.h * 1.9]} />
         <meshBasicMaterial
           ref={glowMat}
           map={glowMap}
@@ -133,6 +139,8 @@ export default function Hotspot({
           document.documentElement.classList.add('cursor-hot');
         }}
         onPointerOut={() => {
+          // balmingtiger: hoverOut is a no-op while this scene is active —
+          // local hovered clears, but isFocused keeps glow latched via GSAP.
           setHovered(false);
           document.documentElement.classList.remove('cursor-hot');
           gl.domElement.style.cursor = '';
@@ -169,7 +177,7 @@ export default function Hotspot({
               } as React.CSSProperties
             }
           >
-            <span className={`hint-ring ${hovered || isActive ? 'hint-pulse' : ''}`} />
+            <span className={`hint-ring ${hovered || isFocused ? 'hint-pulse' : ''}`} />
             <span className="hint-label">{section.hint}</span>
             <span className="hint-nav">{section.nav}</span>
           </div>

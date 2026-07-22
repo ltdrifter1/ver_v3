@@ -13,10 +13,25 @@ import MuteControl from './MuteControl';
 import GyroButton, { createGyro } from './GyroButton';
 import { usePanControls } from './usePanControls';
 import { SECTION_BY_ID, SHOP_URL } from '@/app/data/sections';
-import { lookToSection, resetCamera } from '@/lib/lookTo';
+import { lookToSection, resetCamera, restoreExploreFov } from '@/lib/lookTo';
 import { MFOV_EXPLORE, START_LOOK_U, START_LOOK_V, uToYaw, vToPitch } from '@/lib/pano';
 import { playSfx, unlockAudio } from '@/lib/audio';
 
+const TWO_PI = Math.PI * 2;
+
+function yawDelta(from: number, to: number) {
+  let d = (to - from) % TWO_PI;
+  if (d > Math.PI) d -= TWO_PI;
+  if (d < -Math.PI) d += TWO_PI;
+  return d;
+}
+
+/**
+ * balmingtiger focus model:
+ *   lookto → glow latches (hoverOut no-op while active_scene matches)
+ *   drag-away / zoom-away → free (glow out, explore FOV)
+ *   explicit close → resetCamera to front
+ */
 export default function Experience() {
   const stageRef = useRef<HTMLDivElement>(null);
   const enteredRef = useRef({ value: false });
@@ -26,8 +41,12 @@ export default function Experience() {
   const gyroRef = useRef(createGyro());
   const onDragEndRef = useRef<(() => void) | null>(null);
   const activeRef = useRef<string | null>(null);
+  const focusedRef = useRef<string | null>(null);
+  /** Ignore zoom-away until lookto has landed. */
+  const focusReadyAt = useRef(0);
 
   const [active, setActive] = useState<string | null>(null);
+  const [focusedId, setFocusedId] = useState<string | null>(null);
   const [crtArmed, setCrtArmed] = useState(false);
   const [live, setLive] = useState(false);
   const [canLook, setCanLook] = useState(false);
@@ -42,6 +61,9 @@ export default function Experience() {
   useEffect(() => {
     activeRef.current = active;
   }, [active]);
+  useEffect(() => {
+    focusedRef.current = focusedId;
+  }, [focusedId]);
 
   useEffect(() => {
     setDebug(new URLSearchParams(window.location.search).has('debug'));
@@ -96,12 +118,15 @@ export default function Experience() {
     controls.velocity.y = 0;
   }, [controls]);
 
+  /** Explicit close (Esc / scrim / nav toggle) — BT resetCamera to front. */
   const close = useCallback(
     (opts?: { force?: boolean; silent?: boolean }) => {
-      if (!panelOpenRef.current.value) return;
+      if (!panelOpenRef.current.value && !focusedRef.current) return;
       if (!opts?.force && Date.now() - openedAt.current < 350) return;
       panelOpenRef.current.value = false;
       setActive(null);
+      setFocusedId(null);
+      focusedRef.current = null;
       setCrtArmed(false);
       if (!opts?.silent) playSfx('click');
       if (!reduceMotion) resetCamera(controls, 2);
@@ -109,6 +134,57 @@ export default function Experience() {
     },
     [controls, reduceMotion, snapFront],
   );
+
+  /**
+   * Free focus after the user zooms / pans away from the locked hotspot.
+   * Keeps current look; restores explore FOV; clears glow latch.
+   */
+  const freeFocus = useCallback(
+    (opts?: { silent?: boolean }) => {
+      if (!focusedRef.current) return;
+      panelOpenRef.current.value = false;
+      setActive(null);
+      setFocusedId(null);
+      focusedRef.current = null;
+      setCrtArmed(false);
+      if (!opts?.silent) playSfx('click');
+      if (!reduceMotion) restoreExploreFov(controls, 1.2);
+      else controls.mfov = MFOV_EXPLORE;
+    },
+    [controls, reduceMotion],
+  );
+
+  // Zoom / pan away while locked → free (listening booth + cash register first)
+  useEffect(() => {
+    let raf = 0;
+    const tick = () => {
+      const id = focusedRef.current;
+      if (
+        id &&
+        lookEnabledRef.current &&
+        !controls.lookAnimating &&
+        Date.now() > focusReadyAt.current
+      ) {
+        const section = SECTION_BY_ID[id];
+        if (section) {
+          const targetYaw = uToYaw(section.lookU ?? section.u);
+          const targetPitch = vToPitch(section.lookV ?? section.v);
+          const ang = Math.hypot(
+            yawDelta(controls.lookTarget.x, targetYaw),
+            controls.lookTarget.y - targetPitch,
+          );
+          const zoomedOut = controls.mfov > section.lookFov + 28;
+          const pannedAway = ang > 0.48; // ≈ 27°
+          if (zoomedOut || pannedAway) {
+            freeFocus({ silent: true });
+          }
+        }
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [controls, freeFocus]);
 
   // balmingtiger: drag-end exits primarily in video mode
   useEffect(() => {
@@ -124,27 +200,8 @@ export default function Experience() {
     (id: string) => {
       if (!lookEnabledRef.current || controls.lookAnimating) return;
 
-      // Shop = outbound only (balmingtiger shop URL, no panel)
-      if (id === 'cash-register') {
-        playSfx('shop');
-        const section = SECTION_BY_ID[id];
-        if (section && !reduceMotion) {
-          lookToSection(controls, section, { duration: 2 });
-        } else if (section) {
-          controls.lookTarget.x = uToYaw(section.lookU ?? section.u);
-          controls.lookTarget.y = vToPitch(section.lookV ?? section.v);
-          controls.mfov = section.lookFov;
-        }
-        window.open(SHOP_URL, '_blank', 'noopener,noreferrer');
-        if (panelOpenRef.current.value) {
-          panelOpenRef.current.value = false;
-          setActive(null);
-          setCrtArmed(false);
-        }
-        return;
-      }
-
-      if (active === id) {
+      // Toggle off if same focused feature re-clicked via nav
+      if (focusedRef.current === id && (active === id || id === 'cash-register')) {
         close({ force: true });
         return;
       }
@@ -153,10 +210,35 @@ export default function Experience() {
       if (!section) return;
 
       openedAt.current = Date.now();
+      setShowCompass(false);
+      setCrtArmed(false);
+
+      // —— Shop / cash register: lookto + glow latch + outbound (no panel) ——
+      if (id === 'cash-register') {
+        playSfx('shop');
+        panelOpenRef.current.value = false;
+        setActive(null);
+        setFocusedId(id);
+        focusedRef.current = id;
+        focusReadyAt.current = Date.now() + (reduceMotion ? 0 : 2100);
+
+        if (reduceMotion) {
+          controls.lookTarget.x = uToYaw(section.lookU ?? section.u);
+          controls.lookTarget.y = vToPitch(section.lookV ?? section.v);
+          controls.mfov = section.lookFov;
+        } else {
+          lookToSection(controls, section, { duration: 2 });
+        }
+        window.open(SHOP_URL, '_blank', 'noopener,noreferrer');
+        return;
+      }
+
+      // —— Listening booth (+ other panels): lookto + glow latch + panel ——
       panelOpenRef.current.value = true;
       setActive(id);
-      setCrtArmed(false);
-      setShowCompass(false);
+      setFocusedId(id);
+      focusedRef.current = id;
+      focusReadyAt.current = Date.now() + (reduceMotion ? 0 : 2100);
       playSfx(section.sfx || 'focus');
 
       if (reduceMotion) {
@@ -212,6 +294,7 @@ export default function Experience() {
             lightsOn={lightsOn}
             onToggleLights={toggleLights}
             activeId={active}
+            focusedId={focusedId}
             crtArmed={crtArmed}
             gyroRef={gyroRef}
           />
