@@ -1,6 +1,6 @@
 'use client';
 
-import { useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import { Html, useTexture } from '@react-three/drei';
 import gsap from 'gsap';
