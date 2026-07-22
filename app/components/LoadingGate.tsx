@@ -6,7 +6,8 @@ import gsap from 'gsap';
 
 /**
  * Entry gate — balmingtiger gold full-bleed + CLICK TO ENTER.
- * Fade out 0.4s (no shutters) then intro FOV/fisheye starts in Scene.
+ * Fade out 0.4s (no shutters) then cinematic intro starts in Scene
+ * (ceiling → pan → settle on listening booth).
  */
 export default function LoadingGate({ onEntered }: { onEntered: () => void }) {
   const { progress, active } = useProgress();
