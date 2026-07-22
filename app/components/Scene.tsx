@@ -20,6 +20,7 @@ import {
   SPHERE_RADIUS,
   START_LOOK_U,
   START_LOOK_V,
+  TEXTURE_OFF_SRC,
   TEXTURE_SRC,
   autoPitchLimit,
   followZoomScale,
@@ -27,6 +28,7 @@ import {
   uToYaw,
   vToPitch,
 } from '@/lib/pano';
+import type { GyroHandle } from '@/lib/gyro';
 import { SECTIONS } from '@/app/data/sections';
 import { SceneContext, type SceneEnv, type Controls } from './sceneContext';
 import DustField from './DustField';
@@ -34,6 +36,7 @@ import LightBeams from './LightBeams';
 import Flicker from './Flicker';
 import Hotspot from './Hotspot';
 import FisheyePass from './FisheyePass';
+import CrtScreen from './CrtScreen';
 
 const TWO_PI = Math.PI * 2;
 const DEG = Math.PI / 180;
@@ -57,6 +60,9 @@ type Props = {
   onOpen: (id: string) => void;
   onIntroComplete?: () => void;
   debug?: boolean;
+  lightsOn?: boolean;
+  activeId?: string | null;
+  gyroRef?: { current: GyroHandle };
 };
 
 /**
@@ -73,12 +79,14 @@ function Rig({
   enteredRef,
   onIntroComplete,
   fisheyeRef,
+  gyroRef,
 }: {
   controls: Controls;
   env: SceneEnv;
   enteredRef: { value: boolean };
   onIntroComplete?: () => void;
   fisheyeRef: { current: number };
+  gyroRef?: { current: GyroHandle };
 }) {
   const { camera, size } = useThree();
   const startYaw = uToYaw(START_LOOK_U);
@@ -277,8 +285,21 @@ function Rig({
       fPitch = followPitch.current;
     }
 
-    env.look.x = yaw.current + fYaw;
-    env.look.y = THREE.MathUtils.clamp(pitch.current + fPitch, -maxPitch, maxPitch);
+    // Mobile gyro offset (krpano gyro plugin) — skipped while dragging
+    let gYaw = 0;
+    let gPitch = 0;
+    const gyro = gyroRef?.current;
+    if (looking && gyro?.enabled && !controls.dragging && !controls.lookAnimating) {
+      gYaw = gyro.yaw;
+      gPitch = gyro.pitch;
+    }
+
+    env.look.x = yaw.current + fYaw + gYaw;
+    env.look.y = THREE.MathUtils.clamp(
+      pitch.current + fPitch + gPitch,
+      -maxPitch,
+      maxPitch,
+    );
 
     camera.rotation.order = 'YXZ';
     camera.rotation.y = env.look.x;
@@ -290,6 +311,16 @@ function Rig({
   return null;
 }
 
+function prepTex(tex: THREE.Texture, gl: THREE.WebGLRenderer) {
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.flipY = true;
+  tex.anisotropy = Math.min(4, gl.capabilities.getMaxAnisotropy());
+  tex.minFilter = THREE.LinearFilter;
+  tex.magFilter = THREE.LinearFilter;
+  tex.generateMipmaps = false;
+  tex.needsUpdate = true;
+}
+
 export default function Scene({
   controls,
   reduceMotion,
@@ -299,20 +330,30 @@ export default function Scene({
   onOpen,
   onIntroComplete,
   debug = false,
+  lightsOn = true,
+  activeId = null,
+  gyroRef,
 }: Props) {
-  const tex = useTexture(TEXTURE_SRC);
+  const [texOn, texOff] = useTexture([TEXTURE_SRC, TEXTURE_OFF_SRC]);
   const { gl } = useThree();
   const fisheyeRef = useRef(FISHEYE_INTRO);
+  const lightsBlend = useRef({ v: lightsOn ? 1 : 0 });
+  const matOn = useRef<THREE.MeshBasicMaterial>(null);
+  const matOff = useRef<THREE.MeshBasicMaterial>(null);
 
   useEffect(() => {
-    tex.colorSpace = THREE.SRGBColorSpace;
-    tex.flipY = true;
-    tex.anisotropy = Math.min(4, gl.capabilities.getMaxAnisotropy());
-    tex.minFilter = THREE.LinearFilter;
-    tex.magFilter = THREE.LinearFilter;
-    tex.generateMipmaps = false;
-    tex.needsUpdate = true;
-  }, [tex, gl]);
+    prepTex(texOn, gl);
+    prepTex(texOff, gl);
+  }, [texOn, texOff, gl]);
+
+  useEffect(() => {
+    gsap.to(lightsBlend.current, {
+      v: lightsOn ? 1 : 0,
+      duration: 0.85,
+      ease: 'power2.inOut',
+      overwrite: true,
+    });
+  }, [lightsOn]);
 
   const env = useMemo<SceneEnv>(
     () => ({
@@ -325,6 +366,12 @@ export default function Scene({
     [liveRef, panelOpenRef, reduceMotion],
   );
 
+  useFrame(() => {
+    const on = lightsBlend.current.v;
+    if (matOn.current) matOn.current.opacity = on;
+    if (matOff.current) matOff.current.opacity = 1 - on;
+  });
+
   return (
     <SceneContext.Provider value={env}>
       <Rig
@@ -333,26 +380,45 @@ export default function Scene({
         enteredRef={enteredRef}
         onIntroComplete={onIntroComplete}
         fisheyeRef={fisheyeRef}
+        gyroRef={gyroRef}
       />
 
       <color attach="background" args={['#ebe4d6']} />
 
+      {/* Lights-on sphere */}
       <mesh>
         <sphereGeometry args={[SPHERE_RADIUS, 96, 64]} />
         <meshBasicMaterial
-          map={tex}
+          ref={matOn}
+          map={texOn}
           toneMapped={false}
           side={THREE.BackSide}
           depthWrite={false}
-          // Lift the illustration toward a flatter cartoon read
+          transparent
+          opacity={1}
           color="#fff6ea"
         />
       </mesh>
 
+      {/* Lights-off sphere (crossfades) */}
+      <mesh>
+        <sphereGeometry args={[SPHERE_RADIUS - 0.02, 96, 64]} />
+        <meshBasicMaterial
+          ref={matOff}
+          map={texOff}
+          toneMapped={false}
+          side={THREE.BackSide}
+          depthWrite={false}
+          transparent
+          opacity={0}
+          color="#d8cfc0"
+        />
+      </mesh>
+
       <group>
-        {/* Keep beams/flicker subtle — heavy atmospherics fought the cel look */}
         <LightBeams />
         <Flicker />
+        <CrtScreen activeId={activeId} />
         {SECTIONS.map((s) => (
           <Hotspot key={s.id} section={s} onOpen={onOpen} controls={controls} debug={debug} />
         ))}

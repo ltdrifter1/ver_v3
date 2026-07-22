@@ -1,22 +1,37 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { isMuted, setMuted, unlockAudio } from '@/lib/audio';
 
 /**
- * balmingtiger mute toggle — bottom-left. Audio is opt-in placeholder:
- * we only flip UI state + a CSS class so a real BGM loop can plug in later.
+ * balmingtiger mute toggle — bottom-left. Controls real BGM loop.
  */
-export default function MuteControl({ visible }: { visible: boolean }) {
-  const [muted, setMuted] = useState(true);
+export default function MuteControl({
+  visible,
+  unlocked,
+}: {
+  visible: boolean;
+  /** True after gate enter — audio may unlock on unmute. */
+  unlocked: boolean;
+}) {
+  const [muted, setMutedState] = useState(true);
 
   useEffect(() => {
-    document.documentElement.classList.toggle('is-muted', muted);
-  }, [muted]);
-
-  const toggle = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    setMuted((m) => !m);
+    setMutedState(isMuted());
   }, []);
+
+  useEffect(() => {
+    if (unlocked && !muted) {
+      void unlockAudio();
+    }
+  }, [unlocked, muted]);
+
+  const toggle = useCallback(async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const next = !muted;
+    setMutedState(next);
+    await setMuted(next);
+  }, [muted]);
 
   if (!visible) return null;
 
