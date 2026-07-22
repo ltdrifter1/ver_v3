@@ -50,7 +50,7 @@ export const INTRO_DUR = 2;
  * Designed "front" of the store (listening booth / bins / CRT),
  * equivalent of krpano hlookat=0, vlookat=0 for this equirect.
  */
-export const START_LOOK_U = 0.7;
+export const START_LOOK_U = 0.68;
 export const START_LOOK_V = 0.5;
 
 /**

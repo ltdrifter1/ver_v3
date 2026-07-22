@@ -11,8 +11,8 @@ looking around.
 
 ## The experience
 
-- **Loading gate** — a warm, flickering title card doubles as the asset-streaming UI.
-  Clicking **Step Inside** parts the shutters and drops you into the room.
+- **Loading gate** — solid gold title card (balmingtiger-style) with load progress.
+  Clicking **CLICK TO ENTER** parts the shutters and drops you into the room.
 - **360° store** — the camera is pinned at the centre of the shop. Drag, trackpad,
   arrow keys or touch to look freely around a full equirectangular wrap of the
   listening booth, bins, counter, entrance and back room. Pitch is gently clamped
@@ -36,12 +36,10 @@ looking around.
 
 ## Visual & motion language
 
-- Graphic-novel / comic-book illustration with bold ink and halftone detail.
-- Warm tungsten lighting, baked into the art and reinforced with additive light
-  shafts, a warm wash and a heavy vignette.
-- Film grain + scanlines over the whole frame.
-- Subtle **camera breathing**, animated neon / EXIT / CRT / phone-booth flicker and
-  drifting dust motes inside the room.
+- **One feeling:** Saturday-morning cartoon room + balmingtiger floating chrome.
+- 90s American cartoon equirect (bold ink outlines, flat cel fills, bright midtones).
+- Airy HUD: white conveyor nav labels, frosted glass panels, drop-shadow mute/lights.
+- Custom tilted cursor; soft object glows; lights-on / lights-off night-cel twin.
 - Honours `prefers-reduced-motion`.
 
 ## Tech

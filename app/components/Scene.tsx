@@ -32,8 +32,6 @@ import type { GyroHandle } from '@/lib/gyro';
 import { SECTIONS } from '@/app/data/sections';
 import { SceneContext, type SceneEnv, type Controls } from './sceneContext';
 import DustField from './DustField';
-import LightBeams from './LightBeams';
-import Flicker from './Flicker';
 import Hotspot from './Hotspot';
 import LampHotspot from './LampHotspot';
 import FisheyePass from './FisheyePass';
@@ -386,7 +384,7 @@ export default function Scene({
         gyroRef={gyroRef}
       />
 
-      <color attach="background" args={['#ebe4d6']} />
+      <color attach="background" args={['#ffd56a']} />
 
       {/* Lights-on sphere */}
       <mesh>
@@ -399,7 +397,7 @@ export default function Scene({
           depthWrite={false}
           transparent
           opacity={1}
-          color="#fff6ea"
+          color="#ffffff"
         />
       </mesh>
 
@@ -414,13 +412,11 @@ export default function Scene({
           depthWrite={false}
           transparent
           opacity={0}
-          color="#d8cfc0"
+          color="#ffffff"
         />
       </mesh>
 
       <group>
-        <LightBeams />
-        <Flicker />
         <CrtScreen activeId={activeId} />
         {SECTIONS.map((s) => (
           <Hotspot
@@ -437,7 +433,8 @@ export default function Scene({
         )}
       </group>
 
-      <DustField count={reduceMotion ? 20 : 50} />
+      {/* Tiny floating flecks only — cel rooms don't want tungsten beams/dust storms */}
+      <DustField count={reduceMotion ? 0 : 12} />
 
       <FisheyePass amountRef={fisheyeRef} />
     </SceneContext.Provider>
