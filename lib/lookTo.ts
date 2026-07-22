@@ -31,8 +31,8 @@ export function lookToSection(
   opts: { duration?: number; onComplete?: () => void } = {},
 ) {
   const duration = opts.duration ?? 2;
-  const targetYaw = uToYaw(section.u);
-  const targetPitch = vToPitch(section.v);
+  const targetYaw = uToYaw(section.lookU ?? section.u);
+  const targetPitch = vToPitch(section.lookV ?? section.v);
   const targetMfov = section.lookFov ?? 80;
 
   activeTween?.kill();
@@ -66,7 +66,8 @@ export function lookToSection(
       pitch: targetPitch,
       mfov: targetMfov,
       duration,
-      ease: 'power3.inOut',
+      // ≈ krpano / GSAP easeinoutquart
+      ease: 'power4.inOut',
       onUpdate: () => {
         controls.lookTarget.x = startYaw + delta * proxy.t;
         controls.lookTarget.y = proxy.pitch;
@@ -89,7 +90,7 @@ export function restoreExploreFov(controls: Controls, duration = 1.2) {
   const tw = gsap.to(controls, {
     mfov: MFOV_EXPLORE,
     duration,
-    ease: 'power3.inOut',
+    ease: 'power4.inOut',
     onComplete: () => {
       controls.lookAnimating = false;
     },
@@ -114,6 +115,7 @@ export function resetCamera(controls: Controls, duration = 2) {
     w: 1,
     h: 1,
     lookFov: MFOV_EXPLORE,
+    sfx: 'click',
     items: [],
   } satisfies Section;
   return lookToSection(controls, front, { duration });

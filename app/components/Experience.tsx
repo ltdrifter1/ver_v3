@@ -14,8 +14,8 @@ import LightsToggle from './LightsToggle';
 import GyroButton, { createGyro } from './GyroButton';
 import { usePanControls } from './usePanControls';
 import { SECTION_BY_ID } from '@/app/data/sections';
-import { lookToSection, restoreExploreFov } from '@/lib/lookTo';
-import { MFOV_EXPLORE } from '@/lib/pano';
+import { lookToSection, resetCamera } from '@/lib/lookTo';
+import { MFOV_EXPLORE, START_LOOK_U, START_LOOK_V, uToYaw, vToPitch } from '@/lib/pano';
 import { playSfx, unlockAudio } from '@/lib/audio';
 
 export default function Experience() {
@@ -25,6 +25,7 @@ export default function Experience() {
   const liveRef = useRef({ value: false });
   const panelOpenRef = useRef({ value: false });
   const gyroRef = useRef(createGyro());
+  const onDragEndRef = useRef<(() => void) | null>(null);
 
   const [active, setActive] = useState<string | null>(null);
   const [live, setLive] = useState(false);
@@ -35,7 +36,7 @@ export default function Experience() {
   const [debug, setDebug] = useState(false);
   const [lightsOn, setLightsOn] = useState(true);
 
-  const controls = usePanControls(stageRef, lookEnabledRef);
+  const controls = usePanControls(stageRef, lookEnabledRef, onDragEndRef);
 
   useEffect(() => {
     setDebug(new URLSearchParams(window.location.search).has('debug'));
@@ -82,16 +83,43 @@ export default function Experience() {
 
   const openedAt = useRef(0);
 
+  const snapFront = useCallback(() => {
+    controls.lookTarget.x = uToYaw(START_LOOK_U);
+    controls.lookTarget.y = vToPitch(START_LOOK_V);
+    controls.mfov = MFOV_EXPLORE;
+    controls.velocity.x = 0;
+    controls.velocity.y = 0;
+  }, [controls]);
+
+  const close = useCallback(
+    (opts?: { force?: boolean; silent?: boolean }) => {
+      if (!panelOpenRef.current.value) return;
+      if (!opts?.force && Date.now() - openedAt.current < 350) return;
+      panelOpenRef.current.value = false;
+      setActive(null);
+      if (!opts?.silent) playSfx('click');
+      if (!reduceMotion) resetCamera(controls, 2);
+      else snapFront();
+    },
+    [controls, reduceMotion, snapFront],
+  );
+
+  // Drag exits focus (balmingtiger: dragging away leaves the punched-in view).
+  useEffect(() => {
+    onDragEndRef.current = () => {
+      if (panelOpenRef.current.value) close({ force: true });
+    };
+    return () => {
+      onDragEndRef.current = null;
+    };
+  }, [close]);
+
   const open = useCallback(
     (id: string) => {
       if (!lookEnabledRef.current || controls.lookAnimating) return;
 
       if (active === id) {
-        panelOpenRef.current.value = false;
-        setActive(null);
-        playSfx('click');
-        if (!reduceMotion) restoreExploreFov(controls, 1.2);
-        else controls.mfov = MFOV_EXPLORE;
+        close({ force: true });
         return;
       }
 
@@ -102,31 +130,25 @@ export default function Experience() {
       panelOpenRef.current.value = true;
       setActive(id);
       setShowCompass(false);
-      playSfx('focus');
+      playSfx(section.sfx || 'focus');
 
       if (reduceMotion) {
-        controls.lookTarget.x = (section.u - 0.5) * Math.PI * 2;
-        controls.lookTarget.y = (0.5 - section.v) * Math.PI;
+        controls.lookTarget.x = uToYaw(section.lookU ?? section.u);
+        controls.lookTarget.y = vToPitch(section.lookV ?? section.v);
         controls.mfov = section.lookFov;
         return;
       }
       lookToSection(controls, section, { duration: 2 });
     },
-    [active, controls, reduceMotion],
+    [active, close, controls, reduceMotion],
   );
-
-  const close = useCallback(() => {
-    if (Date.now() - openedAt.current < 350) return;
-    panelOpenRef.current.value = false;
-    setActive(null);
-    playSfx('click');
-    if (!reduceMotion) restoreExploreFov(controls, 1.2);
-  }, [controls, reduceMotion]);
 
   const toggleLights = useCallback(() => {
     setLightsOn((v) => !v);
-    playSfx('click');
+    playSfx('lights');
   }, []);
+
+  const videoFocused = active === 'crt-tv';
 
   return (
     <div className={`stage${canLook ? ' can-look' : ''}`} ref={stageRef}>
@@ -155,6 +177,7 @@ export default function Experience() {
             onIntroComplete={handleIntroComplete}
             debug={debug}
             lightsOn={lightsOn}
+            onToggleLights={toggleLights}
             activeId={active}
             gyroRef={gyroRef}
           />
@@ -163,7 +186,7 @@ export default function Experience() {
 
       <FilmFX />
       <CustomCursor enabled={canLook} />
-      <MuteControl visible={canLook} unlocked={live} />
+      <MuteControl visible={canLook && !videoFocused} unlocked={live} />
       <LightsToggle visible={canLook} lightsOn={lightsOn} onToggle={toggleLights} />
       <GyroButton visible={canLook} gyroRef={gyroRef} />
       <TopNav visible={canLook} activeId={active} onOpen={open} />
@@ -174,7 +197,7 @@ export default function Experience() {
         </div>
       )}
 
-      <SectionPanel activeId={active} onClose={close} />
+      <SectionPanel activeId={active} onClose={() => close()} />
       <LoadingGate onEntered={handleEntered} />
     </div>
   );

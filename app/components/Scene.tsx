@@ -35,6 +35,7 @@ import DustField from './DustField';
 import LightBeams from './LightBeams';
 import Flicker from './Flicker';
 import Hotspot from './Hotspot';
+import LampHotspot from './LampHotspot';
 import FisheyePass from './FisheyePass';
 import CrtScreen from './CrtScreen';
 
@@ -61,6 +62,7 @@ type Props = {
   onIntroComplete?: () => void;
   debug?: boolean;
   lightsOn?: boolean;
+  onToggleLights?: () => void;
   activeId?: string | null;
   gyroRef?: { current: GyroHandle };
 };
@@ -331,6 +333,7 @@ export default function Scene({
   onIntroComplete,
   debug = false,
   lightsOn = true,
+  onToggleLights,
   activeId = null,
   gyroRef,
 }: Props) {
@@ -420,8 +423,18 @@ export default function Scene({
         <Flicker />
         <CrtScreen activeId={activeId} />
         {SECTIONS.map((s) => (
-          <Hotspot key={s.id} section={s} onOpen={onOpen} controls={controls} debug={debug} />
+          <Hotspot
+            key={s.id}
+            section={s}
+            onOpen={onOpen}
+            controls={controls}
+            activeId={activeId}
+            debug={debug}
+          />
         ))}
+        {onToggleLights && (
+          <LampHotspot controls={controls} lightsOn={lightsOn} onToggle={onToggleLights} />
+        )}
       </group>
 
       <DustField count={reduceMotion ? 20 : 50} />

@@ -28,6 +28,9 @@ export type Section = {
    */
   u: number;
   v: number;
+  /** Optional lookto aim point (defaults to hotspot u/v). */
+  lookU?: number;
+  lookV?: number;
   /** hotspot footprint in world units on the sphere wall */
   w: number;
   h: number;
@@ -36,6 +39,8 @@ export type Section = {
    * (balmingtiger zooms in: music 60, video 20, tour 80, contact 60).
    */
   lookFov: number;
+  /** Object SFX key played on focus (see lib/audio.ts). */
+  sfx: string;
   /** list rendered inside the panel */
   items: SectionItem[];
 };
@@ -60,7 +65,8 @@ export const SECTIONS: Section[] = [
     v: 0.42,
     w: 6,
     h: 11,
-    lookFov: 75,
+    lookFov: 60,
+    sfx: 'music',
     items: [
       { label: 'Tape 001 — Midnight Amen', meta: 'Continuous mix', detail: '62 min' },
       { label: 'Tape 002 — Hydro Steppers', meta: 'Continuous mix', detail: '58 min' },
@@ -83,7 +89,8 @@ export const SECTIONS: Section[] = [
     v: 0.46,
     w: 4.5,
     h: 4.2,
-    lookFov: 55,
+    lookFov: 28,
+    sfx: 'video',
     items: [
       { label: 'Warehouse Tape — Sector 7', meta: 'VHS transfer', detail: '1994' },
       { label: 'Pirate Ident Reel', meta: 'Off-air capture', detail: '1995' },
@@ -105,7 +112,8 @@ export const SECTIONS: Section[] = [
     v: 0.7,
     w: 14,
     h: 7.5,
-    lookFov: 90,
+    lookFov: 85,
+    sfx: 'artists',
     items: [
       { label: 'Tenor Fly', meta: 'Roller / Steppa', detail: 'VCR-002' },
       { label: 'Sister Circuit', meta: 'Ragga Jungle', detail: 'VCR-004' },
@@ -130,6 +138,7 @@ export const SECTIONS: Section[] = [
     w: 6.5,
     h: 5.5,
     lookFov: 70,
+    sfx: 'shop',
     items: [
       { label: 'VCR-013 — Dread at the Controls', meta: '12" Vinyl', detail: '£12' },
       { label: 'VCR-011 — Nocturne LP', meta: 'Double 12"', detail: '£18' },
@@ -153,6 +162,7 @@ export const SECTIONS: Section[] = [
     w: 10,
     h: 5.5,
     lookFov: 80,
+    sfx: 'archive',
     items: [
       { label: 'HELTER SKELTER', meta: 'New Year’s Eve', detail: '1994' },
       { label: 'DREAMSCAPE', meta: 'Aerodrome', detail: '1995' },
@@ -175,7 +185,8 @@ export const SECTIONS: Section[] = [
     v: 0.4,
     w: 4.2,
     h: 9,
-    lookFov: 65,
+    lookFov: 60,
+    sfx: 'phone',
     items: [
       { label: 'demos@vcrrecords.fm', meta: 'Send a dubplate', detail: 'WAV / 320' },
       { label: 'bookings@vcrrecords.fm', meta: 'Soundsystem hire', detail: 'UK + EU' },
@@ -198,6 +209,7 @@ export const SECTIONS: Section[] = [
     w: 4,
     h: 8.5,
     lookFov: 70,
+    sfx: 'door',
     items: [
       { label: 'Est. 1993', meta: 'Origin', detail: 'A back room in the rain' },
       { label: 'VCR — Video Cassette Recordings', meta: 'The name', detail: 'Tape culture' },

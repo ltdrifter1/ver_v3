@@ -13,35 +13,56 @@ import { useSceneEnv, type Controls } from './sceneContext';
 const tmp = new THREE.Vector3();
 const origin = new THREE.Vector3(0, 0, 0);
 
+/** Stronger authored glow — soft core + wide bloom (balmingtiger *_glow). */
 function makeGlowTexture(color: string) {
   const c = document.createElement('canvas');
-  c.width = 128;
-  c.height = 128;
+  c.width = 256;
+  c.height = 256;
   const ctx = c.getContext('2d')!;
-  const g = ctx.createRadialGradient(64, 64, 4, 64, 64, 64);
+  const g = ctx.createRadialGradient(128, 128, 4, 128, 128, 128);
   g.addColorStop(0, color);
-  g.addColorStop(0.35, color);
+  g.addColorStop(0.18, color);
+  g.addColorStop(0.42, hexAlpha(color, 0.55));
+  g.addColorStop(0.72, hexAlpha(color, 0.18));
   g.addColorStop(1, 'rgba(0,0,0,0)');
   ctx.fillStyle = g;
-  ctx.fillRect(0, 0, 128, 128);
+  ctx.fillRect(0, 0, 256, 256);
+  // bright inner disc
+  const core = ctx.createRadialGradient(128, 128, 0, 128, 128, 36);
+  core.addColorStop(0, 'rgba(255,255,255,0.95)');
+  core.addColorStop(0.45, hexAlpha(color, 0.85));
+  core.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = core;
+  ctx.fillRect(0, 0, 256, 256);
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
   return tex;
 }
 
+function hexAlpha(hex: string, a: number) {
+  const h = hex.replace('#', '');
+  const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h;
+  const r = parseInt(full.slice(0, 2), 16);
+  const g = parseInt(full.slice(2, 4), 16);
+  const b = parseInt(full.slice(4, 6), 16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
 /**
  * Hotspot — balmingtiger pattern:
- * invisible hit plane + hover glow (0.4s power1.inOut) + label when near centre.
+ * invisible hit plane + hover glow (0.4s power1.inOut) + latch while section open.
  */
 export default function Hotspot({
   section,
   onOpen,
   controls,
+  activeId = null,
   debug = false,
 }: {
   section: Section;
   onOpen: (id: string) => void;
   controls: Controls;
+  activeId?: string | null;
   debug?: boolean;
 }) {
   const mesh = useRef<THREE.Mesh>(null);
@@ -55,6 +76,7 @@ export default function Hotspot({
   const { camera, gl } = useThree();
   const [x, y, z] = uvToSpherical(section.u, section.v, SPHERE_RADIUS - 0.5);
   const glowTex = useMemo(() => makeGlowTexture(section.accent), [section.accent]);
+  const isActive = activeId === section.id;
 
   useLayoutEffect(() => {
     mesh.current?.lookAt(origin);
@@ -66,6 +88,17 @@ export default function Hotspot({
       glowTex.dispose();
     };
   }, [glowTex]);
+
+  // Latch glow while this section is focused; hover otherwise.
+  useLayoutEffect(() => {
+    const on = isActive || hovered;
+    gsap.to(glow.current, {
+      a: on ? 1 : 0,
+      duration: 0.4,
+      ease: 'power1.inOut',
+      overwrite: true,
+    });
+  }, [isActive, hovered]);
 
   useFrame(() => {
     const m = mesh.current;
@@ -80,26 +113,18 @@ export default function Hotspot({
       : 0;
 
     let target = Math.max(proximity * 0.9, hovered ? 1 : 0);
-    if (!env.live.value) target = 0;
-    if (env.panelOpen.value) target = 0;
+    if (!env.live.value || env.panelOpen.value) target = 0;
 
     opacity.current += (target - opacity.current) * 0.18;
     el.style.opacity = opacity.current.toFixed(3);
     el.style.visibility = opacity.current < 0.02 ? 'hidden' : 'visible';
 
     if (glowMat.current) {
-      glowMat.current.opacity = glow.current.a * (env.panelOpen.value ? 0.35 : 1);
+      // Active section stays fully lit; others dim hard while focused.
+      const scale = env.panelOpen.value ? (isActive ? 1 : 0) : 1;
+      glowMat.current.opacity = glow.current.a * scale;
     }
   });
-
-  const setGlow = (on: boolean) => {
-    gsap.to(glow.current, {
-      a: on ? 1 : 0,
-      duration: 0.4,
-      ease: 'power1.inOut',
-      overwrite: true,
-    });
-  };
 
   const handleClick = (e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation();
@@ -109,9 +134,8 @@ export default function Hotspot({
 
   return (
     <group position={[x, y, z]}>
-      {/* Soft additive glow — fades in on hover like balmingtiger *_glow hotspots */}
       <mesh ref={glowMesh} renderOrder={1}>
-        <planeGeometry args={[section.w * 1.35, section.h * 1.35]} />
+        <planeGeometry args={[section.w * 1.7, section.h * 1.7]} />
         <meshBasicMaterial
           ref={glowMat}
           map={glowTex}
@@ -131,12 +155,10 @@ export default function Hotspot({
           e.stopPropagation();
           if (!env.live.value) return;
           setHovered(true);
-          setGlow(true);
           document.documentElement.classList.add('cursor-hot');
         }}
         onPointerOut={() => {
           setHovered(false);
-          setGlow(false);
           document.documentElement.classList.remove('cursor-hot');
           gl.domElement.style.cursor = '';
         }}
@@ -172,7 +194,7 @@ export default function Hotspot({
               } as React.CSSProperties
             }
           >
-            <span className={`hint-ring ${hovered ? 'hint-pulse' : ''}`} />
+            <span className={`hint-ring ${hovered || isActive ? 'hint-pulse' : ''}`} />
             <span className="hint-label">{section.hint}</span>
             <span className="hint-nav">{section.nav}</span>
           </div>

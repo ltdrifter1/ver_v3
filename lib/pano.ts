@@ -34,7 +34,8 @@ export const MFOV_RATIO = 4 / 3;
  */
 export const MFOV_EXPLORE = 140;
 export const MFOV_INTRO = 170;
-export const MFOV_MIN = 55;
+/** Allow video punch-in (balmingtiger video lookto ~20 MFOV). */
+export const MFOV_MIN = 20;
 export const MFOV_MAX = 140;
 
 /** Steady-state + intro fisheye (krpano view.fisheye). */
