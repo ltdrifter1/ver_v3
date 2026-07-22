@@ -30,6 +30,8 @@ export type Controls = {
   followFactor: number;
   /** usercontrol=all after intro — hotspots + drag enabled. */
   userControl: boolean;
+  /** True while a lookto / FOV tween is in flight — drag locked. */
+  lookAnimating: boolean;
 };
 
 export type SceneEnv = {

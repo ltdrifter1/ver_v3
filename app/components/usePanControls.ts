@@ -55,6 +55,7 @@ export function usePanControls(
     pointer: { x: 0, y: 0 },
     followFactor: 0,
     userControl: false,
+    lookAnimating: false,
   }).current;
 
   useEffect(() => {
@@ -97,7 +98,7 @@ export function usePanControls(
     };
 
     const onDown = (e: PointerEvent) => {
-      if (!enabledRef.current || !controls.userControl) return;
+      if (!enabledRef.current || !controls.userControl || controls.lookAnimating) return;
       if (e.pointerType === 'mouse' && e.button !== 0) return;
 
       syncPointer(e);
@@ -188,7 +189,7 @@ export function usePanControls(
     };
 
     const onKey = (e: KeyboardEvent) => {
-      if (!enabledRef.current || !controls.userControl) return;
+      if (!enabledRef.current || !controls.userControl || controls.lookAnimating) return;
       const step = LOOK_KEY_STEP;
       if (e.key === 'ArrowLeft') {
         controls.lookTarget.x = wrapYaw(controls.lookTarget.x + step);
@@ -210,7 +211,7 @@ export function usePanControls(
     };
 
     const onWheel = (e: WheelEvent) => {
-      if (!enabledRef.current || !controls.userControl) return;
+      if (!enabledRef.current || !controls.userControl || controls.lookAnimating) return;
       e.preventDefault();
       // krpano mousefovchange — wheel up zooms in (smaller FOV)
       const delta = Math.sign(e.deltaY) * MOUSE_FOV_CHANGE * Math.min(8, Math.abs(e.deltaY) / 40);

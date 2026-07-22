@@ -107,6 +107,7 @@ function Rig({
     controls.fisheye = FISHEYE_INTRO;
     controls.followFactor = 0;
     controls.userControl = false;
+    controls.lookAnimating = false;
     fisheyeRef.current = FISHEYE_INTRO;
     yaw.current = startYaw;
     pitch.current = startPitch;
