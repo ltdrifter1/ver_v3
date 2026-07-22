@@ -4,14 +4,15 @@ import { useEffect, useRef, useState } from 'react';
 
 /**
  * Desktop custom cursor — balmingtiger pattern:
- * PNG/SVG follow + horizontal tilt (mouseX → ±70°) + click state.
+ * SVG follow + horizontal tilt (mouseX → ±70°) + click state.
+ * ease_xy = ease_rot = 1 (instant, no lag).
  */
 export default function CustomCursor({ enabled }: { enabled: boolean }) {
   const el = useRef<HTMLDivElement>(null);
   const [clicking, setClicking] = useState(false);
   const [hovering, setHovering] = useState(false);
   const [ok, setOk] = useState(false);
-  const pos = useRef({ x: -100, y: -100, rot: 0, tx: -100, ty: -100, tr: 0 });
+  const pos = useRef({ x: -100, y: -100, rot: 0 });
   const raf = useRef(0);
 
   useEffect(() => {
@@ -23,13 +24,9 @@ export default function CustomCursor({ enabled }: { enabled: boolean }) {
     if (!ok) return;
     document.documentElement.classList.add('has-custom-cursor');
 
-    const ease = 0.28;
-
+    // balmingtiger: ease_xy = ease_rot = 1 → snap each frame
     const tick = () => {
       const p = pos.current;
-      p.x += (p.tx - p.x) * ease;
-      p.y += (p.ty - p.y) * ease;
-      p.rot += (p.tr - p.rot) * ease;
       const node = el.current;
       if (node) {
         node.style.transform = `translate3d(${p.x}px, ${p.y}px, 0) translate(-12px, -2px) rotateZ(${p.rot * 70}deg)`;
@@ -39,9 +36,9 @@ export default function CustomCursor({ enabled }: { enabled: boolean }) {
     raf.current = requestAnimationFrame(tick);
 
     const move = (e: PointerEvent) => {
-      pos.current.tx = e.clientX;
-      pos.current.ty = e.clientY;
-      pos.current.tr = (e.clientX / Math.max(1, window.innerWidth)) * 2 - 1;
+      pos.current.x = e.clientX;
+      pos.current.y = e.clientY;
+      pos.current.rot = (e.clientX / Math.max(1, window.innerWidth)) * 2 - 1;
     };
     const down = () => setClicking(true);
     const up = () => setClicking(false);
@@ -74,7 +71,7 @@ export default function CustomCursor({ enabled }: { enabled: boolean }) {
 
   return (
     <div className={`custom-cursor${clicking ? ' is-down' : ''}`} ref={el} aria-hidden>
-      <img src={src} alt="" width={40} height={40} draggable={false} />
+      <img src={src} alt="" width={50} height={50} draggable={false} />
     </div>
   );
 }

@@ -312,6 +312,9 @@ export const SECTION_BY_ID = Object.fromEntries(
   SECTIONS.map((s) => [s.id, s]),
 ) as Record<string, Section>;
 
+/** Outbound shop — balmingtiger shop opens a blank tab (no panel). */
+export const SHOP_URL = 'https://vcrrecords.bandcamp.com';
+
 /** Primary conveyor nav order (balmingtiger: music / video / …). */
 export const NAV_ORDER = [
   'listening-booth',

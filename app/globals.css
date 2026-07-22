@@ -77,8 +77,8 @@ html.has-custom-cursor * {
 }
 .custom-cursor img {
   display: block;
-  width: 40px;
-  height: 40px;
+  width: 50px;
+  height: 50px;
 }
 .custom-cursor.is-down img {
   opacity: 0.92;
@@ -106,40 +106,49 @@ html.has-custom-cursor * {
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35));
 }
 .mute-control {
-  left: clamp(14px, 2.5vw, 28px);
-  bottom: clamp(14px, 3vh, 28px);
-  width: 44px;
-  height: 44px;
+  right: 20px;
+  left: auto;
+  bottom: 25px;
+  width: 30px;
+  height: 30px;
+  transition: opacity 0.3s ease, transform 0.15s ease, pointer-events 0s;
 }
-.lights-control {
-  left: clamp(66px, 2.5vw + 52px, 84px);
-  bottom: clamp(14px, 3vh, 28px);
-  height: 44px;
-  padding: 0 4px;
+.mute-control.is-faded {
+  opacity: 0;
+  pointer-events: none;
 }
-.lights-control.is-off {
-  opacity: 0.7;
+.mute-control img {
+  display: block;
+  width: 28px;
+  height: 28px;
+  filter: drop-shadow(1px 1px 1px rgba(64, 64, 64, 0.75));
 }
 .gyro-control {
   left: clamp(14px, 2.5vw, 28px);
-  bottom: calc(clamp(14px, 3vh, 28px) + 48px);
+  bottom: clamp(14px, 3vh, 28px);
   height: 32px;
   padding: 0 4px;
 }
 .gyro-control.is-on {
   color: var(--gold);
 }
-.mute-control:hover,
-.lights-control:hover,
+.mute-control:hover:not(.is-faded),
 .gyro-control:hover {
   transform: translateY(-1px);
   opacity: 0.92;
 }
-.mute-control img {
-  display: block;
-  width: 28px;
-  height: 28px;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.45));
+@media (max-width: 570px) {
+  .mute-control {
+    top: 20px;
+    bottom: auto;
+    right: 15px;
+    width: 24px;
+    height: 24px;
+  }
+  .mute-control img {
+    width: 22px;
+    height: 22px;
+  }
 }
 
 /* ---------- quiet grade over cel room ---------- */
@@ -465,10 +474,10 @@ html.has-custom-cursor * {
   --singlebuttonwidth: calc(((100vw - 40px) - (16px * 3)) / 4);
   position: fixed;
   left: 20px;
-  top: 72px;
+  top: 80px;
   width: min(330px, var(--singlebuttonwidth));
   max-height: 800px;
-  background: rgba(121, 121, 121, 0.12);
+  background: rgba(121, 121, 121, 0.1);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 0;

@@ -62,6 +62,7 @@ type Props = {
   lightsOn?: boolean;
   onToggleLights?: () => void;
   activeId?: string | null;
+  crtArmed?: boolean;
   gyroRef?: { current: GyroHandle };
 };
 
@@ -333,6 +334,7 @@ export default function Scene({
   lightsOn = true,
   onToggleLights,
   activeId = null,
+  crtArmed = false,
   gyroRef,
 }: Props) {
   const [texOn, texOff] = useTexture([TEXTURE_SRC, TEXTURE_OFF_SRC]);
@@ -417,7 +419,7 @@ export default function Scene({
       </mesh>
 
       <group>
-        <CrtScreen activeId={activeId} />
+        <CrtScreen activeId={activeId} armed={crtArmed} />
         {SECTIONS.map((s) => (
           <Hotspot
             key={s.id}
