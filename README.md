@@ -36,10 +36,10 @@ looking around.
 
 ## Visual & motion language
 
-- **One feeling:** Saturday-morning cartoon room + balmingtiger floating chrome.
-- 90s American cartoon equirect (bold ink outlines, flat cel fills, bright midtones).
+- **One feeling:** underground illustrated room + balmingtiger floating chrome.
+- Jungle / drum & bass equirect — rave flyers, Amen culture, cassette wall, vinyl shelves.
 - Airy HUD: white conveyor nav labels, frosted glass panels, drop-shadow mute/lights.
-- Custom tilted cursor; soft object glows; lights-on / lights-off night-cel twin.
+- Custom tilted cursor; soft object glows; lights-on / lights-off night twin.
 - Honours `prefers-reduced-motion`.
 
 ## Tech

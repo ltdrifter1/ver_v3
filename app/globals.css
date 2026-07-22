@@ -1,9 +1,9 @@
 :root {
   /*
-   * One feeling: Saturday-morning cartoon room + balmingtiger HUD.
-   * Personality lives in the drawn panorama; chrome stays airy white/glass.
+   * One feeling: underground illustrated room + balmingtiger floating chrome.
+   * Personality lives in the jungle/DnB panorama; HUD stays airy white/glass.
    */
-  --bg: #ffd56a;
+  --bg: #0a0a0a;
   --ink: #1a1410;
   --ink-dim: rgba(255, 255, 255, 0.72);
   --amber: #e9b21d;
@@ -51,7 +51,7 @@ main {
   inset: 0;
   height: 100dvh;
   width: 100vw;
-  background: var(--bg);
+  background: #000;
   cursor: default;
   touch-action: none;
 }

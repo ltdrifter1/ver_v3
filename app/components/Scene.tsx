@@ -384,7 +384,7 @@ export default function Scene({
         gyroRef={gyroRef}
       />
 
-      <color attach="background" args={['#ffd56a']} />
+      <color attach="background" args={['#000000']} />
 
       {/* Lights-on sphere */}
       <mesh>

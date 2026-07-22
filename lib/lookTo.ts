@@ -3,6 +3,8 @@ import type { Controls } from '@/app/components/sceneContext';
 import type { Section } from '@/app/data/sections';
 import {
   MFOV_EXPLORE,
+  MFOV_LOOKTO_MIN,
+  MFOV_MAX,
   START_LOOK_U,
   START_LOOK_V,
   uToYaw,
@@ -33,7 +35,13 @@ export function lookToSection(
   const duration = opts.duration ?? 2;
   const targetYaw = uToYaw(section.lookU ?? section.u);
   const targetPitch = vToPitch(section.lookV ?? section.v);
-  const targetMfov = section.lookFov ?? 80;
+  // Mobile: softer video punch (balmingtiger video ~40 on small screens).
+  let targetMfov = section.lookFov ?? 80;
+  if (typeof window !== 'undefined' && section.id === 'crt-tv') {
+    const narrow = window.matchMedia('(max-width: 570px)').matches;
+    targetMfov = narrow ? 40 : Math.min(targetMfov, 20);
+  }
+  targetMfov = Math.min(MFOV_MAX, Math.max(MFOV_LOOKTO_MIN, targetMfov));
 
   activeTween?.kill();
   controls.velocity.x = 0;

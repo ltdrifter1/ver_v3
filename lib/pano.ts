@@ -28,15 +28,19 @@ export const SPHERE_RADIUS = 48;
 export const MFOV_RATIO = 4 / 3;
 
 /**
- * Explore MFOV. krpano xml lists 120; Three.js + fisheye=0.3 still reads
- * narrower than their stereographic frame, so we land at 130 (P1 step
- * toward 120 without collapsing the room).
+ * Explore MFOV. Matched to balmingtiger / krpano view.fov="120".
+ * (Earlier 130–140 compensated for fisheye; P0 FOV discipline restores 120.)
  */
-export const MFOV_EXPLORE = 130;
-export const MFOV_INTRO = 170;
-/** Allow video punch-in (balmingtiger video lookto ~20 MFOV). */
-export const MFOV_MIN = 20;
+export const MFOV_EXPLORE = 120;
+export const MFOV_INTRO = 160;
+/**
+ * Free-look wheel clamp (krpano fovmin/fovmax).
+ * lookto may punch below this (video ~20) — wheel/keys stay in this range.
+ */
+export const MFOV_MIN = 70;
 export const MFOV_MAX = 140;
+/** Absolute floor for lookto punch-ins (video). */
+export const MFOV_LOOKTO_MIN = 20;
 
 /** Steady-state + intro fisheye (krpano view.fisheye). */
 export const FISHEYE_EXPLORE = 0.3;
@@ -51,7 +55,7 @@ export const INTRO_DUR = 2;
  * equivalent of krpano hlookat=0, vlookat=0 for this equirect.
  */
 export const START_LOOK_U = 0.55;
-export const START_LOOK_V = 0.5;
+export const START_LOOK_V = 0.48;
 
 /**
  * krpano vtourskin defaults:

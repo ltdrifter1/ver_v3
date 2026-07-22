@@ -21,7 +21,7 @@ const body = Outfit({
 export const metadata: Metadata = {
   title: 'VCR Records — Video Cassette Recordings',
   description:
-    'Step inside the VCR Records store. A full 360° Saturday-morning cartoon panorama of a 1990s record shop. Look around, explore, and discover.',
+    'Step inside the VCR Records store. A full 360° illustrated jungle & drum and bass record shop. Look around, explore, and discover.',
   keywords: [
     'VCR Records',
     'jungle',
@@ -29,11 +29,11 @@ export const metadata: Metadata = {
     'record store',
     'vinyl',
     'immersive',
-    'cartoon',
+    'underground',
   ],
   openGraph: {
     title: 'VCR Records',
-    description: 'An interactive 360° cartoon record-store. Look around, explore, discover.',
+    description: 'An interactive 360° underground record-store. Look around, explore, discover.',
     type: 'website',
   },
 };
