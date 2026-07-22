@@ -43,7 +43,7 @@ export type Section = {
   accent: string;
   /**
    * Normalised hotspot position on the equirectangular store
-   * (public/textures/store_pano_v2.webp, 2048×1024).
+   * (public/textures/store_pano_v3.webp, 2048×1024).
    * u: around full 360° yaw after BackSide U-flip (1 − texture_u) · v: top→bottom
    */
   u: number;
@@ -87,8 +87,8 @@ export const SECTIONS: Section[] = [
     intro:
       'The foam ear-cups still smell of cigarettes and rain. Drop the needle and the room disappears — just you, a stool, and 174 beats per minute.',
     accent: '#ffb347',
-    u: 0.48,
-    v: 0.42,
+    u: 0.2,
+    v: 0.4,
     w: 6,
     h: 9,
     lookFov: 60,
@@ -174,7 +174,7 @@ export const SECTIONS: Section[] = [
     intro:
       'Static rolls until it doesn’t. Hand-dubbed VHS sets, pirate TV idents and grainy warehouse footage nobody was supposed to keep.',
     accent: '#7ad7ff',
-    u: 0.34,
+    u: 0.3,
     v: 0.42,
     w: 4.5,
     h: 4.2,
@@ -197,8 +197,8 @@ export const SECTIONS: Section[] = [
     intro:
       'Cardboard sleeves softened by a thousand thumbs. Every divider is a name; every name kept this place breathing after dark.',
     accent: '#ff7a9c',
-    u: 0.55,
-    v: 0.82,
+    u: 0.34,
+    v: 0.78,
     w: 16,
     h: 7,
     lookFov: 85,
@@ -222,8 +222,8 @@ export const SECTIONS: Section[] = [
     intro:
       'The drawer sticks unless you hit it just right. Fresh pressings, dusty repress, and a tin of badges by the till.',
     accent: '#9dff8a',
-    u: 0.45,
-    v: 0.5,
+    u: 0.58,
+    v: 0.52,
     w: 5.5,
     h: 5,
     lookFov: 70,
@@ -246,8 +246,8 @@ export const SECTIONS: Section[] = [
     intro:
       'Layer over layer over layer. Pull one flyer and three come with it. Every party that ever mattered is buried in here somewhere.',
     accent: '#ffe66d',
-    u: 0.45,
-    v: 0.24,
+    u: 0.44,
+    v: 0.36,
     w: 12,
     h: 6,
     lookFov: 80,
@@ -270,8 +270,8 @@ export const SECTIONS: Section[] = [
     intro:
       'Still takes 10p. The number on the card behind the glass hasn’t changed since ’93 — ring it and somebody actually answers.',
     accent: '#ff5e5e',
-    u: 0.4,
-    v: 0.45,
+    u: 0.37,
+    v: 0.48,
     w: 3.8,
     h: 8,
     lookFov: 60,
@@ -293,7 +293,7 @@ export const SECTIONS: Section[] = [
     intro:
       'Past the EXIT sign and the beaded curtain. This is where the label started: one borrowed sampler, two decks, and a fridge full of nothing.',
     accent: '#c9a6ff',
-    u: 0.12,
+    u: 0.4,
     v: 0.48,
     w: 3.8,
     h: 8,

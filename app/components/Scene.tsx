@@ -68,7 +68,7 @@ type Props = {
 
 /**
  * Camera rig — exact balmingtiger / krpano parity:
- * - MFOV 120 explore, intro 160→120 + fisheye 1→0.3 over 2s (power3.inOut, delay 0.4)
+ * - MFOV 130 explore, intro 160→130 + fisheye 1→0.3 over 2s (power3.inOut, delay 0.4)
  * - Look locked during intro; usercontrol=all on complete
  * - Click-and-drag with instant tracking + draginertia/dragfriction
  * - followmousecontrol lean on desktop (view.rx / view.ry)

@@ -14,7 +14,7 @@ const tmp = new THREE.Vector3();
 
 /** Ceiling lamp in the store — toggles lights on/off (balmingtiger lamp hotspot). */
 export const LAMP_U = 0.5;
-export const LAMP_V = 0.12;
+export const LAMP_V = 0.16;
 
 function makeLampGlow() {
   const c = document.createElement('canvas');

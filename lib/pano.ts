@@ -28,10 +28,10 @@ export const SPHERE_RADIUS = 48;
 export const MFOV_RATIO = 4 / 3;
 
 /**
- * Explore MFOV. Matched to balmingtiger / krpano view.fov="120".
- * (Earlier 130–140 compensated for fisheye; P0 FOV discipline restores 120.)
+ * Explore MFOV. Slightly wider than krpano's 120 so the painted shop
+ * reads roomier (balmingtiger feel) without going back to 140.
  */
-export const MFOV_EXPLORE = 120;
+export const MFOV_EXPLORE = 130;
 export const MFOV_INTRO = 160;
 /**
  * Free-look wheel clamp (krpano fovmin/fovmax).
@@ -55,8 +55,8 @@ export const INTRO_DUR = 2;
  * equivalent of krpano hlookat=0, vlookat=0 for this equirect.
  */
 /** Front of store after BackSide U-flip (texture u ↔ 1−u). */
-export const START_LOOK_U = 0.45;
-export const START_LOOK_V = 0.48;
+export const START_LOOK_U = 0.32;
+export const START_LOOK_V = 0.5;
 
 /**
  * krpano vtourskin defaults:
@@ -153,9 +153,9 @@ export function uvToLocal(u: number, v: number): [number, number, number] {
   return uvToSpherical(u, v, SPHERE_RADIUS - 0.35);
 }
 
-/** v2 paths bust the year-long immutable CDN cache from earlier deploys. */
-export const TEXTURE_SRC = '/textures/store_pano_v2.webp';
+/** v3 — bright 90s cartoon room (cache-bust from darker underground v2). */
+export const TEXTURE_SRC = '/textures/store_pano_v3.webp';
 /** Darkened twin of the store — balmingtiger lights_off scene. */
-export const TEXTURE_OFF_SRC = '/textures/store_pano_off_v2.webp';
-export const LQIP_SRC = '/textures/store_pano_lqip_v2.webp';
+export const TEXTURE_OFF_SRC = '/textures/store_pano_off_v3.webp';
+export const LQIP_SRC = '/textures/store_pano_lqip_v3.webp';
 export const CRT_VIDEO_SRC = '/videos/crt_loop.mp4';
