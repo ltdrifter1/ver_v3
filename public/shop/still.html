@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Analog Fog Recordings</title>
+
+  <!-- Global styles -->
+  <link rel="stylesheet" href="static/style.css" />
+
+  <!-- Page-scoped styles: BASE (background/header/footer) + Product Page layer -->
+  <style>
+  :root{
+    --paper-bg:  #f5f1e8;
+    --paper-line:#d9d2c2;
+    --ink:       #111;
+    --muted:     #555;
+    --overlay-bg: rgba(0,0,0,.9);
+  }
+  html, body, .main-wrapper, .section-block, .row-wrapper{
+    background: var(--paper-bg) !important;
+    color: var(--ink);
+  }
+  .main-wrapper{ padding-bottom: calc(72px + env(safe-area-inset-bottom, 0)); }
+
+  .site-header{
+    display:grid;
+    grid-template-columns: 44px 1fr 44px;
+    align-items:center;
+    position: sticky; top: 0; z-index: 1000;
+    background:#000 url('static/assets/header.png') center/cover no-repeat !important;
+    border-bottom:1px solid #222;
+    padding: calc(1rem + env(safe-area-inset-top, 0px)) 12px 12px;
+  }
+  .center-logo{ justify-self:center; }
+  .center-logo img{ height: 35px; width:auto; display:block; }
+  .hamburger{ justify-self:start; width:36px; height:36px; border:none; background:transparent; padding:6px; cursor:pointer; display:grid; place-items:center; }
+  .hamburger span{ display:block; width:22px; height:2px; background:#f5f5f5; margin:3px 0; transition:transform .2s ease, opacity .2s ease; }
+  .hamburger[aria-expanded="true"] span:nth-child(1){ transform: translateY(5px) rotate(45deg); }
+  .hamburger[aria-expanded="true"] span:nth-child(2){ opacity:0; }
+  .hamburger[aria-expanded="true"] span:nth-child(3){ transform: translateY(-5px) rotate(-45deg); }
+  .nav.drawer{ position: fixed; top: 0; left: 0; bottom: 0; width: 260px; background: rgba(0,0,0,.92); backdrop-filter: blur(6px); border-right: 1px solid rgba(255,255,255,.08); transform: translateX(-100%); transition: transform .22s ease; padding: calc(16px + env(safe-area-inset-top,0)) 16px 16px; display: flex; flex-direction: column; gap: 14px; z-index: 1200; }
+  .nav.drawer a{ color:#fff; font-weight:600; letter-spacing:.2px; text-decoration:none; }
+  .nav-scrim{ position: fixed; inset: 0; background: rgba(0,0,0,.45); backdrop-filter: blur(1px); z-index: 1100; }
+  .site-header.menu-open .nav.drawer{ transform: translateX(0); }
+  .site-header.menu-open .nav-scrim[hidden]{ display:block; }
+  @media (min-width: 900px){
+    .hamburger{ display:none; }
+    .site-header{ grid-template-columns: 1fr auto 1fr; }
+    .nav.drawer{ position: static; transform: none; transition: none; width: auto; background: transparent; backdrop-filter:none; border: none; padding: 0; flex-direction: row; gap: 1.2rem; z-index: auto; }
+    .nav.drawer a{ color:#f5f5f5; }
+    .nav-scrim{ display:none !important; }
+  }
+
+  .wrap{ width:min(1100px, 92vw); margin-inline:auto; }
+  .crumbs{ color:#7a7365; font-size:12px; padding:14px 0 6px; }
+  .crumbs a{ color:#7a7365; text-decoration:none; }
+  .crumbs a:hover{ text-decoration:underline; color:#333; }
+
+  .product-grid{ display:grid; grid-template-columns: 1.05fr 1fr; gap:28px; align-items:start; padding: 8px 0 48px; }
+  @media (max-width: 900px){ .product-grid{ grid-template-columns:1fr; } }
+
+  .gallery{ position:relative; }
+  .hero{ background: #fff; border:1px solid var(--paper-line); border-radius:12px; padding:10px; }
+  .hero img{ width:100%; display:block; border-radius:8px; }
+  .thumbs{ display:grid; grid-template-columns: repeat(6, minmax(0,1fr)); gap:10px; margin-top:10px; }
+  .thumbs button{ background:#fff; border:1px solid var(--paper-line); border-radius:8px; padding:6px; cursor:pointer; }
+  .thumbs img{ width:100%; display:block; border-radius:6px; }
+  .media-badge{ position:absolute; left:16px; top:16px; background:#111; color:#fff; font-weight:700; border-radius:999px; padding:6px 10px; font-size:12px; letter-spacing:.03em; }
+
+  .panel{ background:#fff; border:1px solid var(--paper-line); border-radius:12px; padding:18px; position:sticky; top:84px; }
+  .title{ font-size: clamp(22px, 2.5vw, 30px); font-weight:800; line-height:1.1; margin:0 0 6px; }
+  .subtitle{ color:#6a665b; margin:0 0 10px; font-size:14px; }
+  .price{ font-size:22px; font-weight:700; margin:10px 0 14px; }
+  .label-row{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+  .chip{ border:1px solid var(--paper-line); border-radius:999px; padding:.25rem .6rem; font-size:12px; font-weight:700; letter-spacing:.02em; }
+  .in-stock{ color:#126c2f; border-color:#a9d3b8; background:#edf7f1; }
+
+  .variant{ display:grid; gap:8px; margin:14px 0; }
+  .variant label{ font-size:12px; color:#6a665b; }
+  .variant select, .variant input{ width:100%; height:40px; border-radius:8px; border:1px solid var(--paper-line); padding:0 10px; background:#fff; color:#111; }
+
+  .qty-row{ display:flex; align-items:center; gap:12px; margin:10px 0 16px; }
+  .qty{ display:inline-flex; align-items:center; border:1px solid var(--paper-line); border-radius:10px; overflow:hidden; }
+  .qty button{ background:#f0ede6; color:#111; border:0; width:38px; height:40px; font-size:18px; cursor:pointer; }
+  .qty input{ width:56px; height:40px; text-align:center; background:transparent; border:0; color:#111; font-size:16px; }
+
+  .cta{ display:grid; grid-template-columns: 1fr; gap:10px; margin-top:6px; }
+  .btn{ display:inline-flex; align-items:center; justify-content:center; height:46px; border-radius:10px; font-weight:800; letter-spacing:.02em; text-decoration:none; cursor:pointer; border:1px solid #111; background:#111; color:#fff; }
+  .btn.secondary{ background:transparent; color:#111; border-color:#111; }
+  .shop-pay{ display:flex; align-items:center; justify-content:center; gap:8px; font-weight:800; height:46px; border-radius:10px; border:1px dashed #7c7c7c; background:#f3f1eb; }
+
+  .small-note{ color:#6a665b; font-size:12px; margin-top:8px; }
+  .divider{ height:1px; background:var(--paper-line); margin:18px 0; }
+
+  .tabs{ margin-top: 8px; }
+  .tab-list{ display:flex; gap:10px; flex-wrap:wrap; }
+  .tab-btn{ background:#fff; border:1px solid var(--paper-line); border-radius:999px; padding:.35rem .8rem; font-weight:700; cursor:pointer; }
+  .tab-btn[aria-selected="true"]{ background:#111; color:#fff; border-color:#111; }
+  .tab-panel{ display:none; padding:12px 0; }
+  .tab-panel.active{ display:block; }
+
+  .tracks{ border:1px solid var(--paper-line); border-radius:12px; background:#fff; }
+  .track-row{ display:grid; grid-template-columns:auto 1fr auto; gap:10px; padding:10px 12px; border-top:1px solid var(--paper-line); }
+  .track-row:first-child{ border-top:0; }
+  .track-no{ color:#6a665b; }
+  .disc-tag{ font-size:12px; color:#6a665b; }
+
+  .sticky-bar{ position:sticky; bottom:0; background:#fff; border:1px solid var(--paper-line); border-radius:12px; padding:10px; display:none; gap:10px; }
+  @media (max-width: 900px){ .panel{ position:static; } .sticky-bar{ display:grid; grid-template-columns:1fr auto; align-items:center; } }
+
+  .zoom{ position:fixed; inset:0; background:rgba(0,0,0,.9); display:none; align-items:center; justify-content:center; z-index:3000; }
+  .zoom img{ max-width:90vw; max-height:85vh; border-radius:8px; box-shadow:0 10px 40px rgba(0,0,0,.5); }
+  .zoom button{ position:absolute; top:16px; right:16px; background:rgba(255,255,255,.14); color:#fff; border:1px solid rgba(255,255,255,.3); border-radius:8px; padding:6px 10px; cursor:pointer; }
+
+  /* Redeem */
+  .redeem{ border:1px dashed #bdb7a8; background:#fff; border-radius:10px; padding:12px; }
+  .redeem .disc-tag{ font-weight:700; }
+  .redeem-row{ display:grid; grid-template-columns:1fr auto; gap:10px; margin-top:6px; }
+  .redeem-row input{
+    height:46px; border:1px solid var(--paper-line); border-radius:10px; padding:0 12px;
+    background:#fff; color:#111; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
+  }
+  .download-links{ margin-top:10px; display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .hidden{ display:none !important; }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="site-header">
+    <button class="hamburger" aria-label="Open menu" aria-expanded="false" aria-controls="siteMenu">
+      <span></span><span></span><span></span>
+    </button>
+    <a href="home.html" class="logo center-logo">
+      <img src="static/assets/image.png" alt="AFR Logo" />
+    </a>
+    <div class="header-spacer" aria-hidden="true"></div>
+    <nav id="siteMenu" class="nav drawer">
+      <a href="home.html">Home</a>
+      <a href="#">Releases</a>
+      <a href="#">Library</a>
+      <a href="#.html">Info</a>
+    </nav>
+    <div class="nav-scrim" hidden></div>
+  </header>
+
+  <!-- MAIN -->
+  <main class="main-wrapper">
+    <div class="wrap">
+      <div class="crumbs"><a href="#">Shop</a> / <a href="#">Digital</a> / Single</div>
+
+      <section class="product-grid" itemscope itemtype="https://schema.org/Product">
+        <!-- Gallery -->
+        <div class="gallery">
+          <div class="media-badge">Single</div>
+          <div class="hero">
+            <img id="heroImg" src="static/assets/still.png" alt="Product art" itemprop="image" />
+          </div>
+        </div>
+
+        <!-- Details -->
+        <aside class="panel" itemprop="offers" itemscope itemtype="https://schema.org/Offer">
+          <h1 class="title" itemprop="name">F. Hastings: Still In Love</h1>
+          <p class="subtitle">October 12, 2025</p>
+
+          <div class="label-row">
+            <span class="chip in-stock">In stock</span>
+            <span class="chip">Ships in 2–3 days</span>
+            <span class="chip">Catalog: CBJG02500005</span>
+          </div>
+
+          <!-- Price (correct microdata: meta tags) -->
+          <div class="price">
+            <meta itemprop="priceCurrency" content="USD" />
+            <meta itemprop="price" content="2.98" id="priceContent" />
+            <span id="priceText">$2.98</span> <span class="disc-tag">USD</span>
+          </div>
+
+          <div class="variant">
+            <label for="variant">Format</label>
+            <select id="variant" aria-label="Choose format">
+              <option>Cassette</option>
+              <option>CD</option>
+              <option selected>Digital</option>
+            </select>
+          </div>
+
+          <div class="qty-row">
+            <div class="qty" aria-label="Quantity selector">
+              <button type="button" id="minus">−</button>
+              <input type="number" id="qty" value="1" min="1" inputmode="numeric" />
+              <button type="button" id="plus">+</button>
+            </div>
+            <span class="disc-tag"></span>
+          </div>
+
+          <div class="cta">
+            <button class="btn" id="addCart" data-behavior="add-to-cart">ADD TO CART</button>
+          </div>
+          <br/>
+
+          <div class="shop-pay" aria-label="Express checkout">Shop&nbsp;Pay / Apple&nbsp;Pay / GPay</div>
+          <br/>
+
+          <!-- Redeem code area -->
+          <div class="redeem" aria-label="Redeem download code">
+            <label for="redeemCode" class="disc-tag">Have a free download code?</label>
+            <div class="redeem-row">
+              <input id="redeemCode" type="text" inputmode="text" autocomplete="one-time-code"
+                     placeholder="Enter code" aria-describedby="redeemStatus"/>
+              <button class="btn secondary" id="redeemBtn" type="button">Redeem</button>
+            </div>
+          </div>
+          <div id="redeemStatus" class="small-note" role="status" aria-live="polite"></div>
+          <br/>
+
+          <!-- Fallback links (auto-shown after success) -->
+          <div id="downloadLinks" class="download-links hidden" aria-hidden="true">
+            <a id="dlMp3" class="btn" href="static/downloads/CBGJ0-25-00005.mp3" download>Download MP3</a>
+            <a id="dlWav" class="btn secondary" href="static/downloads/CBGJ0-25-00005.wav" download>Download WAV</a>
+          </div>
+
+          <p class="small-note">Secure checkout · 30-day returns on unopened media</p>
+          <div class="divider"></div>
+
+          <div class="tabs" id="tabs">
+            <div role="tablist" aria-label="Product info" class="tab-list">
+              
+              
+              
+              
+              <button class="tab-btn" role="tab" aria-selected="true" aria-controls="tab-track" id="tabbtn-track">Tracklist</button>
+              
+              <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-desc" id="tabbtn-desc">Description</button>
+              
+              
+              <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-ship" id="tabbtn-ship">Shipping</button>
+            </div>
+            <div id="tab-desc" class="tab-panel" role="tabpanel">
+              <p>...</p>
+              <ul></ul>
+            </div>
+            <div id="tab-track" class="tab-panel active" role="tabpanel">
+              <div class="tracks" aria-label="Tracklist">
+                <div class="track-row"><span class="track-no">A1</span><span>Still In Love</span><span class="disc-tag">6:02</span></div>
+              </div>
+            </div>
+            <div id="tab-ship" class="tab-panel" role="tabpanel">
+              <p>Ships from Cumberland, BC. Packed in a poly bag, bubble-wrap mailer. Combined shipping applied at checkout.</p>
+              <ul>
+                <li>Canada: Expedited (2–7 biz days)</li>
+                <li>USA: Tracked Packet (4–8 biz days)</li>
+                <li>Rest of World: Tracked Air (7–21 biz days)</li>
+              </ul>
+            </div>
+          </div>
+        </aside>
+      </section>
+
+      <!-- Sticky mini add-to-cart on mobile -->
+      <div class="sticky-bar" id="stickyBar">
+        <strong>$39.98</strong>
+        <button class="btn" id="stickyAdd">ADD TO CART</button>
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="site-footer simple-footer">
+  <div class="footer-wrap">
+    <nav class="footer-links" aria-label="Footer links">
+      <a href="#">Help &amp; Support</a>
+      <a href="#">Terms</a>
+      <a href="#">Privacy</a>
+      <a href="#">Cookies</a>
+    </nav>
+    <div class="copyright">&copy; 2025 Analog Fog | Official Store</div>
+  </div>
+</footer>
+
+
+  <!-- ============= JS ============= -->
+  <script>
+  // Header drawer
+  (function(){
+    const header  = document.querySelector('.site-header');
+    const btn     = header.querySelector('.hamburger');
+    const scrim   = header.querySelector('.nav-scrim');
+    function closeMenu(){ header.classList.remove('menu-open'); btn.setAttribute('aria-expanded','false'); scrim.setAttribute('hidden',''); }
+    function openMenu(){ header.classList.add('menu-open'); btn.setAttribute('aria-expanded','true'); scrim.removeAttribute('hidden'); }
+    btn?.addEventListener('click', () => { const open = btn.getAttribute('aria-expanded') === 'true'; open ? closeMenu() : openMenu(); });
+    scrim?.addEventListener('click', closeMenu);
+    window.addEventListener('keydown', e => { if(e.key === 'Escape') closeMenu(); });
+  })();
+
+  // Gallery thumbs + zoom (if thumbs added)
+  (function(){
+    const hero = document.getElementById('heroImg');
+    const thumbs = document.getElementById('thumbs');
+    thumbs?.addEventListener('click', (e)=>{
+      const btn = e.target.closest('button'); if(!btn) return;
+      const img = btn.querySelector('img'); if(!img) return;
+      hero.src = img.src; hero.alt = img.alt || 'Product image';
+    });
+    hero?.addEventListener('click', () => openZoom(hero.src, hero.alt));
+
+    const zoom = document.createElement('div');
+    zoom.className = 'zoom';
+    zoom.innerHTML = '<button aria-label="Close">Close</button><img alt="Zoomed" />';
+    document.body.appendChild(zoom);
+    function openZoom(src, alt){ zoom.style.display='flex'; const im=zoom.querySelector('img'); im.src=src; im.alt=alt||''; }
+    zoom.addEventListener('click', (e)=>{ if(e.target.tagName!=='IMG') zoom.style.display='none'; });
+    zoom.querySelector('button').addEventListener('click', ()=> zoom.style.display='none');
+  })();
+
+  // Tabs
+  (function(){
+    const tabs = document.getElementById('tabs'); if(!tabs) return;
+    const btns = tabs.querySelectorAll('[role="tab"]');
+    const panels = tabs.querySelectorAll('.tab-panel');
+    btns.forEach(btn=>btn.addEventListener('click', ()=>{
+      btns.forEach(b=>b.setAttribute('aria-selected','false'));
+      panels.forEach(p=>p.classList.remove('active'));
+      btn.setAttribute('aria-selected','true');
+      const panel = document.getElementById(btn.getAttribute('aria-controls'));
+      panel?.classList.add('active');
+    }));
+  })();
+
+  // Qty + sticky bar
+  (function(){
+    const q = document.getElementById('qty');
+    document.getElementById('minus')?.addEventListener('click', ()=>{ q.value = Math.max(1, (parseInt(q.value||'1',10)-1)); });
+    document.getElementById('plus') ?.addEventListener('click', ()=>{ q.value = (parseInt(q.value||'1',10)+1); });
+
+    const sticky = document.getElementById('stickyBar');
+    const panel = document.querySelector('.panel');
+    const io = new IntersectionObserver(entries=>{
+      const topVisible = entries[0].isIntersecting;
+      sticky.style.display = window.innerWidth < 900 && !topVisible ? 'grid' : 'none';
+    }, {threshold: 0});
+    if(panel) io.observe(panel);
+    window.addEventListener('resize', ()=>{ if(window.innerWidth>=900) sticky.style.display='none'; }, {passive:true});
+  })();
+
+  // Cart buttons (placeholder)
+  (function(){
+    const add = document.getElementById('addCart');
+    const sAdd= document.getElementById('stickyAdd');
+    function toast(msg){
+      const t = document.createElement('div');
+      t.textContent = msg; t.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:18px;background:#111;color:#fff;padding:10px 14px;border-radius:10px;z-index:4000;';
+      document.body.appendChild(t); setTimeout(()=>t.remove(),1500);
+    }
+    add?.addEventListener('click', ()=> toast('Added to cart'));
+    sAdd?.addEventListener('click', ()=> toast('Added to cart'));
+  })();
+
+  /* ---------- SIMPLE REDEEM (no hashing; works on http/https/file) ---------- */
+  const REDEEM_CODE = 'CBGJ025'; // case-insensitive
+  const FILES = {
+    mp3: 'static/downloads/CBGJ0-25-00001.mp3',
+    wav: 'static/downloads/CBGJ0-25-00001.wav',
+    name: 'F. Hastings - Fall In Love'
+  };
+
+  async function forceDownload(url, filename){
+    try{
+      const res = await fetch(url, { credentials: 'same-origin' });
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      const blob = await res.blob();
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename || (url.split('/').pop() || 'download');
+      document.body.appendChild(a); a.click();
+      setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+    }catch(err){
+      // Fallback: navigate directly
+      console.warn('Fetch download failed, falling back to navigation:', url, err);
+      location.href = url;
+    }
+  }
+
+  (function(){
+    const input  = document.getElementById('redeemCode');
+    const btn    = document.getElementById('redeemBtn');
+    const status = document.getElementById('redeemStatus');
+    const links  = document.getElementById('downloadLinks');
+    const aMp3   = document.getElementById('dlMp3');
+    const aWav   = document.getElementById('dlWav');
+
+    // Keep fallback links in sync with FILES
+    if(aMp3) aMp3.href = FILES.mp3;
+    if(aWav) aWav.href = FILES.wav;
+
+    if(!input || !btn) return;
+
+    async function redeem(){
+      status.textContent = '';
+      links.classList.add('hidden'); links.setAttribute('aria-hidden','true');
+
+      const raw = (input.value || '').trim();
+      if(!raw){ status.textContent = 'Enter your code to redeem.'; return; }
+
+      btn.disabled = true; btn.textContent = 'Checking…';
+      try{
+        if(raw.toUpperCase() !== REDEEM_CODE.toUpperCase()){
+          status.textContent = 'Invalid code. Please try again.';
+          return;
+        }
+
+        status.textContent = 'Code accepted! Starting your downloads…';
+
+        const results = await Promise.allSettled([
+          forceDownload(FILES.mp3, `${FILES.name}.mp3`),
+          forceDownload(FILES.wav, `${FILES.name}.wav`)
+        ]);
+
+        const failed = results.some(r => r.status === 'rejected');
+        links.classList.remove('hidden'); links.setAttribute('aria-hidden','false');
+        status.textContent = failed
+          ? 'Downloads started (some may have failed). Use the links below if needed.'
+          : 'Downloads started! If they don’t begin, use the links below.';
+      }finally{
+        btn.disabled = false; btn.textContent = 'Redeem';
+      }
+    }
+
+    btn.addEventListener('click', redeem);
+    input.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') redeem(); });
+  })();
+
+  /* Variant → price switcher */
+  (function(){
+    const variant = document.getElementById('variant');
+    const priceText = document.getElementById('priceText');
+    const priceContent = document.getElementById('priceContent');
+    if (!variant || !priceText || !priceContent) return;
+
+    const BASE = 2.98;   // Digital
+    const PHYS = 9.98;   // Cassette or CD
+
+    function setPrice() {
+      const v = (variant.value || '').trim().toLowerCase();
+      const amount = (v === 'cassette' || v === 'cd') ? PHYS : BASE;
+
+      priceText.textContent = `$${amount.toFixed(2)}`;
+      priceContent.setAttribute('content', amount.toFixed(2));
+    }
+
+    variant.addEventListener('change', setPrice);
+    setPrice(); // initialize
+  })();
+  </script>
+</body>
+</html>

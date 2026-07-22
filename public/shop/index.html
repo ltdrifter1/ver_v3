@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <title>VCR Recordings — Independent Electronic Music</title>
+  <meta name="description" content="VCR Recordings — independent electronic music. Jungle, house, hip-hop and experimental music."/>
+  <meta name="theme-color" content="#f5f5f7"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f5f5f7;
+      --surface: #ffffff;
+      --text: #1d1d1f;
+      --muted: #6e6e73;
+      --dim: #86868b;
+      --line: rgba(0,0,0,.08);
+      --fill: rgba(0,0,0,.04);
+      --fill-hi: rgba(0,0,0,.07);
+      --shadow: 0 2px 16px rgba(0,0,0,.05);
+      --shadow-lg: 0 12px 40px rgba(0,0,0,.08);
+      --radius: 18px;
+      --pill: 980px;
+      --ease: cubic-bezier(.25,.1,.25,1);
+      --dur: 300ms;
+      --sans: 'Manrope', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+      --safe-b: env(safe-area-inset-bottom, 0px);
+      --safe-t: env(safe-area-inset-top, 0px);
+      --wrap: 1080px;
+      --nav-h: 56px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+      font-size: 17px;
+      line-height: 1.47;
+      letter-spacing: -.01em;
+    }
+    a { color: inherit; text-decoration: none; }
+    img { display: block; max-width: 100%; }
+    button {
+      font-family: inherit; cursor: pointer; border: none; background: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    ::selection { background: rgba(0,0,0,.12); }
+
+    /* NAV */
+    .nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 300;
+      height: calc(var(--nav-h) + var(--safe-t));
+      padding-top: var(--safe-t);
+      background: rgba(245,245,247,.82);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      border-bottom: 1px solid transparent;
+      transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
+    }
+    .nav.scrolled {
+      background: rgba(255,255,255,.9);
+      border-bottom-color: var(--line);
+    }
+    .nav-inner {
+      max-width: var(--wrap);
+      margin: 0 auto;
+      height: var(--nav-h);
+      padding: 0 22px;
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    }
+    .nav-logo {
+      display: flex; align-items: center;
+      transition: opacity var(--dur) var(--ease);
+    }
+    .nav-logo img, .nav-logo svg {
+      height: 40px; width: auto;
+      display: block;
+    }
+    @media (hover:hover) { .nav-logo:hover { opacity: .65; } }
+
+    .nav-links { display: flex; gap: 2px; }
+    .nav-links a {
+      padding: 8px 12px;
+      font-size: 12px; font-weight: 500;
+      color: var(--muted);
+      border-radius: var(--pill);
+      transition: color var(--dur) var(--ease), background var(--dur) var(--ease);
+    }
+    @media (hover:hover) {
+      .nav-links a:hover { color: var(--text); background: var(--fill-hi); }
+    }
+    .nav-ham {
+      display: none; flex-direction: column; gap: 5px; padding: 10px;
+    }
+    .nav-ham span {
+      display: block; width: 16px; height: 1.5px; background: var(--muted);
+      transition: transform var(--dur) var(--ease), opacity var(--dur) var(--ease);
+    }
+    .nav-ham.on span:nth-child(1) { transform: translateY(6.5px) rotate(45deg); background: var(--text); }
+    .nav-ham.on span:nth-child(2) { opacity: 0; }
+    .nav-ham.on span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); background: var(--text); }
+    @media (max-width: 680px) { .nav-links { display: none; } .nav-ham { display: flex; } }
+
+    .nav-drawer {
+      display: none; position: fixed;
+      top: calc(var(--nav-h) + var(--safe-t)); left: 0; right: 0; z-index: 290;
+      background: rgba(255,255,255,.96);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--line);
+      padding: 8px 22px calc(16px + var(--safe-b));
+    }
+    .nav-drawer.on { display: block; }
+    .nav-drawer a {
+      display: block; padding: 14px 0;
+      border-bottom: 1px solid var(--line);
+      font-size: 15px; font-weight: 500; color: var(--muted);
+    }
+    .nav-drawer a:last-child { border-bottom: none; }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      height: 44px; padding: 0 22px;
+      border-radius: var(--pill);
+      font-size: 14px; font-weight: 500;
+      transition: opacity var(--dur) var(--ease), transform 180ms var(--ease), background var(--dur) var(--ease);
+    }
+    .btn:active { transform: scale(.97); }
+    .btn-dark { background: #1d1d1f; color: #fff; }
+    .btn-ghost { background: var(--fill-hi); color: var(--text); }
+    @media (hover:hover) {
+      .btn-dark:hover { opacity: .86; }
+      .btn-ghost:hover { background: rgba(0,0,0,.1); }
+    }
+
+    /* Layout */
+    .page-start {
+      padding-top: calc(var(--nav-h) + var(--safe-t));
+    }
+    .band {
+      max-width: var(--wrap);
+      margin: 0 auto;
+      padding: 0 22px;
+    }
+    .section { padding: 80px 0; }
+    @media (min-width: 800px) { .section { padding: 100px 0; } }
+
+    .section-head {
+      margin-bottom: 36px;
+      max-width: 520px;
+    }
+    .section-head .eyebrow {
+      font-size: 12px; font-weight: 600;
+      letter-spacing: .06em; text-transform: uppercase;
+      color: var(--dim); margin-bottom: 8px;
+    }
+    .section-head h2 {
+      font-size: clamp(32px, 5vw, 48px);
+      font-weight: 600;
+      letter-spacing: -.03em;
+      line-height: 1.05;
+      margin-bottom: 10px;
+    }
+    .section-head p {
+      font-size: 17px; color: var(--muted); line-height: 1.45;
+    }
+
+    /* FEATURED — compact, not a banner */
+    .featured {
+      padding: 40px 0 24px;
+    }
+    .featured-card {
+      display: grid;
+      grid-template-columns: minmax(200px, 380px) 1fr;
+      gap: 0;
+      background: var(--surface);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+    @media (max-width: 720px) {
+      .featured-card { grid-template-columns: 1fr; }
+    }
+    .featured-art {
+      aspect-ratio: 1;
+      background: #e8e8ed;
+      overflow: hidden;
+    }
+    .featured-art img {
+      width: 100%; height: 100%; object-fit: cover;
+      transition: transform .6s var(--ease);
+    }
+    @media (hover:hover) {
+      .featured-card:hover .featured-art img { transform: scale(1.03); }
+    }
+    .featured-body {
+      padding: clamp(24px, 4vw, 40px);
+      display: flex; flex-direction: column; justify-content: center; gap: 20px;
+    }
+    .featured-label {
+      font-size: 12px; font-weight: 600;
+      letter-spacing: .06em; text-transform: uppercase;
+      color: var(--dim);
+    }
+    .featured-title {
+      font-size: clamp(32px, 5vw, 48px);
+      font-weight: 600;
+      letter-spacing: -.035em;
+      line-height: 1.02;
+      margin-top: 6px;
+    }
+    .featured-artist {
+      font-size: 17px; color: var(--muted); margin-top: 8px;
+    }
+    .featured-desc {
+      font-size: 15px; color: var(--muted); line-height: 1.5;
+      max-width: 36ch;
+    }
+    .featured-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+
+    /* LISTEN */
+    .listen {
+      background: var(--surface);
+      border-block: 1px solid var(--line);
+    }
+    .listen-inner {
+      max-width: var(--wrap);
+      margin: 0 auto;
+      padding: 0 22px;
+    }
+    .listen-trig {
+      width: 100%;
+      display: flex; align-items: center; gap: 18px;
+      padding: 28px 0;
+      text-align: left;
+    }
+    .listen-play {
+      width: 52px; height: 52px; border-radius: 50%; flex-shrink: 0;
+      background: var(--text);
+      display: grid; place-items: center;
+      transition: transform var(--dur) var(--ease);
+    }
+    .listen-play svg { width: 16px; height: 16px; fill: #fff; margin-left: 2px; }
+    @media (hover:hover) {
+      .listen-trig:hover .listen-play { transform: scale(1.06); }
+    }
+    .listen-label {
+      font-size: 12px; font-weight: 600; color: var(--dim); margin-bottom: 4px;
+    }
+    .listen-title {
+      font-size: 20px; font-weight: 600; letter-spacing: -.02em;
+    }
+    .listen-sub { font-size: 14px; color: var(--muted); margin-top: 2px; }
+    .listen-embed { display: none; padding-bottom: 24px; }
+    .listen-embed.on { display: block; }
+
+    /* CATALOG */
+    .catalog {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+    @media (max-width: 760px) {
+      .catalog {
+        display: flex;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        gap: 14px;
+        margin: 0 -22px;
+        padding: 0 22px 8px;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+      }
+      .catalog::-webkit-scrollbar { display: none; }
+      .catalog .rel { flex: 0 0 min(72vw, 280px); scroll-snap-align: start; }
+    }
+    .rel { display: block; transition: transform var(--dur) var(--ease); }
+    @media (hover:hover) {
+      .rel:hover { transform: translateY(-3px); }
+      .rel:hover .rel-art img { transform: scale(1.03); }
+    }
+    .rel-art {
+      aspect-ratio: 1; border-radius: var(--radius); overflow: hidden;
+      background: #e8e8ed; box-shadow: var(--shadow); margin-bottom: 14px;
+    }
+    .rel-art img {
+      width: 100%; height: 100%; object-fit: cover;
+      transition: transform .6s var(--ease);
+    }
+    .rel-artist { font-size: 12px; font-weight: 500; color: var(--dim); margin-bottom: 3px; }
+    .rel-title { font-size: 19px; font-weight: 600; letter-spacing: -.02em; line-height: 1.15; }
+    .rel-year { font-size: 13px; color: var(--dim); margin-top: 5px; }
+
+    /* ARTISTS */
+    .artists {
+      background: var(--surface);
+      border-block: 1px solid var(--line);
+    }
+    .artist-list { display: flex; flex-direction: column; }
+    .artist-row {
+      display: grid;
+      grid-template-columns: 88px 1fr auto;
+      gap: 20px; align-items: center;
+      padding: 22px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .artist-row:last-child { border-bottom: none; }
+    @media (max-width: 520px) {
+      .artist-row { grid-template-columns: 72px 1fr; }
+      .artist-meta { display: none; }
+      .artist-row img { width: 72px; height: 72px; }
+    }
+    .artist-row img {
+      width: 88px; height: 88px; border-radius: 50%;
+      object-fit: cover; background: #e8e8ed;
+    }
+    .artist-name { font-size: 24px; font-weight: 600; letter-spacing: -.025em; }
+    .artist-role { font-size: 14px; color: var(--muted); margin-top: 3px; }
+    .artist-meta { font-size: 13px; font-weight: 500; color: var(--dim); text-align: right; }
+
+    /* MERCH */
+    .merch-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+    @media (max-width: 760px) {
+      .merch-grid { grid-template-columns: 1fr; max-width: 420px; }
+    }
+    .merch-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: var(--shadow);
+      display: flex; flex-direction: column; gap: 14px;
+      transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+    }
+    @media (hover:hover) {
+      .merch-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+      .merch-card:hover .merch-img img { transform: scale(1.03); }
+    }
+    .merch-img {
+      aspect-ratio: 1; border-radius: 14px; overflow: hidden;
+      background: var(--bg);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .merch-img img {
+      width: 100%; height: 100%; object-fit: contain; padding: 16px;
+      transition: transform .5s var(--ease);
+    }
+    .merch-name { font-size: 18px; font-weight: 600; letter-spacing: -.02em; }
+    .merch-price { font-size: 14px; color: var(--dim); margin-top: 2px; }
+    .merch-options { display: flex; gap: 6px; flex-wrap: wrap; }
+    .merch-opt {
+      height: 30px; padding: 0 12px;
+      border-radius: var(--pill);
+      background: var(--fill-hi); color: var(--muted);
+      font-size: 12px; font-weight: 500;
+      transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+    }
+    @media (hover:hover) { .merch-opt:hover { color: var(--text); } }
+    .merch-opt.selected { background: var(--text); color: #fff; }
+    .merch-add {
+      height: 42px; width: 100%; margin-top: auto;
+      border-radius: var(--pill);
+      background: var(--text); color: #fff;
+      font-size: 14px; font-weight: 500;
+      transition: opacity var(--dur) var(--ease), transform 180ms var(--ease);
+    }
+    .merch-add:active { transform: scale(.97); }
+    @media (hover:hover) { .merch-add:hover { opacity: .86; } }
+
+    /* FOOTER */
+    .footer {
+      background: #fff;
+      border-top: 1px solid var(--line);
+      padding: 64px 0 calc(36px + var(--safe-b));
+    }
+    .footer-top {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      margin-bottom: 48px;
+    }
+    @media (max-width: 700px) { .footer-top { grid-template-columns: 1fr; } }
+    .footer-logo {
+      width: min(140px, 42vw);
+      margin-bottom: 18px;
+    }
+    .footer-manifesto {
+      font-size: 22px; font-weight: 600;
+      letter-spacing: -.025em; line-height: 1.25;
+      max-width: 16ch;
+    }
+    .footer-manifesto span {
+      display: block; font-weight: 400; color: var(--muted); margin-top: 4px;
+    }
+    .footer-newsletter label {
+      display: block; font-size: 12px; font-weight: 600;
+      color: var(--dim); margin-bottom: 10px;
+    }
+    .footer-form {
+      display: flex; gap: 8px; padding: 4px;
+      border-radius: var(--pill);
+      background: var(--bg);
+      border: 1px solid var(--line);
+    }
+    .footer-form input {
+      flex: 1; min-width: 0; height: 40px; padding: 0 16px;
+      border: none; outline: none; background: transparent;
+      font-family: inherit; font-size: 15px; color: var(--text);
+    }
+    .footer-form input::placeholder { color: var(--dim); }
+    .footer-form button {
+      height: 40px; padding: 0 18px; border-radius: var(--pill);
+      background: var(--text); color: #fff;
+      font-size: 13px; font-weight: 500; white-space: nowrap;
+    }
+    .footer-note { font-size: 13px; color: var(--dim); margin-top: 10px; }
+    .footer-bottom {
+      display: flex; flex-wrap: wrap; gap: 16px;
+      justify-content: space-between; align-items: center;
+      padding-top: 24px; border-top: 1px solid var(--line);
+    }
+    .footer-copy { font-size: 12px; color: var(--dim); }
+    .footer-links { display: flex; flex-wrap: wrap; gap: 6px; }
+    .footer-links a {
+      padding: 8px 12px; border-radius: var(--pill);
+      font-size: 13px; font-weight: 500; color: var(--muted);
+      background: var(--fill);
+      transition: color var(--dur) var(--ease), background var(--dur) var(--ease);
+    }
+    @media (hover:hover) {
+      .footer-links a:hover { color: var(--text); background: var(--fill-hi); }
+    }
+
+    .rv { opacity: 0; transform: translateY(14px); transition: opacity .55s var(--ease), transform .55s var(--ease); }
+    .rv.in { opacity: 1; transform: none; }
+    .d1 { transition-delay: .06s; }
+    .d2 { transition-delay: .12s; }
+    .d3 { transition-delay: .18s; }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: .01ms !important;
+        transition-duration: .01ms !important;
+      }
+      .rv { opacity: 1; transform: none; }
+    }
+  </style>
+</head>
+<body id="top">
+
+<header class="nav" id="nav">
+  <div class="nav-inner">
+    <a href="#top" class="nav-logo" aria-label="VCR Records home">
+      <img src="vcr-globe.svg" alt="VCR Records" width="280" height="200"/>
+    </a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="#featured">Featured</a>
+      <a href="#releases">Releases</a>
+      <a href="#listen">Listen</a>
+      <a href="#artists">Artists</a>
+      <a href="#merch">Merch</a>
+    </nav>
+    <button class="nav-ham" id="navHam" aria-label="Menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</header>
+
+<div class="nav-drawer" id="navDrawer" aria-hidden="true">
+  <a href="#featured">Featured</a>
+  <a href="#releases">Releases</a>
+  <a href="#listen">Listen</a>
+  <a href="#artists">Artists</a>
+  <a href="#merch">Merch</a>
+</div>
+
+<div class="page-start">
+
+  <!-- FEATURED (compact card, not hero banner) -->
+  <section class="featured" id="featured">
+    <div class="band">
+      <a class="featured-card" href="home.html" aria-label="At Home by Inlet Knight">
+        <div class="featured-art">
+          <img src="at_home.png" alt="At Home" fetchpriority="high"/>
+        </div>
+        <div class="featured-body">
+          <div>
+            <div class="featured-label">Latest release</div>
+            <h1 class="featured-title">At Home</h1>
+            <div class="featured-artist">Inlet Knight</div>
+          </div>
+          <p class="featured-desc"> Digital and cassette on VCR Recordings.</p>
+          <div class="featured-actions">
+            <span class="btn btn-dark">View release</span>
+            <span class="btn btn-ghost">House</span>
+          </div>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <!-- LISTEN -->
+  <section class="listen" id="listen">
+    <div class="listen-inner">
+      <div id="listenBlock"
+           data-src="https://bandcamp.com/EmbeddedPlayer/track=4140921124/size=small/bgcol=f5f5f7/linkcol=1d1d1f/transparent=true/autoplay=1/">
+        <button class="listen-trig" id="listenTrig" aria-label="Play Inlet Knight — At Home on Bandcamp">
+          <div class="listen-play">
+            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          </div>
+          <div>
+            <div class="listen-label">Listen now</div>
+            <div class="listen-title">Inlet Knight — At Home</div>
+            <div class="listen-sub">Play on Bandcamp</div>
+          </div>
+        </button>
+        <div class="listen-embed" id="listenEmbed"></div>
+      </div>
+    </div>
+  </section>
+
+  <main>
+
+    <section class="section" id="releases">
+      <div class="band">
+        <div class="section-head rv">
+          <p class="eyebrow">Catalog</p>
+          <h2>Releases</h2>
+
+        </div>
+        <div class="catalog">
+          <a class="rel rv d1" href="home.html">
+            <div class="rel-art"><img src="at_home.png" alt="At Home" loading="lazy"/></div>
+            <div class="rel-artist">Inlet Knight</div>
+            <div class="rel-title">At Home</div>
+            <div class="rel-year">2026 · Digital + Cassette</div>
+          </a>
+          <a class="rel rv d2" href="summer.html">
+            <div class="rel-art"><img src="summer.PNG" alt="Summer Madness" loading="lazy"/></div>
+            <div class="rel-artist">LT Drifta</div>
+            <div class="rel-title">Summer Madness</div>
+            <div class="rel-year">2026 · Digital + Cassette</div>
+          </a>
+          <a class="rel rv d3" href="lion.html">
+            <div class="rel-art"><img src="blank1400.png" alt="Lions' Gate" loading="lazy"/></div>
+            <div class="rel-artist">Charlie Archer</div>
+            <div class="rel-title">Lions' Gate</div>
+            <div class="rel-year">2025 · Digital</div>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section class="artists section" id="artists">
+      <div class="band">
+        <div class="section-head rv">
+          <p class="eyebrow">Roster</p>
+          <h2>Artists</h2>
+     
+        </div>
+        <div class="artist-list rv d1">
+          <div class="artist-row">
+            <img src="logo2.PNG" alt=""/>
+            <div>
+              <div class="artist-name">Inlet Knight</div>
+              <div class="artist-role">Artist · Producer</div>
+            </div>
+     
+          </div>
+          <div class="artist-row">
+            <img src="logo2.PNG" alt=""/>
+            <div>
+              <div class="artist-name">Charlie Archer</div>
+              <div class="artist-role">Producer</div>
+            </div>
+      
+          </div>
+          <div class="artist-row">
+            <img src="logo2.PNG" alt=""/>
+            <div>
+              <div class="artist-name">L.T. Drifta</div>
+              <div class="artist-role">Artist</div>
+            </div>
+      
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="merch">
+      <div class="band">
+        <div class="section-head rv">
+          <p class="eyebrow">Shop</p>
+          <h2>Merch</h2>
+        
+        </div>
+        <div class="merch-grid">
+          <div class="merch-card rv d1">
+            <div class="merch-img">
+              <img id="tshirt-img" src="shirt.png" alt="T-Shirt"/>
+            </div>
+            <div>
+              <div class="merch-name">T-Shirt</div>
+              <div class="merch-price">From $30.00</div>
+            </div>
+            <div class="merch-options">
+              <button class="merch-opt selected" data-group="tshirt-colour" data-img="shirt.png">Black</button>
+              <button class="merch-opt" data-group="tshirt-colour" data-img="shirt2.png">White</button>
+            </div>
+            <div class="merch-options">
+              <button class="merch-opt selected" data-group="tshirt-size">S</button>
+              <button class="merch-opt" data-group="tshirt-size">M</button>
+              <button class="merch-opt" data-group="tshirt-size">L</button>
+              <button class="merch-opt" data-group="tshirt-size">XL</button>
+            </div>
+            <button class="merch-add" data-stripe="https://buy.stripe.com/3cI00k6DB8s877O1JzfrW0o">Buy</button>
+          </div>
+          <div class="merch-card rv d2">
+            <div class="merch-img">
+              <img id="hat-img" src="hat.png" alt="Hat"/>
+            </div>
+            <div>
+              <div class="merch-name">Hat</div>
+              <div class="merch-price">$25.00</div>
+            </div>
+            <div class="merch-options">
+              <button class="merch-opt selected" data-group="cap-colour" data-img="hat.png">Black</button>
+            </div>
+            <button class="merch-add" data-stripe="https://buy.stripe.com/6oU14o2nl23KgIoewlfrW0n">Buy</button>
+          </div>
+          <div class="merch-card rv d3">
+            <div class="merch-img">
+              <img id="bikini-img" src="bikini.png" alt="Bikini"/>
+            </div>
+            <div>
+              <div class="merch-name">Bikini</div>
+              <div class="merch-price">From $35.00</div>
+            </div>
+            <div class="merch-options">
+              <button class="merch-opt selected" data-group="bikini-colour" data-img="bikini.png">Black</button>
+              <button class="merch-opt" data-group="bikini-colour" data-img="bikini2.png">White</button>
+            </div>
+            <div class="merch-options">
+              <button class="merch-opt selected" data-group="bikini-size">XS</button>
+              <button class="merch-opt" data-group="bikini-size">S</button>
+              <button class="merch-opt" data-group="bikini-size">M</button>
+              <button class="merch-opt" data-group="bikini-size">L</button>
+            </div>
+            <button class="merch-add" data-stripe="https://buy.stripe.com/eVq7sMfa70ZG77O2NDfrW0m">Buy</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    <div class="band">
+      <div class="footer-top">
+        <div>
+          <img class="footer-logo" src="vcr-globe.svg" alt="VCR Records" width="280" height="200" loading="lazy"/>
+          <p class="footer-manifesto">
+            Electronic music from the Pacific Northwest.
+            <span> </span>
+          </p>
+        </div>
+        <div>
+          <label for="newsletterEmail">Stay in the loop</label>
+          <form class="footer-form" action="https://formspree.io/f/xdkwjzzr" method="POST">
+            <input type="email" id="newsletterEmail" name="email" placeholder="Email" required autocomplete="email"/>
+            <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px"/>
+            <button type="submit">Join</button>
+          </form>
+          <p class="footer-note">Occasional releases only.</p>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p class="footer-copy">© 2025 VCR Recordings</p>
+        <div class="footer-links">
+          <a href="#releases">Releases</a>
+          <a href="#merch">Merch</a>
+          <a href="https://vcrrecordings.bandcamp.com" target="_blank" rel="noopener">Bandcamp</a>
+          <a href="https://www.instagram.com/vcr_recordings" target="_blank" rel="noopener">Instagram</a>
+          <a href="/cdn-cgi/l/email-protection#93ffe7f7e1faf5e7f2d3f4fef2faffbdf0fcfe">Email</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+</div>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
+<script>
+(function () {
+  var nav = document.getElementById('nav');
+  var ticking = false;
+  window.addEventListener('scroll', function () {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(function () {
+      nav.classList.toggle('scrolled', window.scrollY > 12);
+      ticking = false;
+    });
+  }, { passive: true });
+})();
+
+var navHam = document.getElementById('navHam');
+var navDrawer = document.getElementById('navDrawer');
+navHam.addEventListener('click', function () {
+  var open = navDrawer.classList.toggle('on');
+  navHam.classList.toggle('on', open);
+  navHam.setAttribute('aria-expanded', String(open));
+  navDrawer.setAttribute('aria-hidden', String(!open));
+});
+navDrawer.querySelectorAll('a').forEach(function (a) {
+  a.addEventListener('click', function () {
+    navDrawer.classList.remove('on');
+    navHam.classList.remove('on');
+    navHam.setAttribute('aria-expanded', 'false');
+    navDrawer.setAttribute('aria-hidden', 'true');
+  });
+});
+
+var lb = document.getElementById('listenBlock');
+var lt = document.getElementById('listenTrig');
+var le = document.getElementById('listenEmbed');
+lt.addEventListener('click', function () {
+  if (le.classList.contains('on')) return;
+  lt.style.opacity = '.4';
+  lt.style.pointerEvents = 'none';
+  var f = document.createElement('iframe');
+  f.title = 'Bandcamp player';
+  f.src = lb.dataset.src;
+  f.allow = 'autoplay';
+  f.style.cssText = 'width:100%;height:80px;display:block;border:0;background:#f5f5f7;border-radius:12px;';
+  f.onload = function () { lt.style.display = 'none'; le.classList.add('on'); };
+  le.appendChild(f);
+});
+
+var MERCH_IMG_MAP = {
+  'tshirt-colour': document.getElementById('tshirt-img'),
+  'bikini-colour': document.getElementById('bikini-img'),
+  'cap-colour': document.getElementById('hat-img')
+};
+document.querySelectorAll('.merch-opt').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    var group = btn.dataset.group;
+    document.querySelectorAll('.merch-opt[data-group="' + group + '"]')
+      .forEach(function (b) { b.classList.remove('selected'); });
+    btn.classList.add('selected');
+    if (btn.dataset.img && MERCH_IMG_MAP[group]) MERCH_IMG_MAP[group].src = btn.dataset.img;
+  });
+});
+document.querySelectorAll('.merch-add').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    var card = btn.closest('.merch-card');
+    var baseUrl = btn.dataset.stripe;
+    var colourBtn = card.querySelector('.merch-opt.selected[data-group$="-colour"]');
+    var sizeBtn = card.querySelector('.merch-opt.selected[data-group$="-size"]');
+    var colour = colourBtn ? colourBtn.textContent.trim() : null;
+    var size = sizeBtn ? sizeBtn.textContent.trim() : null;
+    var url = new URL(baseUrl, 'https://placeholder.com');
+    if (colour) url.searchParams.set('colour', colour);
+    if (size) url.searchParams.set('size', size);
+    var finalUrl = baseUrl.startsWith('http') ? url.toString() : baseUrl;
+    var original = btn.textContent;
+    btn.textContent = 'Redirecting…';
+    btn.disabled = true;
+    setTimeout(function () {
+      window.location.href = finalUrl;
+      setTimeout(function () { btn.textContent = original; btn.disabled = false; }, 3000);
+    }, 300);
+  });
+});
+
+var obs = new IntersectionObserver(function (entries) {
+  for (var e of entries) {
+    if (e.isIntersecting) { e.target.classList.add('in'); obs.unobserve(e.target); }
+  }
+}, { threshold: .08, rootMargin: '0px 0px -20px 0px' });
+document.querySelectorAll('.rv').forEach(function (el) { obs.observe(el); });
+</script>
+</body>
+</html>

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>mid-record player</title>
+    <link rel="stylesheet" href="static/style.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            height: 100vh;
+            background: black;
+            overflow: hidden;
+        }
+        #video-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh; /* Adjusted for iOS Safari */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #visualizer {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            pointer-events: none;
+        }
+        #play-button {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.8);
+            border: none;
+            padding: 20px 30px;
+            font-size: 24px;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+        #controls {
+            position: fixed;
+            bottom: 10px; /* Adjusted to avoid URL bar */
+            width: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+        }
+        #audio-player {
+            width: 90%;
+        }
+    </style>
+</head>
+<body>
+    <div id="video-container">
+       <video id="visualizer" loop muted playsinline></video>
+
+
+
+      <button id="play-button">▶</button>
+
+
+        <div id="controls">
+            <audio id="audio-player" controls></audio>
+        </div>
+    </div>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const fileName = urlParams.get('file');
+        const playButton = document.getElementById("play-button");
+        const audioPlayer = document.getElementById("audio-player");
+        const visualizer = document.getElementById("visualizer");
+
+        if (fileName) {
+            const decodedFileName = decodeURIComponent(fileName);
+            audioPlayer.src = "static/mixes/" + decodedFileName;
+            audioPlayer.load();
+
+            const videoPath = "static/viz/" + decodedFileName.replace(/\.(mp3|wav)$/, ".mp4");
+          fetch(videoPath, { method: 'HEAD' })
+    .then(response => {
+        const src = response.ok ? videoPath : "static/viz/viz1.mp4";
+        visualizer.src = src;
+        visualizer.load(); // explicitly start loading
+
+        visualizer.addEventListener("loadeddata", () => {
+            visualizer.currentTime = 0;
+            visualizer.pause(); // show first frame
+            visualizer.style.display = "block"; // make sure it's visible
+        });
+    })
+    .catch(() => {
+        visualizer.src = "static/viz/viz1.mp4";
+        visualizer.load();
+        visualizer.addEventListener("loadeddata", () => {
+            visualizer.currentTime = 0;
+            visualizer.pause();
+            visualizer.style.display = "block";
+        });
+    });
+
+
+
+            playButton.addEventListener("click", () => {
+                audioPlayer.play();
+            });
+
+            audioPlayer.addEventListener("play", () => {
+                playButton.style.display = "none";
+                visualizer.play();
+            });
+
+            audioPlayer.addEventListener("pause", () => {
+                playButton.style.display = "block";
+            });
+        } else {
+            document.body.innerHTML = "<h2 style='color: white;'>Error: No file specified</h2>";
+        }
+    </script>
+</body>
+</html>

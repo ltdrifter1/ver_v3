@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>VCR Records</title>
+
+  <style>
+    /* --- Base --- */
+    * { box-sizing: border-box; margin:0; padding:0; }
+    html, body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background: #f8f8f8; color: #111; line-height: 1.6;
+    }
+
+    /* ===== HEADER (matches home.html) ===== */
+    .site-header {
+      display:flex; justify-content:space-between; align-items:center;
+      padding:1rem 2rem;
+      background:#000 url('/header.png') no-repeat center/cover;
+      position:sticky; top:0; z-index:1000; border-bottom:1px solid #222;
+    }
+    .left-group{display:flex; align-items:center; gap:2rem;}
+    .logo img{height:35px; display:block;}
+    .nav{display:flex; gap:1.2rem;}
+    .nav a{font-weight:500; color:#f5f5f5; text-decoration:none;}
+
+    /* --- Hero --- */
+    .hero{position:relative; height:100vh; background:url("/ff.avif") center/cover no-repeat;}
+    .hero-overlay{position:absolute; inset:0; background:rgba(0,0,0,.35); pointer-events:none;}
+    .hero-content{
+      position:absolute; bottom:20%; left:6%; z-index:2; max-width:600px; color:#fff;
+      transition:transform .3s, opacity .3s;
+    }
+    .hero-content.shrink{transform:scale(.88) translateY(-50px); opacity:.75;}
+    .album-title{font-size:2.0rem; font-weight:600;}
+    .album-details{
+      font-size:1rem; margin-top:8px; color:#f0f0f0; font-weight:700; letter-spacing:.2px;
+      text-shadow:0 1px 2px rgba(0,0,0,.35);
+    }
+
+    /* --- Floating Play (straddles hero/body) --- */
+    .floating-play{position:absolute; left:6%; bottom:-36px; z-index:10;}
+    #playBtn{
+      background:#000; color:#fff; border:none; width:72px; height:72px; border-radius:50%;
+      display:flex; align-items:center; justify-content:center; cursor:pointer;
+      box-shadow:0 10px 30px rgba(0,0,0,.25), inset 0 0 0 2px rgba(255,255,255,.2);
+    }
+    #playBtn svg{width:28px; height:28px; fill:#fff;}
+
+    /* --- Main --- */
+    main.detail-main{padding:60px 5% 120px; max-width:800px; margin:0 auto;}
+    .description{font-size:1rem; max-width:640px; margin-bottom:20px;}
+    .genre-tags{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:32px;}
+    .genre-tag{background:#000; color:#fff; font-size:.7rem; text-transform:uppercase; padding:5px 12px; border-radius:999px; border:1px solid #333; letter-spacing:.5px;}
+    .divider{border:none; border-top:1px solid #111; margin:40px 0 20px; width:100%;}
+    .tracklist-header{font-size:1.1rem; font-weight:800; letter-spacing:1px; margin-bottom:20px;}
+    .tracklist{max-width:640px;}
+    .track-entry{margin-bottom:20px; border-bottom:1px solid #ddd; padding-bottom:10px;}
+    .track-artist{font-weight:700;}
+    .track-title{color:#444;}
+
+    /* ===== Now Playing (old iTunes style) ===== */
+    .now-playing{
+      position:fixed; left:0; right:0; bottom:0; z-index:1500;
+      background:linear-gradient(#e9e9e9,#d9d9d9);
+      border-top:1px solid #bfbfbf;
+      box-shadow:0 -1px 0 #c8c8c8 inset, 0 -6px 16px rgba(0,0,0,.08);
+      padding:8px 14px calc(8px + env(safe-area-inset-bottom,0));
+      font-size:13px; color:#111;
+    }
+    .np-progress{width:100%; display:flex; align-items:center; gap:8px;}
+    .np-time{width:42px; text-align:right; font-variant-numeric:tabular-nums; color:#333;}
+    .np-time.left{text-align:left;}
+    input[type="range"].np-seek{
+      -webkit-appearance:none; appearance:none; width:100%; height:6px; background:#cfcfcf;
+      border-radius:4px; outline:none;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.7), inset 0 -1px 0 rgba(0,0,0,.08);
+    }
+    input[type="range"].np-seek::-webkit-slider-thumb{
+      -webkit-appearance:none; appearance:none; width:14px; height:14px; border-radius:50%;
+      background:#fff; border:1px solid #b5b5b5; box-shadow:0 1px 0 rgba(0,0,0,.25); margin-top:-4px;
+    }
+    input[type="range"].np-seek::-moz-range-thumb{
+      width:14px; height:14px; border-radius:50%; background:#fff; border:1px solid #b5b5b5; box-shadow:0 1px 0 rgba(0,0,0,.25);
+    }
+    .np-controls{margin-top:6px; display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:8px;}
+    .np-buttons{
+      display:inline-flex; align-items:center; gap:10px;
+      background:#ececec; border:1px solid #c8c8c8; border-radius:6px; padding:6px 10px;
+      box-shadow:0 1px 0 rgba(255,255,255,.7) inset, 0 -1px 0 rgba(0,0,0,.05) inset;
+    }
+    .np-btn{background:transparent; border:none; padding:2px; cursor:pointer; display:grid; place-items:center;}
+    .np-btn svg{width:16px; height:16px; fill:#222;}
+    .np-title{text-align:right; font-weight:600; color:#222;}
+    .np-msg{color:#c00; font-weight:600; margin-left:8px;}
+
+    @media (max-width:768px){
+      .album-title{font-size:1.8rem;}
+      main.detail-main{padding:56px 6% 120px;}
+      .floating-play{bottom:-28px;}
+      #playBtn{width:56px; height:56px;}
+      #playBtn svg{width:22px; height:22px;}
+      .np-title{font-size:12px;}
+    }
+  </style>
+</head>
+<body>
+
+   <!-- Header -->
+<header class="site-header">
+  <!-- Left: Hamburger -->
+  <button class="hamburger" aria-label="Open menu" aria-expanded="false" aria-controls="siteMenu">
+    <span></span><span></span><span></span>
+  </button>
+
+  <!-- Center: Logo -->
+  <a href="home.html" class="logo center-logo">
+    <img src="/vcr.avif" alt="AFR Logo" />
+  </a>
+
+  <!-- Right: spacer for balance -->
+  <div class="header-spacer" aria-hidden="true"></div>
+
+  <!-- Off-canvas nav (mobile) / inline (desktop) -->
+  <nav id="siteMenu" class="nav drawer">
+    <a href="home.html">Home</a>
+    <a href="home.html">Releases</a>
+    <a href="home.html">Library</a>
+     <a href="https://www.youtube.com/watch?v=AUAqGMaGjk4">About</a>
+    <a href="about.html">Contact</a>
+  </nav>
+
+  <!-- Dim background when drawer is open -->
+  <div class="nav-scrim" hidden></div>
+
+  <audio id="liveAudio" src="static/assets/live_audio.mp3"></audio>
+</header>
+
+  <!-- ===== HERO ===== -->
+  <div class="hero">
+    <div class="hero-overlay"></div>
+    <div class="hero-content" id="heroContent">
+      <h1 class="album-title">Future Drum and Bass</h1>
+      <p class="album-details">| Summer 2025</p>
+    </div>
+
+    <!-- Floating play button (set your file here) -->
+    <div class="floating-play">
+      <button id="playBtn" aria-label="Play/Pause" data-audio="https://pub-ec23146353b246ceade3d35cb55100dd.r2.dev/DnB9_Futurejungle4.mp3">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- One shared audio element -->
+  <audio id="player" preload="metadata" playsinline></audio>
+
+  <!-- ===== MAIN ===== -->
+  <main class="detail-main">
+    <section class="description">
+      <p>modern sounds of jungle & broken beat.</p>
+    </section>
+
+    <div class="genre-tags">
+        <span class="genre-tag">Breaks</span>
+        <span class="genre-tag">Hardcore</span>
+      <span class="genre-tag">Jungle</span>
+      <span class="genre-tag">Liquid</span>
+  
+    </div>
+
+    <hr class="divider" />
+    <h2 class="tracklist-header">TRACKLIST</h2>
+
+    <section class="tracklist">
+        
+        
+  <!-- Additional tracklist -->
+<div class="track-entry">
+  <div class="track-artist">Walk:r</div>
+  <div class="track-title">Late Night Track (Instrumental)</div>
+</div>
+<div class="track-entry">
+  <div class="track-artist">Arp Nova &amp; Silence Groove</div>
+  <div class="track-title">Orange Skies</div>
+</div>
+<div class="track-entry">
+  <div class="track-artist">[ K S R ] &amp; Konny Kon</div>
+  <div class="track-title">Part of the Plan (DJ Marky &amp; Makoto Remix)</div>
+</div>
+<div class="track-entry">
+  <div class="track-artist">winslow.</div>
+  <div class="track-title">Peaced Out</div>
+</div>
+<div class="track-entry">
+  <div class="track-artist">Keeno</div>
+  <div class="track-title">Persevere (DJ Mix)</div>
+</div>
+<div class="track-entry">
+  <div class="track-artist">Hoax &amp; Zitah</div>
+  <div class="track-title">What You Came Here For</div>
+</div>
+<div class="track-entry">
+  <div class="track-artist">Soulox</div>
+  <div class="track-title">Sneaky (Xtra Spice Mikey VIP)</div>
+</div>
+<div class="track-entry">
+  <div class="track-artist">Roni Size &amp; DJ Die</div>
+  <div class="track-title">Agility</div>
+</div>
+<div class="track-entry">
+  <div class="track-artist">Submarine</div>
+  <div class="track-title">Kowai</div>
+</div>
+<div class="track-entry">
+  <div class="track-artist">Unglued &amp; Molecular</div>
+  <div class="track-title">Underground Supply</div>
+</div>
+<div class="track-entry">
+  <div class="track-artist">Anile</div>
+  <div class="track-title">Flow Chamber</div>
+</div>
+<div class="track-entry">
+  <div class="track-artist">Zero T</div>
+  <div class="track-title">Déjà Vu (feat. Sio &amp; Onj)</div>
+</div>
+<div class="track-entry">
+  <div class="track-artist">Alix Perez</div>
+  <div class="track-title">In Your Eyes</div>
+</div>
+<div class="track-entry">
+  <div class="track-artist">Mystic Trip &amp; Jules</div>
+  <div class="track-title">Capo</div>
+</div>
+<div class="track-entry">
+  <div class="track-artist">Calibre</div>
+  <div class="track-title">Bullets (feat. Diane Charlemagne)</div>
+</div>
+<div class="track-entry">
+  <div class="track-artist">Donnie Murdo</div>
+  <div class="track-title">Find The Way (SMOOTH001)</div>
+</div>
+<div class="track-entry">
+  <div class="track-artist">Dub Phizix</div>
+  <div class="track-title">Seven Stories</div>
+</div>
+<div class="track-entry">
+  <div class="track-artist">Raf &amp; Ill Logic</div>
+  <div class="track-title">We Are Now</div>
+</div>
+<div class="track-entry">
+  <div class="track-artist">Calibre &amp; High Contrast</div>
+  <div class="track-title">The Other Side</div>
+</div>
+<div class="track-entry">
+  <div class="track-artist">LSB</div>
+  <div class="track-title">PCT</div>
+</div>
+<div class="track-entry">
+  <div class="track-artist">Untitled</div>
+  <div class="track-title">NO ID</div>
+</div>
+<div class="track-entry">
+  <div class="track-artist">Untitled</div>
+  <div class="track-title">NO ID2</div>
+</div>
+<div class="track-entry">
+  <div class="track-artist">Untitled</div>
+  <div class="track-title">NO ID3</div>
+</div>
+<div class="track-entry">
+  <div class="track-artist">Untitled</div>
+  <div class="track-title">NO ID4</div>
+</div>
+<div class="track-entry">
+  <div class="track-artist">Untitled</div>
+  <div class="track-title">NO ID5</div>
+</div>
+<div class="track-entry">
+  <div class="track-artist">Untitled</div>
+  <div class="track-title">NO ID6</div>
+</div>
+<div class="track-entry">
+  <div class="track-artist">London Elektricity x Catching Cairo</div>
+  <div class="track-title">Always Golden</div>
+</div>
+<div class="track-entry">
+  <div class="track-artist">username &amp; Moonside</div>
+  <div class="track-title">wit u</div>
+</div>
+<div class="track-entry">
+  <div class="track-artist">Lenzman</div>
+  <div class="track-title">Pure Love (private joy remix)</div>
+</div>
+<div class="track-entry">
+  <div class="track-artist">Trail</div>
+  <div class="track-title">Another Level of Love (Remix)</div>
+</div>
+
+
+  
+    </section>
+  </main>
+  
+  
+  
+  
+  
+  
+  
+  
+
+  <!-- ===== NOW PLAYING BAR ===== -->
+  <div class="now-playing" role="region" aria-label="Now Playing">
+    <div class="np-progress">
+      <span class="np-time left" id="npElapsed">0:00</span>
+      <input type="range" min="0" value="0" step="0.01" class="np-seek" id="npSeek" />
+      <span class="np-time" id="npRemaining">-0:00</span>
+    </div>
+
+    <div class="np-controls">
+      <div></div>
+      <div class="np-buttons">
+        <button class="np-btn" id="npPlay" title="Play/Pause">
+          <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        </button>
+      </div>
+      <div class="np-title">
+        <span id="npTitle"></span>
+        <span class="np-msg" id="npMsg" aria-live="polite"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SCRIPT ===== -->
+  <script>
+    const player    = document.getElementById('player');
+    const playBtn   = document.getElementById('playBtn');
+    const npPlay    = document.getElementById('npPlay');
+    const npSeek    = document.getElementById('npSeek');
+    const npElapsed = document.getElementById('npElapsed');
+    const npRemain  = document.getElementById('npRemaining');
+    const npMsg     = document.getElementById('npMsg');
+
+    // Set source from HTML data attribute (change in markup)
+    const srcFromHTML = playBtn.getAttribute('data-audio');
+    player.src = srcFromHTML;
+
+    function fmt(sec){ if(!isFinite(sec)) return '0:00'; const s=Math.max(0,Math.floor(sec)); const m=Math.floor(s/60); const r=s%60; return m+':' + (r<10?'0'+r:r); }
+    function setIcons(isPlaying){
+      const playSVG  = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+      const pauseSVG = '<svg viewBox="0 0 24 24"><path d="M6 19h4V5H6zm8-14v14h4V5h-4z"/></svg>';
+      playBtn.innerHTML = isPlaying ? pauseSVG : playSVG;
+      npPlay.innerHTML  = isPlaying ? pauseSVG : playSVG;
+      playBtn.setAttribute('aria-pressed', isPlaying ? 'true' : 'false');
+      npPlay.setAttribute('aria-pressed', isPlaying ? 'true' : 'false');
+    }
+    function updateUI(){
+      if(player.duration){
+        npSeek.max = player.duration;
+        npSeek.value = player.currentTime;
+        npElapsed.textContent = fmt(player.currentTime);
+        npRemain.textContent  = '-' + fmt(player.duration - player.currentTime);
+      }
+    }
+    async function togglePlay(){
+      try{
+        if(player.paused){ await player.play(); }
+        else{ player.pause(); }
+      }catch(e){
+        console.error(e);
+        npMsg.textContent = 'Can’t play. Check file path.';
+        setTimeout(()=>npMsg.textContent='', 4000);
+      }
+    }
+
+    playBtn.addEventListener('click', togglePlay);
+    npPlay .addEventListener('click', togglePlay);
+
+    npSeek.addEventListener('input', () => {
+      player.currentTime = parseFloat(npSeek.value||0);
+      updateUI();
+    });
+
+    player.addEventListener('loadedmetadata', updateUI);
+    player.addEventListener('timeupdate', updateUI);
+    player.addEventListener('play',  ()=>setIcons(true));
+    player.addEventListener('pause', ()=>setIcons(false));
+    player.addEventListener('ended', ()=>{ setIcons(false); updateUI(); });
+    player.addEventListener('error', ()=> {
+      npMsg.textContent = 'Audio not found: ' + (player.currentSrc || srcFromHTML);
+    });
+
+    // Hero text shrink on scroll
+    (function(){
+      const hero = document.querySelector('.hero');
+      const content = document.getElementById('heroContent');
+      window.addEventListener('scroll', ()=>{
+        const trigger = hero.offsetHeight - window.innerHeight/2;
+        content.classList.toggle('shrink', window.scrollY > trigger);
+      });
+    })();
+  </script>
+</body>
+</html>
+
+
+

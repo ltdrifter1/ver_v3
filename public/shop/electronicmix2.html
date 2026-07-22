@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+  />
+  <title>Analog Fog Recordings</title>
+  <link href="static/style.css" rel="stylesheet" />
+  <style>
+    /* Existing page-specific adjustments */
+    .album-cover {
+      transform-origin: center;
+      transition: none;
+    }
+    
+    main {
+  width: 100%;
+  max-width: 680px;   /* You can adjust: 600-800px is typical for content. */
+  margin: 150px auto 40px auto; /* Top margin to clear header, bottom margin for footer */
+  padding: 0 24px;    /* Some horizontal padding on desktop */
+  box-sizing: border-box;
+}
+    .play1-icon {
+      width: 14px;
+      height: 14px;
+      margin-right: 8px;
+      filter: brightness(0) invert(0) sepia(1) saturate(500%) hue-rotate(150deg);
+      transition: transform 0.1s ease, filter 0.2s ease;
+    }
+    .play1-icon:hover {
+      transform: scale(1.2);
+      filter: brightness(0) invert(0) sepia(1) saturate(800%) hue-rotate(150deg);
+    }
+    .track {
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      padding: 6px 12px;
+      margin-bottom: 6px;
+      background-color: #2e2e2e;
+      border-radius: 4px;
+      transition: background-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .track:hover {
+      background-color: #262626;
+      box-shadow: 0 0 6px rgba(58, 127, 127, 0.6);
+    }
+    .track .mix-extra {
+      font-size: 0.9rem;
+      color: #e0e0e0;
+    }
+    .track .mix-extra span {
+      font-size: 0.65rem;
+      color: #a0a0a0;
+      padding-left: 16px;
+    }
+    .audio-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      align-items: flex-start;
+    }
+    .progress-slider {
+      width: 160px;
+      -webkit-appearance: none;
+      background: #444;
+      height: 5px;
+      border-radius: 2.5px;
+    }
+    .track-length {
+      font-size: 0.6rem;
+      color: #a0a0a0;
+    }
+    .mix-title {
+      margin-top: 8px;
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: #e0e0e0;
+    }
+    .mix-container-box {
+      background-color: #2e2e2e;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 24px;
+      box-shadow: 0 0 8px rgba(0, 0, 0, 0.6);
+    }
+
+ /* Fix main content positioning to prevent cutoff */
+    main {
+      margin-top: 100px !important; /* Provide space for the header */
+      padding-top: 20px !important; /* Additional padding at the top */
+    }
+
+  </style>
+</head>
+<body class="electronicmix-page">
+  <!-- ========== HEADER ========== -->
+ <header>
+    <div class="hamburger-menu">
+      <button
+        class="hamburger-icon"
+        aria-label="Toggle Navigation"
+        onclick="toggleMenu()"
+      >
+        ☰
+      </button>
+
+      <nav class="header-links" aria-label="Main Navigation">
+        <ul>
+          <li><a href="home.html">Browse</a></li>
+          <li><a href="shop.html">Shop</a></li>
+          <li><a href="contact.html">Contact</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <div class="logo-container">
+      <a href="home.html">
+        <img src="static/text.png" alt="Logo" class="logo" />
+      </a>
+    </div>
+
+    <div class="cart-container">
+      <a href="cart.html">
+        <img src="static/cart.png" alt="Shopping Cart" class="cart-icon" />
+        <span id="cart-count"></span>
+      </a>
+    </div>
+  </header>
+  <!-- ================================ -->
+
+  <!-- ========== MAIN CONTENT ========== -->
+  <main>
+   
+    <div class="mix-container-box">
+      <div style="height: 8px;"></div>
+      <span class="mix-title">OFFICIAL VISUALIZER</span><br>
+      <span class="mix-extra" style="font-size: 1.0rem;">
+         Untitled EP
+      </span> <br>
+       <span class="mix-extra" style="font-size: .75rem;">
+         by: Felix Forgot
+      </span> <br><br>
+      <div class="mix-content">
+        <a
+          href="player.html?file=three4zoneEP.wav"
+          class="itunes-play-button"
+        >
+          <img alt="Play" class="album-cover1" src="static/play.png" />
+        </a>
+        <div class="audio-info">
+          <input
+            type="range"
+            class="progress-slider"
+            min="0"
+            max="100"
+            value="0"
+          />
+          <span class="track-length">00:00 / 14:56</span>
+        </div>
+      </div>
+      <div style="height: 32px;"></div>
+    </div>
+    <div style="height: 24px;"></div>
+ <div class="album-cover-container foggy-album">
+  <img
+    alt="Album Cover"
+    class="album-cover spinning-album"
+    src="static/album2.png"
+  />
+</div>
+    <br /><br />
+
+    <!-- ========== TRACK LIST ========== -->
+    <div class="track-list">
+      <div class="track" onclick="playTrack('Track 1')">
+        <img src="static/play1.png" alt="Play" class="play1-icon" />
+        <span class="mix-extra">
+          1. TrackA<span>(07:52)</span>
+        </span>
+        <audio id="Track 1" src="static/Track 1.wav"></audio>
+      </div>
+      <div class="track" onclick="playTrack('Track 2')">
+        <img src="static/play1.png" alt="Play" class="play1-icon" />
+        <span class="mix-extra">
+          2. TrackB<span>(05:52)</span>
+        </span>
+        <audio id="Track 2" src="static/Track 2.wav"></audio>
+      </div>
+      <div class="track" onclick="playTrack('Track 3')">
+        <img src="static/play1.png" alt="Play" class="play1-icon" />
+        <span class="mix-extra">
+          3. TrackC<span>(02:52)</span>
+        </span>
+        <audio id="Track 3" src="static/Track 3.wav"></audio>
+      </div>
+      <div class="track" onclick="playTrack('Track 4')">
+        <img src="static/play1.png" alt="Play" class="play1-icon" />
+        <span class="mix-extra">
+          4. TrackD<span>(05:52)</span>
+        </span>
+        <audio id="Track 4" src="static/Track 4.wav"></audio>
+      </div><br>
+
+      <!-- BUY / INFO SECTION -->
+      <div style="margin-top: 24px;">
+        <div class="buy-buttons">
+  <span
+    class="mix-extra1"
+    onclick="addToCart('Three 4 Zone EP', 1.00)"
+  >
+    Digital Album <br />$1.00 CAD
+  </span>
+  <span
+    class="mix-extra1"
+    onclick="addToCart('Three 4 Zone EP', 10.00)"
+  >
+    Cassette <br />$10.00 CAD
+  </span>
+</div>
+
+<br><br>
+        
+        <span class="mix-extra" style="font-size: 0.85rem;">
+          Download includes formats: MP3, WAV and FLAC.
+        </span>
+        <br /><br /><br />
+        <span class="mix-extra">
+          Debut EP from this Cumberland, BC based producer.
+        </span>
+        <br /><br /><br />
+        <span class="mix-extra" style="font-size: 0.9rem;">
+          released June 22, 2025
+        </span><br><br>
+      </div>
+      <div style="height: 32px;"></div>
+      <!-- TAGS -->
+      <div class="tag-container">
+        <span class="mix-extra" style="font-size: 0.85rem;">Tags</span>
+        <div style="height: 4px;"></div>
+        <div class="bubbles-container">
+          <div class="tag-bubble">
+            <span class="mix-extra" style="font-size: 0.65rem;">DnB</span>
+          </div>
+          <div class="tag-bubble">
+            <span class="mix-extra" style="font-size: 0.65rem;">Jungle</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <!-- ============================== -->
+
+  <!-- ========== FOOTER ========== -->
+  <footer class="footer">
+    <p>© 2025 Analog Fog Recordings.</p>
+  </footer>
+  <!-- ============================== -->
+
+  <!-- ========== SCRIPTS ========== -->
+  <script>
+    function playTrack(trackId) {
+      document.querySelectorAll("audio").forEach((audio) => audio.pause());
+      const audio = document.getElementById(trackId);
+      if (audio) {
+        audio.currentTime = 0;
+        audio.play();
+      }
+    }
+    function getCartItemCount() {
+      const cart = JSON.parse(localStorage.getItem("cart")) || [];
+      return cart.reduce((total, item) => total + item.quantity, 0);
+    }
+    document.addEventListener("DOMContentLoaded", function () {
+      const cartCount = document.getElementById("cart-count");
+      const count = getCartItemCount();
+      cartCount.textContent = count > 0 ? count : "";
+    });
+    // Only spin album covers NOT spinning-album class
+    window.addEventListener("scroll", function () {
+      document.querySelectorAll(".album-cover:not(.spinning-album)").forEach(function(album) {
+        const scrolled = window.scrollY;
+        const degrees = scrolled * 0.5;
+        album.style.transform = `rotate(${degrees}deg)`;
+      });
+    });
+    // Glitch effect for logo on scroll
+    window.addEventListener("scroll", function () {
+      const logo = document.querySelector(".logo");
+      if (logo) logo.classList.add("glitch");
+    });
+    function toggleMenu() {
+      document.querySelector(".header-links").classList.toggle("show");
+    }
+    function updateCartCount() {
+      const cart = JSON.parse(localStorage.getItem("cart")) || [];
+      const cartCount = cart.reduce((total, item) => total + item.quantity, 0);
+      document.getElementById("cart-count").textContent = cartCount;
+    }
+    function addToCart(name, price) {
+      let cart = JSON.parse(localStorage.getItem("cart")) || [];
+      const existingItem = cart.find((item) => item.name === name);
+      if (existingItem) {
+        existingItem.quantity += 1;
+      } else {
+        cart.push({ name, price, quantity: 1 });
+      }
+      localStorage.setItem("cart", JSON.stringify(cart));
+      alert(`${name} added to cart!`);
+      updateCartCount();
+    }
+  </script>
+  <script>
+    // Grain overlay script for header (unchanged)
+    (function () {
+      const headerEl = document.querySelector("header");
+      headerEl.style.setProperty("--noise-opacity", 0);
+      window.addEventListener("scroll", () => {
+        const scrollY = window.scrollY;
+        const maxScroll = 600;
+        const progress = Math.min(scrollY / maxScroll, 1);
+        const targetOpacity = 0.3 * progress;
+        headerEl.style.setProperty("--noise-opacity", targetOpacity);
+      });
+    })();
+  </script>
+</body>
+</html>

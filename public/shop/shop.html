@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="static/style.css" rel="stylesheet" />
+  <title>Analog Fog Recordings</title>
+</head>
+
+<body class="shop-page">
+   <header>
+<div class="hamburger-menu" onclick="toggleMenu()">
+  <button class="hamburger-icon" aria-label="Menu">
+    <span class="bar"></span>
+    <span class="bar"></span>
+    <span class="bar"></span>
+  </button>
+  <span class="hamburger-label">MENU</span>
+</div>
+
+
+
+      <nav class="header-links" aria-label="Main Navigation">
+        <ul>
+          <li><a href="home.html">Radio</a></li>
+           <li><a href="home.html">Mixtapes</a></li>
+            <li><a href="home.html">Latest Releases</a></li>
+          <li><a href="shop.html">Shop</a></li>
+          <li><a href="about.html">About</a></li>
+        </ul>
+      </nav>
+
+
+    <div class="logo-container">
+      <a href="home.html">
+        <img src="static/text.png" alt="Logo" class="logo" />
+      </a>
+    </div>
+
+    <div class="cart-container">
+      <a href="cart.html">
+        <img src="static/cart.png" alt="Shopping Cart" class="cart-icon" />
+   
+      </a>
+    </div>
+  </header>
+<div class="black-banner"></div>
+  <main>
+    
+      <div class="info-text">
+        <h2>Coming Soon! </h2>
+      </div>
+
+
+     
+
+      <!-- Add more records here -->
+    </div>
+  </main>
+
+  <!-- ========== FOOTER ========== -->
+<footer class="footer">
+  <div class="footer-top">
+    <div class="footer-links">
+      <ul>
+        <li><a href="/about.html">About</a></li>
+        <li><a href="/help">Help and Feedback</a></li>
+        <li><a href="/support">Support Analog Fog</a></li>
+      </ul>
+    </div>
+    <div class="footer-apps">
+      
+    
+    </div>
+  </div>
+  <br><br>
+  <div class="footer-center">
+   <img src="static/logo-footer1.png" alt="Analog Fog logo" class="footer-logo">
+
+    <p class="footer-tagline">INDEPENDENT RECORD LABEL.</p>
+    <div class="footer-social">
+      <a href="https://bandcamp.com/felixtk" aria-label="Bandcamp">
+  <i class="fab fa-bandcamp"></i>
+</a>
+
+      <a href="https://soundcloud.com/felixtk" aria-label="SoundCloud">
+  <i class="fab fa-soundcloud"></i>
+</a>
+
+  
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <a href="/privacy">Privacy Policy</a>
+    <a href="/terms">Terms and Conditions</a>
+    <p>&copy; 2025 Analog Fog Recordings.</p>
+    <br>
+    <br>
+  </div>
+</footer>
+  <script>
+    function updateCartCount() {
+      const cart = JSON.parse(localStorage.getItem('cart')) || [];
+      const cartCount = cart.reduce((total, item) => total + item.quantity, 0);
+      document.getElementById('cart-count').textContent = cartCount;
+    }
+
+    function addToCart(name, price) {
+      let cart = JSON.parse(localStorage.getItem('cart')) || [];
+      const existingItem = cart.find(item => item.name === name);
+      if (existingItem) {
+        existingItem.quantity += 1;
+      } else {
+        cart.push({ name, price, quantity: 1 });
+      }
+      localStorage.setItem('cart', JSON.stringify(cart));
+      alert(`${name} added to cart!`);
+      updateCartCount();
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      document.querySelectorAll('.add-to-cart-btn').forEach(button => {
+        button.addEventListener('click', () => {
+          const name = button.getAttribute('data-name');
+          const price = parseFloat(button.getAttribute('data-price'));
+          addToCart(name, price);
+        });
+      });
+      updateCartCount();
+    });
+
+    function toggleMenu() {
+      document.querySelector('.header-links').classList.toggle('show');
+    }
+  </script>
+</body>
+
+</html>

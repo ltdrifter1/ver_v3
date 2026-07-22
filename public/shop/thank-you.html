@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Thanks! Your download is starting…</title>
+<link rel="stylesheet" href="static/style.css" />
+<style>
+  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
+       background:#f5f1e8;color:#111;display:grid;place-items:center;min-height:100vh;padding:24px}
+  .card{background:#fff;border:1px solid #d9d2c2;border-radius:12px;max-width:560px;width:100%;padding:24px}
+  .btn{display:inline-flex;align-items:center;justify-content:center;height:46px;border-radius:10px;
+       font-weight:800;border:1px solid #111;background:#111;color:#fff;text-decoration:none;padding:0 16px;margin-top:12px}
+  .muted{color:#555;font-size:14px;margin-top:8px}
+</style>
+</head>
+<body>
+  <main class="card">
+    <h1>Thanks for your purchase!</h1>
+    <p>Your download should start automatically. If it doesn’t, use the button below.</p>
+
+    <a id="fallback" class="btn" href="#" download>
+      Download WAV
+    </a>
+    <p class="muted">Having trouble? Try right–click → “Save link as…”</p>
+  </main>
+
+<script>
+(async ()=>{
+  // --- 1) Pull from sessionStorage (primary) ---
+  let stored = null;
+  try { stored = JSON.parse(sessionStorage.getItem('afr_download') || 'null'); } catch(e){}
+
+  // --- 2) Or fall back to URL query params (?file=...&name=...) ---
+  const params = new URLSearchParams(location.search);
+  const paramFile = params.get('file');
+  const paramName = params.get('name');
+
+  // --- 3) Choose values (stored > params > default) ---
+  const WAV_URL = (stored && stored.wav) || paramFile || 'static/downloads/CBGJ0-25-00001.wav';
+  const FILE_NAME = ((stored && stored.name) || paramName || 'download') + '.wav';
+
+  // Populate the fallback button
+  const fallback = document.getElementById('fallback');
+  fallback.href = WAV_URL;
+  fallback.setAttribute('download', FILE_NAME);
+
+  // Optional: Stripe session for logs (if added as success param)
+  const sessionId = params.get('session_id');
+  if(sessionId){ console.log('Stripe session:', sessionId); }
+
+  // Try to force-download; if blocked, user still has the visible button
+  async function forceDownload(url, filename){
+    try{
+      const res = await fetch(url, { credentials: 'same-origin' });
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      const blob = await res.blob();
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename || (url.split('/').pop() || 'download.wav');
+      document.body.appendChild(a); a.click();
+      setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+    }catch(err){
+      // If CORS or fetch is blocked, navigate directly (browser will download or play)
+      location.href = url;
+    }
+  }
+
+  // Kick off the download
+  await forceDownload(WAV_URL, FILE_NAME);
+
+  // Clean up so old values don't leak into future purchases
+  sessionStorage.removeItem('afr_download');
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Checkout • Analog Fog</title>
+<link rel="preconnect" href="https://js.stripe.com" />
+<style>
+  :root{
+    --bg:#f6f6f7; --ink:#111; --muted:#6a665b; --line:#e5e7eb; --card:#fff; --accent:#111;
+  }
+  html,body{margin:0;background:var(--bg);color:var(--ink);
+    font:16px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial;}
+  .wrap{width:min(1100px,92vw);margin:32px auto 80px;}
+  header{display:flex;gap:12px;align-items:center;margin-bottom:18px;}
+  header img{height:28px}
+  header .crumbs{margin-left:auto;color:var(--muted);font-size:12px}
+  .grid{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:22px;}
+  @media (max-width: 900px){ .grid{grid-template-columns:1fr;} }
+
+  /* ChatGPT-ish cards */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;
+        box-shadow:0 8px 20px rgba(0,0,0,.04);}
+  .pane{padding:18px;}
+  h1{font-size:20px;margin:0;}
+  h2{font-size:16px;margin:0 0 8px;}
+  .sub{color:var(--muted);font-size:13px;margin:4px 0 0;}
+
+  /* Inputs / buttons */
+  .field{display:grid;gap:6px;margin:12px 0;}
+  label{font-size:13px;color:#333}
+  input[type="text"], input[type="email"]{
+    height:44px;border:1px solid var(--line);border-radius:10px;padding:0 12px;background:#fff}
+  .btn{display:inline-flex;align-items:center;justify-content:center;height:48px;padding:0 14px;
+       border-radius:10px;border:1px solid var(--accent);background:var(--accent);color:#fff;
+       font-weight:800;letter-spacing:.02em;cursor:pointer}
+  .btn.secondary{background:transparent;color:var(--ink)}
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+
+  /* Summary */
+  .summary{position:sticky; top:20px}
+  .sum-head{padding:14px 18px;border-bottom:1px solid var(--line);font-weight:800}
+  .sum-items{padding:0 18px; max-height: 52vh; overflow:auto}
+  .item{display:grid;grid-template-columns:auto 1fr auto;gap:10px;padding:12px 0;border-bottom:1px solid var(--line)}
+  .item:last-child{border-bottom:0}
+  .thumb{width:56px;height:56px;border-radius:8px;object-fit:cover;border:1px solid var(--line);background:#fff}
+  .muted{color:var(--muted)}
+  .danger{color:#a33;cursor:pointer}
+  .qtyctrl{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .qtyctrl button{width:32px;height:32px;border:0;background:#f0f2f5;cursor:pointer}
+  .qtyctrl input{width:44px;height:32px;border:0;text-align:center}
+  .line{display:flex;justify-content:space-between;margin:6px 0}
+  .total{font-weight:900;font-size:18px}
+  .note{color:var(--muted);font-size:12px;margin-top:10px}
+  .hr{height:1px;background:var(--line);margin:12px 0}
+
+  /* Empty state */
+  .empty{padding:20px;text-align:center;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <img src="/static/assets/image.png" alt="AFR" />
+    <strong>Checkout</strong>
+    <span class="crumbs">Secure • Cards · Apple Pay · Google Pay</span>
+  </header>
+
+  <div class="grid">
+    <!-- LEFT: buyer details + pay -->
+    <section class="card">
+      <div class="pane">
+        <h1>Payment</h1>
+        <p class="sub">You’ll be redirected to our secure Stripe checkout. Apple Pay & Google Pay are shown automatically when available.</p>
+
+        <div class="field">
+          <label for="email">Email for receipt</label>
+          <input id="email" type="email" placeholder="you@example.com" autocomplete="email" />
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="actions">
+          <a class="btn" href="https://buy.stripe.com/14AfZifa75fWfEk3RHfrW01" target="_blank">Pay Now</a>
+
+          <button class="btn secondary" id="backToShop">Continue shopping</button>
+        </div>
+
+        <p class="note">
+          By placing your order, you agree to our Terms & Privacy.
+        </p>
+      </div>
+    </section>
+
+    <!-- RIGHT: summary -->
+    <aside class="card summary">
+      <div class="sum-head">Order summary</div>
+      <div id="sumItems" class="sum-items"></div>
+      <div class="pane">
+        <div class="line"><span class="muted">Subtotal</span><span id="sumSubtotal">$0.00</span></div>
+        <div class="line"><span class="muted">Est. taxes</span><span id="sumTax">$0.00</span></div>
+        <div class="line total"><span>Total (USD)</span><span id="sumTotal">$0.00</span></div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<!-- Stripe.js (Checkout redirect happens server-side; this is optional to keep for future) -->
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+/* ---------- Cart + summary ---------- */
+const CART_KEY = 'afr_cart';
+const TAX_RATE = 0.00; // e.g. 0.07 for 7%
+const CURRENCY = 'USD';
+
+function money(n){ return '$' + (n||0).toFixed(2); }
+function loadCart(){
+  const cart = JSON.parse(localStorage.getItem(CART_KEY) || '{"items":[]}');
+  cart.items = cart.items.filter(i => i && i.qty > 0 && Number.isFinite(i.price));
+  return cart;
+}
+function saveCart(cart){ localStorage.setItem(CART_KEY, JSON.stringify(cart)); }
+
+function renderSummary(){
+  const cont = document.getElementById('sumItems');
+  const subEl= document.getElementById('sumSubtotal');
+  const taxEl= document.getElementById('sumTax');
+  const totEl= document.getElementById('sumTotal');
+
+  const cart = loadCart();
+  cont.innerHTML = '';
+  let subtotal = 0;
+
+  if (!cart.items.length){
+    cont.innerHTML = '<div class="empty">Your cart is empty.</div>';
+  } else {
+    cart.items.forEach((it, idx)=>{
+      const li = document.createElement('div');
+      li.className = 'item';
+      li.innerHTML = `
+        <img class="thumb" src="${it.image || ''}" alt="">
+        <div>
+          <div><strong>${it.title}</strong></div>
+          <div class="muted">${it.variant || ''}</div>
+          <div class="muted">${money(it.price)} ea</div>
+          <div style="margin-top:8px; display:flex; align-items:center; gap:10px;">
+            <div class="qtyctrl">
+              <button aria-label="decrease">−</button>
+              <input type="text" value="${it.qty}" aria-label="quantity">
+              <button aria-label="increase">+</button>
+            </div>
+            <span class="danger" role="button" tabindex="0">Remove</span>
+          </div>
+        </div>
+        <div><strong>${money(it.price * it.qty)}</strong></div>
+      `;
+      cont.appendChild(li);
+
+      const [minus, input, plus] = li.querySelectorAll('.qtyctrl > *');
+      minus.addEventListener('click', ()=>{ it.qty = Math.max(1, it.qty - 1); saveCart(cart); renderSummary(); });
+      plus .addEventListener('click', ()=>{ it.qty = it.qty + 1;           saveCart(cart); renderSummary(); });
+      input.addEventListener('change', ()=>{ 
+        const v = Math.max(1, parseInt(input.value||'1',10)); it.qty = v; saveCart(cart); renderSummary();
+      });
+      li.querySelector('.danger').addEventListener('click', ()=>{ cart.items.splice(idx,1); saveCart(cart); renderSummary(); });
+      subtotal += it.price * it.qty;
+    });
+  }
+
+  const tax = +(subtotal * TAX_RATE).toFixed(2);
+  const total = subtotal + tax;
+  subEl.textContent = money(subtotal);
+  taxEl.textContent = money(tax);
+  totEl.textContent = money(total);
+  return { subtotal, tax, total, cart };
+}
+
+renderSummary();
+document.getElementById('backToShop').addEventListener('click', ()=>{ location.href = '/home.html'; });
+
+/* ---------- Stripe Checkout redirect ---------- */
+/* This calls your backend route that creates a Checkout Session
+   using your SECRET key (server-side), then returns session.url. */
+
+document.getElementById('payNow').addEventListener('click', createSessionAndRedirect);
+
+async function createSessionAndRedirect(){
+  const email = (document.getElementById('email')?.value || '').trim();
+  const { cart, total } = renderSummary();
+  if (!cart.items.length){ alert('Your cart is empty.'); return; }
+
+  // Build payload the server expects
+  const items = cart.items.map(i => ({
+    name: `${i.title}${i.variant ? ' - ' + i.variant : ''}`,
+    image: i.image || null,
+    unitAmount: Number(i.price),  // dollars
+    quantity: Number(i.qty || 1),
+  }));
+
+  try{
+    const res = await fetch('/create-checkout-session', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ items, email })
+    });
+    const data = await res.json();
+    if (data && data.url) {
+      location.href = data.url; // Stripe-hosted page (shows Apple/Google Pay automatically)
+    } else {
+      alert('Unable to start checkout.');
+    }
+  }catch(e){
+    alert('Network error starting checkout.');
+  }
+}
+</script>
+</body>
+</html>
