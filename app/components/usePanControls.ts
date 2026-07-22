@@ -40,10 +40,12 @@ const wrapYaw = (y: number) => {
  *   - followmousecontrol lean (desktop, no-touch) via pointer + followFactor
  *   - mouse-wheel / trackpad FOV zoom (fovmin…fovmax)
  *   - Arrow keys for a11y
+ *   - onDragEnd when a real drag completed (exit focused section)
  */
 export function usePanControls(
   stageRef: RefObject<HTMLElement | null>,
   enabledRef: RefObject<boolean>,
+  onDragEndRef?: RefObject<(() => void) | null>,
 ) {
   const controls = useRef<Controls>({
     lookTarget: { x: 0, y: 0 },
@@ -182,6 +184,7 @@ export function usePanControls(
       }
 
       if (wasDrag) {
+        onDragEndRef?.current?.();
         window.setTimeout(() => {
           if (!controls.dragging) controls.dragged = false;
         }, 0);
@@ -234,7 +237,7 @@ export function usePanControls(
       stage.removeEventListener('wheel', onWheel);
       window.removeEventListener('keydown', onKey);
     };
-  }, [stageRef, enabledRef, controls]);
+  }, [stageRef, enabledRef, onDragEndRef, controls]);
 
   return controls;
 }

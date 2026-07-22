@@ -1,11 +1,25 @@
 /**
- * Lightweight audio bus — BGM loop + one-shot SFX.
- * Mirrors balmingtiger mute / focus click sounds with original placeholders.
+ * Audio bus — BGM loop + object SFX + balmingtiger-style volume tweens.
  */
+import gsap from 'gsap';
 
 let bgm: HTMLAudioElement | null = null;
 let muted = true;
-const volume = { bgm: 0.45, sfx: 0.55 };
+let duckTween: gsap.core.Tween | null = null;
+const volume = { bgm: 0.45, sfx: 0.55, target: 0.45 };
+
+const SFX: Record<string, string> = {
+  click: '/audio/click.mp3',
+  focus: '/audio/focus.mp3',
+  music: '/audio/music.mp3',
+  video: '/audio/video.mp3',
+  phone: '/audio/phone.mp3',
+  lights: '/audio/lights.mp3',
+  shop: '/audio/shop.mp3',
+  archive: '/audio/archive.mp3',
+  artists: '/audio/artists.mp3',
+  door: '/audio/door.mp3',
+};
 
 function ensureBgm() {
   if (bgm) return bgm;
@@ -21,17 +35,16 @@ export function isMuted() {
   return muted;
 }
 
-/** Call once after user gesture (enter / unmute). */
 export async function unlockAudio() {
   const a = ensureBgm();
   if (!a) return;
   try {
     if (!muted) {
-      a.volume = volume.bgm;
+      a.volume = volume.target;
       await a.play();
     }
   } catch {
-    /* autoplay still blocked — unmute click will retry */
+    /* unmute will retry */
   }
 }
 
@@ -42,10 +55,12 @@ export async function setMuted(next: boolean) {
   }
   const a = ensureBgm();
   if (!a) return;
+  duckTween?.kill();
   if (muted) {
     a.volume = 0;
     a.pause();
   } else {
+    volume.target = volume.bgm;
     a.volume = volume.bgm;
     try {
       await a.play();
@@ -55,17 +70,31 @@ export async function setMuted(next: boolean) {
   }
 }
 
-export function playSfx(name: 'click' | 'focus') {
+export function playSfx(name: keyof typeof SFX | string) {
   if (muted || typeof window === 'undefined') return;
-  const src = name === 'click' ? '/audio/click.mp3' : '/audio/focus.mp3';
+  const src = SFX[name] ?? SFX.focus;
   const s = new Audio(src);
   s.volume = volume.sfx;
   void s.play().catch(() => {});
 }
 
-/** Dip BGM while video panel is focused (balmingtiger muteBGMVolume). */
-export function setBgmDucked(ducked: boolean) {
+/**
+ * balmingtiger muteBGMVolume / unmuteBGMVolume — 0.6s power1.inOut tween.
+ * ducked=true → near silence; false → restore target level.
+ */
+export function setBgmDucked(ducked: boolean, duration = 0.6) {
   const a = ensureBgm();
   if (!a || muted) return;
-  a.volume = ducked ? volume.bgm * 0.15 : volume.bgm;
+  duckTween?.kill();
+  const to = ducked ? 0.02 : volume.bgm;
+  volume.target = to;
+  const proxy = { v: a.volume };
+  duckTween = gsap.to(proxy, {
+    v: to,
+    duration,
+    ease: 'power1.inOut',
+    onUpdate: () => {
+      if (!muted && a) a.volume = proxy.v;
+    },
+  });
 }

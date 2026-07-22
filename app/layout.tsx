@@ -1,8 +1,8 @@
 import type { Metadata, Viewport } from 'next';
-import { Nunito, Archivo_Black } from 'next/font/google';
+import { Archivo_Black, Outfit } from 'next/font/google';
 import './globals.css';
 
-/** Bold display — cartoon storefront title energy. */
+/** Bold display — brand mark only (gate / panel titles). */
 const display = Archivo_Black({
   weight: '400',
   subsets: ['latin'],
@@ -10,10 +10,10 @@ const display = Archivo_Black({
   display: 'swap',
 });
 
-/** Rounded sans — flat cartoon UI like balmingtiger’s clean labels. */
-const body = Nunito({
+/** Clean geometric sans — balmingtiger-style floating chrome. */
+const body = Outfit({
   subsets: ['latin'],
-  weight: ['600', '700', '800'],
+  weight: ['500', '600', '700', '800'],
   variable: '--font-body',
   display: 'swap',
 });
@@ -21,7 +21,7 @@ const body = Nunito({
 export const metadata: Metadata = {
   title: 'VCR Records — Video Cassette Recordings',
   description:
-    'Step inside the VCR Records store. A full 360° hand-illustrated panorama of a 1990s jungle & drum and bass record shop. Look around, explore, and discover.',
+    'Step inside the VCR Records store. A full 360° illustrated jungle & drum and bass record shop. Look around, explore, and discover.',
   keywords: [
     'VCR Records',
     'jungle',
@@ -29,16 +29,17 @@ export const metadata: Metadata = {
     'record store',
     'vinyl',
     'immersive',
+    'underground',
   ],
   openGraph: {
     title: 'VCR Records',
-    description: 'An interactive 360° record-store installation. Look around, explore, discover.',
+    description: 'An interactive 360° underground record-store. Look around, explore, discover.',
     type: 'website',
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: '#ebe4d6',
+  themeColor: '#e9b21d',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,

@@ -32,9 +32,8 @@ import type { GyroHandle } from '@/lib/gyro';
 import { SECTIONS } from '@/app/data/sections';
 import { SceneContext, type SceneEnv, type Controls } from './sceneContext';
 import DustField from './DustField';
-import LightBeams from './LightBeams';
-import Flicker from './Flicker';
 import Hotspot from './Hotspot';
+import LampHotspot from './LampHotspot';
 import FisheyePass from './FisheyePass';
 import CrtScreen from './CrtScreen';
 
@@ -61,7 +60,9 @@ type Props = {
   onIntroComplete?: () => void;
   debug?: boolean;
   lightsOn?: boolean;
+  onToggleLights?: () => void;
   activeId?: string | null;
+  crtArmed?: boolean;
   gyroRef?: { current: GyroHandle };
 };
 
@@ -314,6 +315,10 @@ function Rig({
 function prepTex(tex: THREE.Texture, gl: THREE.WebGLRenderer) {
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.flipY = true;
+  // BackSide equirect sphere mirrors U — flip so poster/sign text reads LTR.
+  tex.wrapS = THREE.RepeatWrapping;
+  tex.repeat.x = -1;
+  tex.offset.x = 1;
   tex.anisotropy = Math.min(4, gl.capabilities.getMaxAnisotropy());
   tex.minFilter = THREE.LinearFilter;
   tex.magFilter = THREE.LinearFilter;
@@ -331,7 +336,9 @@ export default function Scene({
   onIntroComplete,
   debug = false,
   lightsOn = true,
+  onToggleLights,
   activeId = null,
+  crtArmed = false,
   gyroRef,
 }: Props) {
   const [texOn, texOff] = useTexture([TEXTURE_SRC, TEXTURE_OFF_SRC]);
@@ -383,7 +390,7 @@ export default function Scene({
         gyroRef={gyroRef}
       />
 
-      <color attach="background" args={['#ebe4d6']} />
+      <color attach="background" args={['#000000']} />
 
       {/* Lights-on sphere */}
       <mesh>
@@ -396,7 +403,7 @@ export default function Scene({
           depthWrite={false}
           transparent
           opacity={1}
-          color="#fff6ea"
+          color="#ffffff"
         />
       </mesh>
 
@@ -411,20 +418,29 @@ export default function Scene({
           depthWrite={false}
           transparent
           opacity={0}
-          color="#d8cfc0"
+          color="#ffffff"
         />
       </mesh>
 
       <group>
-        <LightBeams />
-        <Flicker />
-        <CrtScreen activeId={activeId} />
+        <CrtScreen activeId={activeId} armed={crtArmed} />
         {SECTIONS.map((s) => (
-          <Hotspot key={s.id} section={s} onOpen={onOpen} controls={controls} debug={debug} />
+          <Hotspot
+            key={s.id}
+            section={s}
+            onOpen={onOpen}
+            controls={controls}
+            activeId={activeId}
+            debug={debug}
+          />
         ))}
+        {onToggleLights && (
+          <LampHotspot controls={controls} lightsOn={lightsOn} onToggle={onToggleLights} />
+        )}
       </group>
 
-      <DustField count={reduceMotion ? 20 : 50} />
+      {/* Tiny floating flecks only — cel rooms don't want tungsten beams/dust storms */}
+      <DustField count={reduceMotion ? 0 : 12} />
 
       <FisheyePass amountRef={fisheyeRef} />
     </SceneContext.Provider>

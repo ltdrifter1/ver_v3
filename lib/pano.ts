@@ -28,14 +28,19 @@ export const SPHERE_RADIUS = 48;
 export const MFOV_RATIO = 4 / 3;
 
 /**
- * Explore MFOV. krpano xml lists 120, but their stereographic fisheye=0.3
- * reads much wider than a plain rectilinear 120. Land at 140 (their fovmax)
- * so the post-intro room matches balmingtiger’s pulled-back frame.
+ * Explore MFOV. Matched to balmingtiger / krpano view.fov="120".
+ * (Earlier 130–140 compensated for fisheye; P0 FOV discipline restores 120.)
  */
-export const MFOV_EXPLORE = 140;
-export const MFOV_INTRO = 170;
-export const MFOV_MIN = 55;
+export const MFOV_EXPLORE = 120;
+export const MFOV_INTRO = 160;
+/**
+ * Free-look wheel clamp (krpano fovmin/fovmax).
+ * lookto may punch below this (video ~20) — wheel/keys stay in this range.
+ */
+export const MFOV_MIN = 70;
 export const MFOV_MAX = 140;
+/** Absolute floor for lookto punch-ins (video). */
+export const MFOV_LOOKTO_MIN = 20;
 
 /** Steady-state + intro fisheye (krpano view.fisheye). */
 export const FISHEYE_EXPLORE = 0.3;
@@ -49,8 +54,9 @@ export const INTRO_DUR = 2;
  * Designed "front" of the store (listening booth / bins / CRT),
  * equivalent of krpano hlookat=0, vlookat=0 for this equirect.
  */
-export const START_LOOK_U = 0.7;
-export const START_LOOK_V = 0.5;
+/** Front of store after BackSide U-flip (texture u ↔ 1−u). */
+export const START_LOOK_U = 0.45;
+export const START_LOOK_V = 0.48;
 
 /**
  * krpano vtourskin defaults:
@@ -147,8 +153,9 @@ export function uvToLocal(u: number, v: number): [number, number, number] {
   return uvToSpherical(u, v, SPHERE_RADIUS - 0.35);
 }
 
-export const TEXTURE_SRC = '/textures/store_pano.webp';
+/** v2 paths bust the year-long immutable CDN cache from earlier deploys. */
+export const TEXTURE_SRC = '/textures/store_pano_v2.webp';
 /** Darkened twin of the store — balmingtiger lights_off scene. */
-export const TEXTURE_OFF_SRC = '/textures/store_pano_off.webp';
-export const LQIP_SRC = '/textures/store_pano_lqip.webp';
+export const TEXTURE_OFF_SRC = '/textures/store_pano_off_v2.webp';
+export const LQIP_SRC = '/textures/store_pano_lqip_v2.webp';
 export const CRT_VIDEO_SRC = '/videos/crt_loop.mp4';

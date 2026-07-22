@@ -3,6 +3,8 @@ import type { Controls } from '@/app/components/sceneContext';
 import type { Section } from '@/app/data/sections';
 import {
   MFOV_EXPLORE,
+  MFOV_LOOKTO_MIN,
+  MFOV_MAX,
   START_LOOK_U,
   START_LOOK_V,
   uToYaw,
@@ -31,9 +33,15 @@ export function lookToSection(
   opts: { duration?: number; onComplete?: () => void } = {},
 ) {
   const duration = opts.duration ?? 2;
-  const targetYaw = uToYaw(section.u);
-  const targetPitch = vToPitch(section.v);
-  const targetMfov = section.lookFov ?? 80;
+  const targetYaw = uToYaw(section.lookU ?? section.u);
+  const targetPitch = vToPitch(section.lookV ?? section.v);
+  // Mobile: softer video punch (balmingtiger video ~40 on small screens).
+  let targetMfov = section.lookFov ?? 80;
+  if (typeof window !== 'undefined' && section.id === 'crt-tv') {
+    const narrow = window.matchMedia('(max-width: 570px)').matches;
+    targetMfov = narrow ? 40 : Math.min(targetMfov, 20);
+  }
+  targetMfov = Math.min(MFOV_MAX, Math.max(MFOV_LOOKTO_MIN, targetMfov));
 
   activeTween?.kill();
   controls.velocity.x = 0;
@@ -66,7 +74,8 @@ export function lookToSection(
       pitch: targetPitch,
       mfov: targetMfov,
       duration,
-      ease: 'power3.inOut',
+      // ≈ krpano / GSAP easeinoutquart
+      ease: 'power4.inOut',
       onUpdate: () => {
         controls.lookTarget.x = startYaw + delta * proxy.t;
         controls.lookTarget.y = proxy.pitch;
@@ -89,7 +98,7 @@ export function restoreExploreFov(controls: Controls, duration = 1.2) {
   const tw = gsap.to(controls, {
     mfov: MFOV_EXPLORE,
     duration,
-    ease: 'power3.inOut',
+    ease: 'power4.inOut',
     onComplete: () => {
       controls.lookAnimating = false;
     },
@@ -114,6 +123,7 @@ export function resetCamera(controls: Controls, duration = 2) {
     w: 1,
     h: 1,
     lookFov: MFOV_EXPLORE,
+    sfx: 'click',
     items: [],
   } satisfies Section;
   return lookToSection(controls, front, { duration });
