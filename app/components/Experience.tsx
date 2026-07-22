@@ -8,15 +8,17 @@ import LoadingGate from './LoadingGate';
 import SectionPanel from './SectionPanel';
 import FilmFX from './FilmFX';
 import TopNav from './TopNav';
+import CustomCursor from './CustomCursor';
+import MuteControl from './MuteControl';
 import { usePanControls } from './usePanControls';
+import { SECTION_BY_ID } from '@/app/data/sections';
+import { lookToSection, restoreExploreFov } from '@/lib/lookTo';
+import { MFOV_EXPLORE } from '@/lib/pano';
 
 export default function Experience() {
   const stageRef = useRef<HTMLDivElement>(null);
-  /** True once the gate opens — kicks the intro FOV ease. */
   const enteredRef = useRef({ value: false });
-  /** Click-and-drag look — unlocked only after intro zoom settles. */
   const lookEnabledRef = useRef(false);
-  /** Hotspot proximity / clicks — same unlock as look. */
   const liveRef = useRef({ value: false });
   const panelOpenRef = useRef({ value: false });
 
@@ -46,7 +48,6 @@ export default function Experience() {
   }, []);
 
   const handleEntered = useCallback(() => {
-    // Start intro zoom. Look + hotspots stay locked until onIntroComplete.
     lookEnabledRef.current = false;
     liveRef.current.value = false;
     enteredRef.current.value = true;
@@ -56,7 +57,6 @@ export default function Experience() {
   }, []);
 
   const handleIntroComplete = useCallback(() => {
-    // Mirror balmingtiger: set(control.usercontrol, all) after enter tween.
     lookEnabledRef.current = true;
     liveRef.current.value = true;
     setCanLook(true);
@@ -76,24 +76,45 @@ export default function Experience() {
 
   const openedAt = useRef(0);
 
-  const open = useCallback((id: string) => {
-    if (!lookEnabledRef.current) return;
-    // Toggle like balmingtiger menu buttons
-    if (active === id) {
-      panelOpenRef.current.value = false;
-      setActive(null);
-      return;
-    }
-    openedAt.current = Date.now();
-    panelOpenRef.current.value = true;
-    setActive(id);
-  }, [active]);
+  const open = useCallback(
+    (id: string) => {
+      if (!lookEnabledRef.current || controls.lookAnimating) return;
+
+      // Toggle close — restore explore FOV like leaving a focused hotspot
+      if (active === id) {
+        panelOpenRef.current.value = false;
+        setActive(null);
+        if (!reduceMotion) restoreExploreFov(controls, 1.2);
+        else controls.mfov = MFOV_EXPLORE;
+        return;
+      }
+
+      const section = SECTION_BY_ID[id];
+      if (!section) return;
+
+      openedAt.current = Date.now();
+      // balmingtiger: lookto + openPanel in parallel (panel while camera flies)
+      panelOpenRef.current.value = true;
+      setActive(id);
+      setShowCompass(false);
+
+      if (reduceMotion) {
+        controls.lookTarget.x = (section.u - 0.5) * Math.PI * 2;
+        controls.lookTarget.y = (0.5 - section.v) * Math.PI;
+        controls.mfov = section.lookFov;
+        return;
+      }
+      lookToSection(controls, section, { duration: 2 });
+    },
+    [active, controls, reduceMotion],
+  );
 
   const close = useCallback(() => {
     if (Date.now() - openedAt.current < 350) return;
     panelOpenRef.current.value = false;
     setActive(null);
-  }, []);
+    if (!reduceMotion) restoreExploreFov(controls, 1.2);
+  }, [controls, reduceMotion]);
 
   return (
     <div className={`stage${canLook ? ' can-look' : ''}`} ref={stageRef}>
@@ -126,7 +147,8 @@ export default function Experience() {
       </Canvas>
 
       <FilmFX />
-
+      <CustomCursor enabled={canLook} />
+      <MuteControl visible={canLook} />
       <TopNav visible={canLook} activeId={active} onOpen={open} />
 
       {live && (
@@ -136,7 +158,6 @@ export default function Experience() {
       )}
 
       <SectionPanel activeId={active} onClose={close} />
-
       <LoadingGate onEntered={handleEntered} />
     </div>
   );

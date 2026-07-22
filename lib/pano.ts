@@ -34,7 +34,7 @@ export const MFOV_RATIO = 4 / 3;
  */
 export const MFOV_EXPLORE = 140;
 export const MFOV_INTRO = 170;
-export const MFOV_MIN = 70;
+export const MFOV_MIN = 55;
 export const MFOV_MAX = 140;
 
 /** Steady-state + intro fisheye (krpano view.fisheye). */

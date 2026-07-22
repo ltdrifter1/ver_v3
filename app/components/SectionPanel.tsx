@@ -4,9 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import { SECTION_BY_ID } from '@/app/data/sections';
 
 /**
- * The hidden-room overlay. Driven by CSS transitions for rock-solid slide /
- * fade behaviour; content is kept mounted through the close transition so it
- * never blanks mid-exit.
+ * Floating overlay panel — closer to balmingtiger menu-panels than a side drawer:
+ * centred card, soft scrim, horizontal item strip.
  */
 export default function SectionPanel({
   activeId,
@@ -24,14 +23,12 @@ export default function SectionPanel({
 
     if (activeId) {
       setShownId(activeId);
-      // ensure the element is displayed before flipping to the open state so
-      // the transition actually fires
       const raf = requestAnimationFrame(() => setOpen(true));
       return () => cancelAnimationFrame(raf);
     }
 
     setOpen(false);
-    closeTimer.current = setTimeout(() => setShownId(null), 700);
+    closeTimer.current = setTimeout(() => setShownId(null), 500);
   }, [activeId]);
 
   useEffect(() => {
@@ -55,14 +52,22 @@ export default function SectionPanel({
       <aside
         className="panel"
         style={
-          section ? ({ ['--panel-accent' as string]: section.accent } as React.CSSProperties) : undefined
+          section
+            ? ({ ['--panel-accent' as string]: section.accent } as React.CSSProperties)
+            : undefined
         }
         role="dialog"
         aria-modal="true"
         aria-label={section?.title}
+        onPointerDown={(e) => e.stopPropagation()}
       >
-        <button className="panel-close" onClick={onClose} aria-label="Close">
-          ✕
+        <button
+          className="panel-close"
+          onClick={onClose}
+          aria-label="Close"
+          data-cursor="click"
+        >
+          ×
         </button>
         {section && (
           <>
@@ -71,7 +76,11 @@ export default function SectionPanel({
             <p className="panel-intro">{section.intro}</p>
             <ul className="panel-list">
               {section.items.map((it, i) => (
-                <li className="panel-item" key={i} style={{ transitionDelay: `${0.18 + i * 0.05}s` }}>
+                <li
+                  className="panel-item"
+                  key={i}
+                  style={{ transitionDelay: `${0.12 + i * 0.04}s` }}
+                >
                   <span className="pi-label">{it.label}</span>
                   {it.meta && <span className="pi-meta">{it.meta}</span>}
                   {it.detail && <span className="pi-detail">{it.detail}</span>}
@@ -79,7 +88,7 @@ export default function SectionPanel({
               ))}
             </ul>
             <p className="panel-foot">
-              VCR · {section.object} · {section.nav}
+              {section.object} · {section.nav}
             </p>
           </>
         )}
