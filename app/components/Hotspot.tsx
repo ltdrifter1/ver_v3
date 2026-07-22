@@ -13,27 +13,36 @@ import { useSceneEnv, type Controls } from './sceneContext';
 const tmp = new THREE.Vector3();
 const origin = new THREE.Vector3(0, 0, 0);
 
-/** Stronger authored glow — soft core + wide bloom (balmingtiger *_glow). */
+/**
+ * Authored glow for a bright cel room.
+ * Soft additive blooms wash out on Saturday-morning art — use a denser
+ * coloured core + wide halo so hover / focus still reads.
+ */
 function makeGlowTexture(color: string) {
   const c = document.createElement('canvas');
   c.width = 256;
   c.height = 256;
   const ctx = c.getContext('2d')!;
-  const g = ctx.createRadialGradient(128, 128, 4, 128, 128, 128);
-  g.addColorStop(0, color);
-  g.addColorStop(0.18, color);
-  g.addColorStop(0.42, hexAlpha(color, 0.55));
-  g.addColorStop(0.72, hexAlpha(color, 0.18));
-  g.addColorStop(1, 'rgba(0,0,0,0)');
-  ctx.fillStyle = g;
+
+  // Wide coloured wash
+  const wash = ctx.createRadialGradient(128, 128, 8, 128, 128, 128);
+  wash.addColorStop(0, hexAlpha(color, 1));
+  wash.addColorStop(0.22, hexAlpha(color, 0.95));
+  wash.addColorStop(0.48, hexAlpha(color, 0.55));
+  wash.addColorStop(0.78, hexAlpha(color, 0.18));
+  wash.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = wash;
   ctx.fillRect(0, 0, 256, 256);
-  // bright inner disc
-  const core = ctx.createRadialGradient(128, 128, 0, 128, 128, 36);
-  core.addColorStop(0, 'rgba(255,255,255,0.95)');
-  core.addColorStop(0.45, hexAlpha(color, 0.85));
+
+  // Hot white core so additive still pops on bright walls
+  const core = ctx.createRadialGradient(128, 128, 0, 128, 128, 52);
+  core.addColorStop(0, 'rgba(255,255,255,1)');
+  core.addColorStop(0.35, hexAlpha(color, 1));
+  core.addColorStop(0.7, hexAlpha(color, 0.45));
   core.addColorStop(1, 'rgba(0,0,0,0)');
   ctx.fillStyle = core;
   ctx.fillRect(0, 0, 256, 256);
+
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
   return tex;
@@ -50,7 +59,7 @@ function hexAlpha(hex: string, a: number) {
 
 /**
  * Hotspot — balmingtiger pattern:
- * invisible hit plane + hover glow (0.4s power1.inOut) + latch while section open.
+ * invisible hit plane + glow on look/hover + latch while section open.
  */
 export default function Hotspot({
   section,
@@ -67,9 +76,12 @@ export default function Hotspot({
 }) {
   const mesh = useRef<THREE.Mesh>(null);
   const glowMesh = useRef<THREE.Mesh>(null);
+  const washMesh = useRef<THREE.Mesh>(null);
   const glowMat = useRef<THREE.MeshBasicMaterial>(null);
+  const washMat = useRef<THREE.MeshBasicMaterial>(null);
   const inner = useRef<HTMLDivElement>(null);
   const opacity = useRef(0);
+  /** Current glow strength 0…1 (proximity / hover / active). */
   const glow = useRef({ a: 0 });
   const [hovered, setHovered] = useState(false);
   const env = useSceneEnv();
@@ -77,10 +89,12 @@ export default function Hotspot({
   const [x, y, z] = uvToSpherical(section.u, section.v, SPHERE_RADIUS - 0.5);
   const glowTex = useMemo(() => makeGlowTexture(section.accent), [section.accent]);
   const isActive = activeId === section.id;
+  const accentColor = useMemo(() => new THREE.Color(section.accent), [section.accent]);
 
   useLayoutEffect(() => {
     mesh.current?.lookAt(origin);
     glowMesh.current?.lookAt(origin);
+    washMesh.current?.lookAt(origin);
   }, [x, y, z]);
 
   useLayoutEffect(() => {
@@ -89,16 +103,16 @@ export default function Hotspot({
     };
   }, [glowTex]);
 
-  // Latch glow while this section is focused; hover otherwise.
+  // Keep a latched floor while this section is the open feature.
   useLayoutEffect(() => {
-    const on = isActive || hovered;
+    if (!isActive) return;
     gsap.to(glow.current, {
-      a: on ? 1 : 0,
+      a: 1,
       duration: 0.4,
       ease: 'power1.inOut',
       overwrite: true,
     });
-  }, [isActive, hovered]);
+  }, [isActive]);
 
   useFrame(() => {
     const m = mesh.current;
@@ -108,21 +122,48 @@ export default function Hotspot({
     m.getWorldPosition(tmp).project(camera);
     const inFront = tmp.z > -1 && tmp.z < 1;
     const dist = Math.hypot(tmp.x, tmp.y);
+    // Looking toward the feature (centre of view) counts as focus.
     const proximity = inFront
-      ? THREE.MathUtils.clamp(1 - (dist - 0.12) / 0.7, 0, 1)
+      ? THREE.MathUtils.clamp(1 - (dist - 0.08) / 0.55, 0, 1)
       : 0;
 
-    let target = Math.max(proximity * 0.9, hovered ? 1 : 0);
-    if (!env.live.value || env.panelOpen.value) target = 0;
+    // Hint labels
+    let hintTarget = Math.max(proximity * 0.95, hovered ? 1 : 0);
+    if (!env.live.value) hintTarget = 0;
+    // Hide labels while a panel is open (glow still latches on active).
+    if (env.panelOpen.value) hintTarget = 0;
 
-    opacity.current += (target - opacity.current) * 0.18;
+    opacity.current += (hintTarget - opacity.current) * 0.18;
     el.style.opacity = opacity.current.toFixed(3);
     el.style.visibility = opacity.current < 0.02 ? 'hidden' : 'visible';
 
+    // —— Glow drive ——
+    // Active feature: full latch.
+    // Otherwise: proximity look-at + hover, only while live and not another panel.
+    let glowTarget = 0;
+    if (!env.live.value) {
+      glowTarget = 0;
+    } else if (isActive) {
+      glowTarget = 1;
+    } else if (env.panelOpen.value) {
+      glowTarget = 0;
+    } else {
+      glowTarget = Math.max(proximity * 0.85, hovered ? 1 : 0);
+    }
+
+    // Smooth toward target (hover/proximity); active latch also eased above.
+    glow.current.a += (glowTarget - glow.current.a) * (isActive ? 0.22 : 0.16);
+
+    const a = glow.current.a;
     if (glowMat.current) {
-      // Active section stays fully lit; others dim hard while focused.
-      const scale = env.panelOpen.value ? (isActive ? 1 : 0) : 1;
-      glowMat.current.opacity = glow.current.a * scale;
+      // Additive bloom — boost past 1 via texture brightness; clamp display opacity.
+      glowMat.current.opacity = Math.min(1, a * 1.15);
+      glowMat.current.visible = a > 0.02;
+    }
+    if (washMat.current) {
+      // Soft coloured plate underneath so glow still reads on bright cel walls.
+      washMat.current.opacity = a * 0.28;
+      washMat.current.visible = a > 0.02;
     }
   });
 
@@ -134,14 +175,31 @@ export default function Hotspot({
 
   return (
     <group position={[x, y, z]}>
-      <mesh ref={glowMesh} renderOrder={1}>
-        <planeGeometry args={[section.w * 1.7, section.h * 1.7]} />
+      {/* Coloured wash — readable on bright cartoon walls */}
+      <mesh ref={washMesh} renderOrder={1} raycast={() => null}>
+        <planeGeometry args={[section.w * 1.55, section.h * 1.55]} />
+        <meshBasicMaterial
+          ref={washMat}
+          color={accentColor}
+          transparent
+          depthWrite={false}
+          depthTest={false}
+          opacity={0}
+          side={THREE.DoubleSide}
+          toneMapped={false}
+        />
+      </mesh>
+
+      {/* Additive bloom on top */}
+      <mesh ref={glowMesh} renderOrder={2} raycast={() => null}>
+        <planeGeometry args={[section.w * 1.85, section.h * 1.85]} />
         <meshBasicMaterial
           ref={glowMat}
           map={glowTex}
           color="#ffffff"
           transparent
           depthWrite={false}
+          depthTest={false}
           blending={THREE.AdditiveBlending}
           opacity={0}
           side={THREE.DoubleSide}
@@ -151,6 +209,7 @@ export default function Hotspot({
 
       <mesh
         ref={mesh}
+        renderOrder={3}
         onPointerOver={(e) => {
           e.stopPropagation();
           if (!env.live.value) return;
@@ -194,7 +253,7 @@ export default function Hotspot({
               } as React.CSSProperties
             }
           >
-            <span className={`hint-ring ${hovered || isActive ? 'hint-pulse' : ''}`} />
+            <span className={`hint-ring ${hovered || isActive || glow.current.a > 0.45 ? 'hint-pulse' : ''}`} />
             <span className="hint-label">{section.hint}</span>
             <span className="hint-nav">{section.nav}</span>
           </div>
