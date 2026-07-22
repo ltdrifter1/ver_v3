@@ -60,6 +60,8 @@ type Props = {
   lightsOn?: boolean;
   onToggleLights?: () => void;
   activeId?: string | null;
+  /** Glow latch — stays on while lookto-focused (incl. shop without panel). */
+  focusedId?: string | null;
   crtArmed?: boolean;
   gyroRef?: { current: GyroHandle };
 };
@@ -277,6 +279,7 @@ export default function Scene({
   lightsOn = true,
   onToggleLights,
   activeId = null,
+  focusedId = null,
   crtArmed = false,
   gyroRef,
 }: Props) {
@@ -369,7 +372,7 @@ export default function Scene({
             section={s}
             onOpen={onOpen}
             controls={controls}
-            activeId={activeId}
+            focusedId={focusedId}
             debug={debug}
           />
         ))}
